@@ -1,4 +1,4 @@
-*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2016-Dec-26
+*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2017-May-14
 
 Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
 Copyleft ())
@@ -28,10 +28,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	|+reltime|, |+statusline|, |+user_commands|, and |+modify_fname|.
 
 	The 'eventignore' option should not include: all, |CursorMovedI|,
-	|InsertEnter|, and |InsertLeave|.
+	|InsertEnter|, |InsertChange|, and |InsertLeave|.
 
-	The format of |reltime()| is system-dependent, it is assumed that
-	[sec, ...] is returned.
+	The returned item of |reltime()| is system-dependent, it is assumed
+	that its format is a [sec, ...] list.
 
 
 ==============================================================================
@@ -51,7 +51,7 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	Source the script and then call a function (or use a command).
 
 					*Pace_Load()* *:PaceOn* *:PaceOff*
-	Pace_Load() toggles an instance of either |ruler| or local to
+	Pace_Load() toggles an instance of either |ruler| or local-to-
 		window |statusline| filled with relevant data: >
 
 		:echo Pace_Load(1)
@@ -97,6 +97,8 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 			\ .split(expand('path/to/dir/pace_*'), "\n")[-1]
 		endif
 <
+		Whenever |:mksession| is used, run |:PaceOff| before it
+		to purge local-to-window |g:pace_info| statusline entry.
 
 					*Pace_Free()* *:PaceFree*
 	Pace_Free() (:PaceFree) clears out all local to script scope.
@@ -125,9 +127,9 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 		10		keep `reject' record (exclusive), i.e.
 					any pending collected data that
 					have missed |InsertLeave| event
-					and were not written to the log
-					(see <Ctrl-c> exiting in
-					|pace-caveats|);
+					and have not been written to
+					the log (see |i_CTRL-C| exiting
+					in |pace-caveats|);
 		20		keep `reject' record & mark (exclusive);
 		100		keep `null' record, i.e. no-characters-
 					typed entry (see the inserting
@@ -157,9 +159,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	|ins-special-keys| do not move cursor, others advance it over
 	several screen cells atomically, e.g.
 		(*) any |digraphs| that require three-to-six key presses
-		to produce a character, equate a character;
+			to produce a character, equate a character;
 		(*) typing a word, deleting it |i_CTRL-W|, typing it
-		again, equate the doubled word length plus one character.
+			again, equate the doubled word length plus one
+			character.
 
 	The |inserting| commands (not `i') may account for a character.
 	The last line <EOL> character is never typed, see |eol|.
@@ -176,15 +179,15 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 		(*) 'winheight' to 1 (in the demo script): to arrange all
 			preview windows compactly.
 
-	Leaving |Insert-mode| &c.  by means of <Ctrl-c> keystroke
-	|i_CTRL-C| ignores |InsertLeave| event.  To force it, and to
-	circumvent a contingent `reject' policy |g:pace_policy|, run: >
+	Leaving |Insert-mode| &c.  by means of the |i_CTRL-C| keystroke
+	ignores |InsertLeave| event.  To force it, and to circumvent
+	a contingent `reject' policy |g:pace_policy|, run: >
 
 		:doautocmd pace InsertLeave
 <
-	<Ctrl-o> keystroke fires |InsertLeave| event; switching between
-	|Insert| and |Replace| modes by means of <Insert> keystroke
-	|i_esc|, when either mode is masked, rejects the record.
+	The |i_CTRL-O| and |i_<Insert>| keystrokes within |Insert-mode|
+	&c.  fire sequentially |InsertLeave| and |InsertEnter| events.
+	(The Insert key adopts it arbitrarily.)
 
 	By failing policy, the last `null' and/or `reject' record is
 	available between successive |InsertLeave| and |InsertEnter|
@@ -195,15 +198,28 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 ==============================================================================
 7. History						*pace-history*
 
+	2017-May-14	v1.2.
+				demo.vim: ~
+				The demo buffers allow to re-run a preview.
 
-	2016-Dec-26	The minor update (v1.1).
+				pace.vim: ~
+				The initial value of |g:pace_info| now
+				observes the amassing |g:pace_policy|.
 
-				pace.txt:
+				The sequence of leave-enter mode routines
+				is arranged for |InsertChange|.
+
+				|PaceSum| keeps up-to-date its rejects sum.
+
+				The mode check is omitted on |InsertLeave|.
+
+	2016-Dec-26	v1.1.
+				pace.txt: ~
 				The 'laststatus' option is set to 1, if 0
 				(the documentation is made to agree with
 				the script).
 
-				pace.vim:
+				pace.vim: ~
 				The |g:pace_policy| variable allows a new
 				value (2000) to amass buffer typing.
 

@@ -1,7 +1,7 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.1
-" Last Change:	2016-Dec-26
+" Version:	1.2
+" Last Change:	2017-May-14
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -58,6 +58,10 @@ function! s:pace.div(dividend, divisor) abort				" {{{1
 	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
 endfunction	" Not used in pace.eval() since it sips ~1e-5 secs a call.
 
+function! s:pace.msg(fname, entry) abort				" {{{1
+	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
+endfunction
+
 function! s:pace.eval() abort						" {{{1
 	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
 	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
@@ -87,6 +91,12 @@ endfunction	" On local machine reltime()[1] spits non-padded microseconds.
 " (0000), all (1000), or buffer (2000).
 
 function! s:pace.test(pass) abort					" {{{1
+	if !exists('#pace')
+		" Redefine the _pace_ group, but do not touch its commands!
+		augroup pace
+		augroup END
+	endif
+
 	if exists('#pace#CursorMovedI#*')
 		autocmd! pace CursorMovedI
 	endif
@@ -98,43 +108,37 @@ function! s:pace.test(pass) abort					" {{{1
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
 		if g:pace_policy != l:self.policy &&
 				\ g:pace_policy =~ '\<1[012][01][012][0-7]\>'
-			echomsg split(expand('<sfile>'), '\.\.')[-1].': @'
-				\ .localtime().': g:pace_policy: '
-				\ .l:self.policy.'->'.g:pace_policy
+			call l:self.msg(expand('<sfile>'), 'g:pace_policy: '
+				\ .l:self.policy.'->'.g:pace_policy)
 			let l:self.policy	= g:pace_policy
 		endif
 
 		unlet g:pace_policy
 	endif
 
-	if &eventignore =~? '\v(all|insert(enter|leave)|cursormovedi)'
-		echomsg split(expand('<sfile>'), '\.\.')[-1].': @'
-			\ .localtime().': &eventignore mask'
-		return 1	" Return the same value as the following.
-	elseif !l:self.policy[4] ||
-		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
-		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
-		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
-		return 1	" Imitates and(l:self.policy[4], 1) &c.
-	elseif l:self.char < 0
-		return -1				" No leftovers.
+	if l:self.char < 0
+		return -1
 	elseif !l:self.char && !l:self.policy[2]
 		return 4				" Discard null.
 	elseif !a:pass
-		return 0	" The recursion base and :doautocmd exit.
+		return 0				" pace.leave() exit.
 	elseif !l:self.policy[3]
 		return 2				" Discard rejects.
 	endif
 
 	try
 		let l:self.mark	= l:self.policy[3] == 2	" Add (-) to hit.
-		return l:self.leave()			" Accept rejects.
+		return l:self.leave()			" Collect rejects.
 	finally
 		let l:self.mark	= 0
 	endtry
 endfunction
 
 function! s:pace.leave() abort						" {{{1
+	if &maxfuncdepth < 16		" An arbitrary bound.
+		set maxfuncdepth&
+	endif				" What if :doautocmd pace InsertLeave?
+
 	if l:self.test(0)
 		return 1
 	elseif !has_key(l:self.dump, l:self.buffer)
@@ -146,7 +150,11 @@ function! s:pace.leave() abort						" {{{1
 	let l:whole[0:3]	+= [1, 0, l:self.char, l:self.sec]
 	unlet! g:pace_amin
 	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
-	lockvar g:pace_amin g:pace_info
+	lockvar g:pace_amin
+
+	if exists('g:pace_info')
+		lockvar g:pace_info
+	endif
 
 	" Append a new hit instance and fetch the buffer total entry.
 	let l:total		= add(l:self.dump[l:self.buffer],
@@ -179,28 +187,39 @@ function! s:pace.swap(buffer) abort					" {{{1
 endfunction
 
 function! s:pace.enter() abort						" {{{1
-	if l:self.test(1) == 1		" An ignored mode policy, or &ei mask.
-		return 1
-	elseif !exists('#pace')
-		return -1
-	elseif !&laststatus
+	if &maxfuncdepth < 16		" An arbitrary bound.
+		set maxfuncdepth&
+	endif				" Graduate a sounding-rod before _test_.
+
+	call l:self.test(1)		" Make allowance for any leftovers.
+
+	" Leave and enter gracefully at the switch.
+	autocmd! pace InsertChange
+	autocmd pace InsertChange	* call s:pace.leave()
+	autocmd pace InsertChange	* call s:pace.enter()
+
+	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+		call l:self.msg(expand('<sfile>'), '&eventignore mask')
+		return -128
+	elseif !l:self.policy[4] ||
+		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
+		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
+		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
+		return -1		" Imitates and(l:self.policy[4], 1) &c.
+	endif
+
+	if !&laststatus
 		set laststatus&
+	endif
+
+	if !&ruler
+		set ruler
 	endif
 
 	" Pre-empt the statusline value and substitute it for the one assembled.
 	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
 				\ 'winbufnr(v:val) == l:self.buffer')) > 1
 		call l:self.swap(bufnr('%'))
-	endif
-
-	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
-	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
-
-	if winnr('$') == 1
-		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
-	else
-		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
-					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
 	let [l:self.cchar, l:self.ssec]	= l:self.policy[1] == 1	?
@@ -212,6 +231,17 @@ function! s:pace.enter() abort						" {{{1
 	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
 	let [l:self.char, l:self.sec]		= [0, 0]
 	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
+	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
+				\ l:self.div(l:self.cchar, l:self.ssec),
+				\ l:self.cchar, l:self.ssec)
+
+	if winnr('$') == 1
+		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
+	else
+		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
+					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
+	endif
 
 	if !exists('#pace#CursorMovedI#*')
 		autocmd pace CursorMovedI	* call s:pace.eval()
@@ -237,9 +267,8 @@ function! Pace_Load(entropy) abort					" {{{1
 		let s:pace.load		= 0
 		silent! autocmd! pace
 		return 2
-	elseif &eventignore =~? '\v(all|insert(enter|leave)|cursormovedi)'
-		echomsg split(expand('<sfile>'), '\s\+')[-1].': @'
-			\ .localtime().': &eventignore mask'
+	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+		call s:pace.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
 	elseif s:pace.load
 		return -1
@@ -250,8 +279,7 @@ function! Pace_Load(entropy) abort					" {{{1
 	let s:pace.state.ruler		= &ruler
 	let s:pace.state.rulerformat	= &rulerformat
 	let s:pace.state.statusline	= &g:statusline
-	setglobal maxfuncdepth& rulerformat& ruler
-	setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
+	setglobal ruler statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 	let s:pace.buffer	= bufnr('%')
 	let s:pace.load		= 1
 	let s:pace.status[s:pace.buffer]	= &l:statusline
@@ -266,6 +294,8 @@ function! Pace_Dump(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
 		return deepcopy(s:pace.dump, 1)
 	elseif !empty(s:pace.pool)			" pace.leave() empties.
+		let s:pace.pool['_rejects']	= printf('%+31i',
+			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0]))
 		return copy(s:pace.pool)
 	endif
 

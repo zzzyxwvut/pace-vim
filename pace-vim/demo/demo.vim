@@ -1,7 +1,7 @@
 " Description:	The demo-imitation of the "pace.vim" script
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.0
-" Last Change:	2016-Oct-26
+" Version:	1.1
+" Last Change:	2017-May-14
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
@@ -73,10 +73,24 @@ function! s:demo.eval() abort						" {{{1
 endfunction
 
 function! s:demo.print(i, j, bname, lines) abort			" {{{1
-	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'split +setlocal
+	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
 		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:bname.'+'
+
+	if !&l:modifiable
+		setlocal modifiable
+	endif
+
+	if &l:readonly
+		setlocal noreadonly
+	endif
+
+	if join(getbufline('%', 1, a:lines), '') != ''
+		" Add some empty lines at the buffer end and set cursor there.
+		call map(range(a:lines), "setline(line('$') + 1, '')")
+		normal! G
+	endif
 
 	try
 		let l:k		= localtime() % l:self.gear	" Seed [0-3].
@@ -104,18 +118,18 @@ function! s:demo.run() abort						" {{{1
 	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
 
 	for [l:bname, l:match, l:off] in l:self.data.part
-		let l:at	= index(map(l:self.file[:], "v:val =~ ".l:match), 1)
+		let l:at	= index(map(l:self.file[:], "v:val =~# ".l:match), 1)
 		call l:self.print(l:at, l:at + l:off, l:bname, l:off + 1)
 		let l:self.data.turn	-= 1
 	endfor
 endfunction
 
-function! s:demo.errmsg(mess) abort					" {{{1
-	echohl ErrorMsg| echomsg l:self.handle.': '.a:mess| echohl None
+function! s:demo.errmsg(entry) abort					" {{{1
+	echohl ErrorMsg| echomsg l:self.handle.': '.a:entry| echohl None
 endfunction
 
 try									" {{{1
-	if !&g:modifiable
+	if !&g:modifiable || &g:readonly
 		throw 1024
 	elseif !filereadable(s:demo.data.fname)
 		throw 2048
@@ -131,7 +145,7 @@ try									" {{{1
 		throw 8192
 	endif
 
-	if has('autocmd') && &eventignore !~? '\v(all|vimresized)'
+	if has('autocmd') && &eventignore !~? '\v%(all|vimresized)'
 		augroup demo
 			autocmd! demo
 			autocmd VimResized	* redraw!
@@ -149,6 +163,7 @@ try									" {{{1
 		set laststatus&
 	endif
 
+	only
 	redraw!
 	call s:demo.run()
 catch	/\<1024\>/
@@ -162,6 +177,7 @@ catch	/\<4096\>/
 catch	/\<8192\>/
 	call s:demo.errmsg("Narrow width: ".winwidth(0)." < "
 					\ .s:demo.data.cols)
+catch	/^Vim:Interrupt$/	" Silence this error message.
 finally
 	let @z			= s:demo.reg_z
 	let &g:statusline	= s:demo.state.statusline
