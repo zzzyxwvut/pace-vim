@@ -203,6 +203,9 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				Links to project's repository and zipped
 				archives can be found in the file headers.
 
+				The core calculations of the measuring
+				algorithm have been further whittled down.
+
 				demo.vim: ~
 				Allowance is made for the option value of
 				'switchbuf' after the demonstration ends.

@@ -70,13 +70,27 @@ let s:demo	= {
 	\ },
 \ }			" [ buffer_name, line_match, line_offset ]
 
-function! s:demo.eval() abort						" {{{1
+function! s:demo.eval1() abort						" {{{1
 	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
 	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
 	let g:demo_info			= printf('%-9s %2i, %7i, %5i',
 		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
-		\ (l:self.sec ? l:self.char / l:self.sec :	l:self.char),
-		\ l:self.char, l:self.sec)
+		\ (l:self.char / l:self.sec),
+		\ l:self.char,
+		\ l:self.sec)
+	let l:self.break		= reltime()
+endfunction
+
+function! s:demo.eval0() abort						" {{{1
+	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
+	let g:demo_info			= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
+		\ (l:self.sec != 0 ?
+			\ l:self.char / l:self.sec :
+			\ l:self.char),
+		\ l:self.char,
+		\ l:self.sec)
 	let l:self.break		= reltime()
 endfunction
 
@@ -109,16 +123,33 @@ function! s:demo.print(i, j, name, lines) abort				" {{{1
 			return
 		endif
 
+		let l:a		= split(join(l:self.file[a:i : a:j], "\n"), '\zs')
+		let l:z		= len(l:a)
+		lockvar l:a l:z
 		let l:k		= localtime() % l:self.gear	" Seed [0-3].
+		let l:n		= 0
 
-		for l:c in split(join(l:self.file[a:i : a:j], "\n"), '\zs')
-			let @z	= l:c
+		while l:self.sec < 1 && l:n < l:z
+			let @z	= l:a[l:n]
 			normal! "zp
-			call l:self.eval()
+			call l:self.eval0()
 			execute "sleep ".l:self.delay[l:k % l:self.gear]."m"
 			redrawstatus
 			let l:k	+= 1
-		endfor
+			let l:n	+= 1
+		endwhile
+
+		sleep 60m
+
+		while l:n < l:z
+			let @z	= l:a[l:n]
+			normal! "zp
+			call l:self.eval1()
+			execute "sleep ".l:self.delay[l:k % l:self.gear]."m"
+			redrawstatus
+			let l:k	+= 1
+			let l:n	+= 1
+		endwhile
 	finally
 		if l:self.data.turn
 			call setbufvar(bufnr('%'), '&statusline', '')
