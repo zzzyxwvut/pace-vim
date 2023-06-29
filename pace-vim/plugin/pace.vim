@@ -1,7 +1,7 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.2
-" Last Change:	2017-May-14
+" Version:	1.3
+" Last Change:	2023-Jun-29
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -193,7 +193,10 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
