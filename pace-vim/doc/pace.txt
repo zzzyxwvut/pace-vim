@@ -199,6 +199,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 7. History						*pace-history*
 
 	2023-Jun-29	v1.3.
+				demo.vim and pace.vim: ~
+				Links to project's repository and zipped
+				archives can be found in the file headers.
+
 				demo.vim: ~
 				Allowance is made for the option value of
 				'switchbuf' after the demonstration ends.

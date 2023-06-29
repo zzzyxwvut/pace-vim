@@ -1,5 +1,7 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
+" Repository:	https://github.com/zzzyxwvut/pace-vim/tree/vim/7/0/master
+" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	1.3
 " Last Change:	2023-Jun-29
 " Copyleft ())
