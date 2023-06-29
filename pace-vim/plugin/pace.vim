@@ -233,7 +233,6 @@ function! s:pace.enter() abort						" {{{1
 		\ [0, 0]
 	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
 	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
 				\ l:self.div(l:self.cchar, l:self.ssec),
@@ -253,6 +252,8 @@ function! s:pace.enter() abort						" {{{1
 	if !exists('#pace#InsertLeave#*')
 		autocmd pace InsertLeave	* call s:pace.leave()
 	endif
+
+	let [l:self.break, l:self.begin]	= [reltime(), reltime()]
 endfunction
 
 function! Pace_Load(entropy) abort					" {{{1
