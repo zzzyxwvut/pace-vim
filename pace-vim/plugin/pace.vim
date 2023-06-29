@@ -39,7 +39,7 @@ let s:pace	= {
 	\ 'ssec':	0,
 	\ 'load':	0,
 	\ 'mark':	0,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
+	\ 'microf':	printf('%%0%ii', len(reltime([0, 0], [0, -1])[1])),
 	\ 'buffer':	bufnr('%'),
 	\ 'policy':	10007,
 	\ 'begin':	reltime(),
@@ -70,7 +70,7 @@ function! s:pace.eval() abort						" {{{1
 	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
 		\ l:self.sec + l:self.ssec]
 	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
+		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
 		\ (l:sec ? l:char / l:sec :	l:char), l:char, l:sec)
 	let l:self.break		= reltime()
 endfunction	" On local machine reltime()[1] spits non-padded microseconds.

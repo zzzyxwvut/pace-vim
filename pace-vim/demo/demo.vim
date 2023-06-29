@@ -39,7 +39,7 @@ let s:demo	= {
 	\ 'char':	0,
 	\ 'sec':	0,
 	\ 'gear':	4,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
+	\ 'microf':	printf('%%0%ii', len(reltime([0, 0], [0, -1])[1])),
 	\ 'reg_z':	@z,
 	\ 'handle':	expand('<sfile>'),
 	\ 'begin':	reltime(),
@@ -74,7 +74,7 @@ function! s:demo.eval() abort						" {{{1
 	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
 	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
 	let g:demo_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
+		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
 		\ (l:self.sec ? l:self.char / l:self.sec :	l:self.char),
 		\ l:self.char, l:self.sec)
 	let l:self.break		= reltime()
