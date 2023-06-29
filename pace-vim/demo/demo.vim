@@ -1,7 +1,7 @@
 " Description:	The demo-imitation of the "pace.vim" script
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.1
-" Last Change:	2017-May-14
+" Version:	1.2
+" Last Change:	2023-Jun-29
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
@@ -10,18 +10,24 @@
 "
 " Usage:	Source the file: ":lcd %:p:h | so %".
 "
-" Notes:	In order to preview any other file, change s:demo.data
-"		keys' values.
+" Notes:	In order to preview any other file, change values of the keys
+"		of s:demo.data dictionary's dictionary.  (Read the innermost
+"		list elements of the value of s:demo.data.part as follows:
+"		seek the leftmost 'line_match' as regexp at the accumulated
+"		'line_offset' and print the line and its current 'line_offset'
+"		lines that follow; otherwise print a null line.  The value of
+"		s:demo.data.turn must equal the number of s:demo.data.part
+"		list elements less one.)
 "
-"		In order to adjust the typing pace, change s:demo.delay
-"		values.
+"		In order to adjust the typing pace, vary s:demo.delay values.
 "
 " Caveats:	The "winheight" option is set to 1.
 
 let s:cpoptions	= &cpoptions						" {{{1
 set cpoptions-=C					" Join line-breaks.
 
-if !(has('reltime') && has('cmdline_info') && has('statusline') && len(reltime()) == 2)
+if !(has('reltime') && has('cmdline_info') && has('statusline') &&
+							\ len(reltime()) == 2)
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
@@ -54,10 +60,10 @@ let s:demo	= {
 		\ 'lines':	20,
 		\ 'turn':	3,
 		\ 'part':	[
-			\ ['1st\ quatrain',	"'^Of _vim_'",		3],
-			\ ['2nd\ quatrain',	"'^Mnem0nic\\$'",	3],
-			\ ['3rd\ quatrain',	"'^No pop-ups'",	3],
-			\ ['the\ couplet',	"'^Go to,'",		1],
+			\ ['1st\ quatrain',	'^Of _vim_',		3],
+			\ ['2nd\ quatrain',	'^Mnem0nic\$',		3],
+			\ ['3rd\ quatrain',	'^No pop-ups',		3],
+			\ ['the\ couplet',	'^Go to,',		1],
 		\ ],
 	\ },
 \ }			" [ buffer_name, line_match, line_offset ]
@@ -72,11 +78,15 @@ function! s:demo.eval() abort						" {{{1
 	let l:self.break		= reltime()
 endfunction
 
-function! s:demo.print(i, j, bname, lines) abort			" {{{1
+function! s:demo.print(i, j, name, lines) abort				" {{{1
+	if a:lines < 1
+		return
+	endif
+
 	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
-		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:bname.'+'
+		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:name.'+'
 
 	if !&l:modifiable
 		setlocal modifiable
@@ -93,6 +103,10 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 	endif
 
 	try
+		if a:i < 0 || a:j < 0 || a:i > a:j
+			return
+		endif
+
 		let l:k		= localtime() % l:self.gear	" Seed [0-3].
 
 		for l:c in split(join(l:self.file[a:i : a:j], "\n"), '\zs')
@@ -115,11 +129,17 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 endfunction
 
 function! s:demo.run() abort						" {{{1
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+	let [l:z, l:n, l:m]			= [len(l:self.file), 0, 0]
+	let [l:self.break, l:self.begin]	= [reltime(), reltime()]
 
-	for [l:bname, l:match, l:off] in l:self.data.part
-		let l:at	= index(map(l:self.file[:], "v:val =~# ".l:match), 1)
-		call l:self.print(l:at, l:at + l:off, l:bname, l:off + 1)
+	for [l:name, l:match, l:offset] in l:self.data.part
+		while l:n < l:z && l:self.file[l:n] !~# l:match
+			let l:n	+= 1
+		endwhile
+
+		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
+		call l:self.print(l:p, l:p + l:offset, l:name, l:offset + 1)
+		let l:n		= l:m + l:offset + 1
 		let l:self.data.turn	-= 1
 	endfor
 endfunction
@@ -163,7 +183,10 @@ try									" {{{1
 		set laststatus&
 	endif
 
-	only
+	if winnr('$') > 1
+		only
+	endif
+
 	redraw!
 	call s:demo.run()
 catch	/\<1024\>/
@@ -188,15 +211,19 @@ finally
 	let &maxfuncdepth	= s:demo.state.maxfuncdepth
 	let &laststatus		= s:demo.state.laststatus
 	let &cpoptions		= s:cpoptions
+	let s:switchbuf		= &switchbuf
 
 	try
+		setglobal switchbuf=useopen
 		execute 'sbuffer '.s:demo.state.buffer
 		lcd -
 	catch	/.*/
 		call s:demo.errmsg(v:exception)
+	finally
+		let &switchbuf	= s:switchbuf
 	endtry
 
-	unlet s:demo s:cpoptions
+	unlet s:switchbuf s:demo s:cpoptions
 	silent! autocmd! demo
 	silent! augroup! demo
 endtry									" }}}1

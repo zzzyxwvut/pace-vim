@@ -1,7 +1,7 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.2
-" Last Change:	2017-May-14
+" Version:	1.3
+" Last Change:	2023-Jun-29
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -97,11 +97,11 @@ function! s:pace.test(pass) abort					" {{{1
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
@@ -193,7 +193,10 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
@@ -230,7 +233,6 @@ function! s:pace.enter() abort						" {{{1
 		\ [0, 0]
 	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
 	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
 				\ l:self.div(l:self.cchar, l:self.ssec),
@@ -250,6 +252,8 @@ function! s:pace.enter() abort						" {{{1
 	if !exists('#pace#InsertLeave#*')
 		autocmd pace InsertLeave	* call s:pace.leave()
 	endif
+
+	let [l:self.break, l:self.begin]	= [reltime(), reltime()]
 endfunction
 
 function! Pace_Load(entropy) abort					" {{{1
