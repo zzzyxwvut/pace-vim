@@ -1,7 +1,7 @@
 " Description:	The demo-imitation of the "pace.vim" script
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.1
-" Last Change:	2017-May-14
+" Version:	1.2
+" Last Change:	2023-Jun-29
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
@@ -163,7 +163,10 @@ try									" {{{1
 		set laststatus&
 	endif
 
-	only
+	if winnr('$') > 1
+		only
+	endif
+
 	redraw!
 	call s:demo.run()
 catch	/\<1024\>/
