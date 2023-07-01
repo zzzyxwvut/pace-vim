@@ -1,7 +1,9 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.2
-" Last Change:	2017-May-14
+" Repository:	https://github.com/zzzyxwvut/pace-vim/tree/vim/7/0/master
+" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+" Version:	1.3
+" Last Change:	2023-Jun-29
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -37,7 +39,7 @@ let s:pace	= {
 	\ 'ssec':	0,
 	\ 'load':	0,
 	\ 'mark':	0,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
+	\ 'microf':	printf('%%0%ii', len(reltime([0, 0], [0, -1])[1])),
 	\ 'buffer':	bufnr('%'),
 	\ 'policy':	10007,
 	\ 'begin':	reltime(),
@@ -55,21 +57,45 @@ let s:pace	= {
 \ }
 
 function! s:pace.div(dividend, divisor) abort				" {{{1
-	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
-endfunction	" Not used in pace.eval() since it sips ~1e-5 secs a call.
+	return (a:divisor != 0 ? a:dividend / a:divisor : a:dividend)
+endfunction
 
 function! s:pace.msg(fname, entry) abort				" {{{1
 	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
 endfunction
 
-function! s:pace.eval() abort						" {{{1
+function! s:pace.trampoline(value, tick) abort				" {{{1
+	autocmd! pace CursorMovedI
+	autocmd pace CursorMovedI	* call s:pace.eval1()
+	let l:self.begin[0]	+= reltime(a:tick)[0]
+	return a:value
+endfunction
+
+function! s:pace.eval1() abort						" {{{1
 	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
 	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
 	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
 		\ l:self.sec + l:self.ssec]
 	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:sec ? l:char / l:sec :	l:char), l:char, l:sec)
+		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
+		\ (l:char / l:sec),
+		\ l:char,
+		\ l:sec)
+	let l:self.break		= reltime()
+endfunction	" On local machine reltime()[1] spits non-padded microseconds.
+
+function! s:pace.eval0() abort						" {{{1
+	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
+	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
+		\ l:self.sec + l:self.ssec]
+	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].('.'.printf(l:self.microf, l:tick[1]))[:2].',',
+		\ (l:sec != 0 ?
+			\ l:self.trampoline(l:char / l:sec, reltime()) :
+			\ l:char),
+		\ l:char,
+		\ l:sec)
 	let l:self.break		= reltime()
 endfunction	" On local machine reltime()[1] spits non-padded microseconds.
 
@@ -97,11 +123,11 @@ function! s:pace.test(pass) abort					" {{{1
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
@@ -193,7 +219,10 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
@@ -230,7 +259,6 @@ function! s:pace.enter() abort						" {{{1
 		\ [0, 0]
 	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
 	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
 				\ l:self.div(l:self.cchar, l:self.ssec),
@@ -244,12 +272,14 @@ function! s:pace.enter() abort						" {{{1
 	endif
 
 	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval()
+		autocmd pace CursorMovedI	* call s:pace.eval0()
 	endif
 
 	if !exists('#pace#InsertLeave#*')
 		autocmd pace InsertLeave	* call s:pace.leave()
 	endif
+
+	let [l:self.break, l:self.begin]	= [reltime(), reltime()]
 endfunction
 
 function! Pace_Load(entropy) abort					" {{{1
