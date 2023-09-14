@@ -1,0 +1,9 @@
+# Make a symbolic link to this file from the pace-vim/ subdirectory
+# and exclude the link in .git/info/exclude: pace-vim/.gitattributes.
+# Archive tracked files with "git-archive --worktree-attributes ..."
+# from the pace-vim/ subdirectory.
+**/.gitattributes	export-ignore
+**/profiles		export-ignore
+**/profiles/**		export-ignore
+**/tests		export-ignore
+**/tests/**		export-ignore
