@@ -6,6 +6,8 @@
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
 "
+" Usage:	This script is run by "../profiler.vim".
+"
 " Caveats:	The "winheight" option is set to 1.
 
 let s:cpoptions = &cpoptions
