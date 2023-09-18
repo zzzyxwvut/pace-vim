@@ -1,7 +1,9 @@
 " Description:	The demo-imitation of the "pace.vim" script
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.1
-" Last Change:	2017-May-14
+" Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/7/0/master]
+" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+" Version:	1.2
+" Last Change:	2023-Sep-18
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
