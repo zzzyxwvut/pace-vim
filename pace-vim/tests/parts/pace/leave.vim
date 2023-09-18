@@ -12,18 +12,18 @@ try
 	let s:mockup.mode = 'i'
 
 	call s:Assert_True(1, !exists('#pace#InsertLeave#*'))
-	call s:Assert_Equal(1, -1, s:pace.char)
-	call s:Assert_Equal(2, -1, s:pace.sec)
+	call s:Assert_Equal(1, -1, s:Get_Chars())
+	call s:Assert_Equal(2, -1, s:Get_Secs())
 	call s:Assert_True(2, exists('#pace'))
 	call s:Assert_True(3, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(3, 0, s:pace.char)
-	call s:Assert_Equal(4, 0, s:pace.sec)
+	call s:Assert_Equal(3, 0, s:Get_Chars())
+	call s:Assert_Equal(4, 0, s:Get_Secs())
 	call s:Assert_True(4, exists('#pace#CursorMovedI#*'))
 	doautocmd pace CursorMovedI
 	doautocmd pace CursorMovedI
-	call s:Assert_Equal(5, 2, s:pace.char)
-	call s:Assert_Equal(6, 0, s:pace.sec)
+	call s:Assert_Equal(5, 2, s:Get_Chars())
+	call s:Assert_Equal(6, 0, s:Get_Secs())
 	call s:Assert_True(5, exists('#pace#InsertLeave#*'))
 	doautocmd pace InsertLeave
 
@@ -51,8 +51,8 @@ try
 	call s:Assert_Equal(18, 2, s:leave_hit[2])
 	call s:Assert_Equal(19, 0, s:leave_hit[3])
 
-	call s:Assert_Equal(20, -1, s:pace.char)
-	call s:Assert_Equal(21, -1, s:pace.sec)
+	call s:Assert_Equal(20, -1, s:Get_Chars())
+	call s:Assert_Equal(21, -1, s:Get_Secs())
 finally
 	let s:mockup.mode = s:leave_mode
 endtry
@@ -66,18 +66,18 @@ try
 	let s:mockup.mode = 'i'
 
 	call s:Assert_True(7, !exists('#pace#InsertLeave#*'))
-	call s:Assert_Equal(22, -1, s:pace.char)
-	call s:Assert_Equal(23, -1, s:pace.sec)
+	call s:Assert_Equal(22, -1, s:Get_Chars())
+	call s:Assert_Equal(23, -1, s:Get_Secs())
 	call s:Assert_True(8, exists('#pace'))
 	call s:Assert_True(9, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(24, 0, s:pace.char)
-	call s:Assert_Equal(25, 0, s:pace.sec)
+	call s:Assert_Equal(24, 0, s:Get_Chars())
+	call s:Assert_Equal(25, 0, s:Get_Secs())
 	call s:Assert_True(10, exists('#pace#CursorMovedI#*'))
 	doautocmd pace CursorMovedI
 	doautocmd pace CursorMovedI
-	call s:Assert_Equal(26, 2, s:pace.char)
-	call s:Assert_Equal(27, 0, s:pace.sec)
+	call s:Assert_Equal(26, 2, s:Get_Chars())
+	call s:Assert_Equal(27, 0, s:Get_Secs())
 	call s:Assert_True(11, exists('#pace#InsertLeave#*'))
 	doautocmd pace InsertLeave
 
@@ -105,8 +105,8 @@ try
 	call s:Assert_Equal(39, 2, s:leave_hit[2])
 	call s:Assert_Equal(40, 0, s:leave_hit[3])
 
-	call s:Assert_Equal(41, -1, s:pace.char)
-	call s:Assert_Equal(42, -1, s:pace.sec)
+	call s:Assert_Equal(41, -1, s:Get_Chars())
+	call s:Assert_Equal(42, -1, s:Get_Secs())
 
 	" Allow for re-sourcing.
 	execute bufwinnr(s:leave_buffer_1).'wincmd w'

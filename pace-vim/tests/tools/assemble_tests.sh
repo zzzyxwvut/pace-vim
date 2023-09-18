@@ -96,6 +96,8 @@ do
 	hh="`printf '%s\n' "${parts}/$a"-head-*.vim`"
 
 	case "${hh}" in
+	"${parts}"/share/*)
+		;;
 	"${parts}/$a"-head-\*.vim)
 		cat "${dir}"/base.vim \
 			"${parts}/$a".vim > "`printf 't%02i.vim' "$i"`"

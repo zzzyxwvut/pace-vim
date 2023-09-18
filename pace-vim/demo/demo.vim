@@ -33,10 +33,6 @@ let s:demo	= {
 	\ 'handle':	expand('<sfile>'),
 	\ 'reg_z':	@z,
 	\ 'gear':	4,
-	\ 'char':	0,
-	\ 'sec':	0,
-	\ 'break':	reltime(),
-	\ 'begin':	reltime(),
 	\ 'file':	[],
 	\ 'delay':	[70, 90, 80, 60],
 	\ 'state':	{
@@ -78,48 +74,64 @@ endif
 
 if s:parts == 6
 
-function! s:demo.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+function! s:demo.eval(go) abort						" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[2].(printf('.%06i', l:tick[3]))[: 2].',',
-		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
-		\ l:self.char,
-		\ l:self.sec)
-	let l:self.break	= reltime()
+		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:demo.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+function! s:demo.eval(go) abort						" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[2].(printf('.%09i', l:tick[3]))[: 2].',',
-		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
-		\ l:self.char,
-		\ l:self.sec)
-	let l:self.break	= reltime()
+		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 else
 
-function! s:demo.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec, l:unit]	= [(l:self.char + 1),
-					\ str2nr(reltimestr(l:tick[0 : 1])),
-					\ reltimestr(l:tick[2 : 3])]
+" The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+
+function! s:demo.eval(go) abort						" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
 		\ str2nr(l:unit).l:unit[-7 : -5].',',
-		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
-		\ l:self.char,
-		\ l:self.sec)
-	let l:self.break	= reltime()
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 endif
 
-function! s:demo.print(i, j, bname, lines) abort			" {{{1
+function! s:demo.print(go, i, j, bname, lines) abort			" {{{1
 	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
@@ -145,7 +157,7 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 		for l:c in split(join(l:self.file[a:i : a:j], "\n"), '\zs')
 			let @z	= l:c
 			normal! "zp
-			call l:self.eval()
+			call l:self.eval(a:go)
 			execute "sleep ".l:self.delay[l:k % l:self.gear]."m"
 			redrawstatus
 			let l:k	+= 1
@@ -161,12 +173,12 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 	endtry
 endfunction
 
-function! s:demo.run() abort						" {{{1
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+function! s:demo.run(go) abort						" {{{1
+	let a:go.a	= reltime()
 
 	for [l:bname, l:match, l:off] in l:self.data.part
 		let l:at	= index(map(l:self.file[:], "v:val =~# ".l:match), 1)
-		call l:self.print(l:at, l:at + l:off, l:bname, l:off + 1)
+		call l:self.print(a:go, l:at, (l:off + l:at), l:bname, (l:off + 1))
 		let l:self.data.turn	-= 1
 	endfor
 endfunction
@@ -212,7 +224,14 @@ try
 
 	only
 	redraw!
-	call s:demo.run()
+	lockvar 1 s:demo
+
+	" (Shorter key names shorten lookup time.)
+	" a: tick,
+	" b: seconds,
+	" c: micro- or nano-seconds,
+	" d: characters.
+	call s:demo.run({'a': reltime(), 'b': 0, 'c': 0, 'd': 0})
 catch	/\<1024\>/
 	call s:demo.errmsg("Cannot make changes")
 catch	/\<2048\>/

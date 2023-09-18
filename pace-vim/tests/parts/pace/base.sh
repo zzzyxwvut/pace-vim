@@ -34,6 +34,7 @@ tools/comment_1_with_awk.sh "$1"/comment.awk \
 		'^[\t ]+silent! delcommand
 \"'		'^[\t ]+silent! delfunction
 \"'		'^lockvar s:parts
+\"'		'^lockvar 1 s:pace s:turn
 \"'
 
 ## Arrange filters before the empty pattern.
@@ -63,12 +64,15 @@ cd "${cwd}"
 ##	(1) Mock up mode(), reltime(), reltimestr(), and v:insertmode;
 ##		also, limit the scope of Pace_{Load,Dump,Free}();
 ##	(2) Comment out '^[\t ]+silent! delcommand', '^lockvar s:parts',
-##		and '^[\t ]+silent! delfunction'.
+##		'^[\t ]+silent! delfunction', and '^lockvar 1 s:pace s:turn'.
 awk -f "$1"/filter.awk "${TEST_PACE_PATH:-../plugin/pace.vim}" > "$1"/pace.vim
 
 ## Calculate the first line location of a test file.
 stdin=4
-cursor=$((`wc -l "$1"/pace.vim parts/share/mockup.vim parts/share/assert.vim | \
+cursor=$((`wc -l "$1"/pace.vim \
+parts/share/mockup.vim \
+parts/share/assert.vim \
+parts/pace/share/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
 
 ## Implement the --quiet option for ../../tools/assemble_tests.sh: whether
@@ -76,8 +80,11 @@ cursor=$((`wc -l "$1"/pace.vim parts/share/mockup.vim parts/share/assert.vim | \
 test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
 
 ## Produce a common-base script file.
-cat parts/share/mockup.vim "$1"/pace.vim - parts/share/assert.vim > \
-							"$1"/base.vim <<EOF
+cat parts/share/mockup.vim \
+"$1"/pace.vim \
+- \
+parts/share/assert.vim \
+parts/pace/share/turn.vim > "$1"/base.vim <<EOF
 """"""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
 call cursor((${cursor} + str2nr(\$TEST_PACE_CURSOR_OFFSET)), 1)
 ${quiet}

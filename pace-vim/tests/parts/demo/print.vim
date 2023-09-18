@@ -7,8 +7,8 @@ try
 	let s:print_cursor = 1
 
 	call s:Assert_Not_Equal(1, 'i', s:mockup.mode)
-	call s:Assert_Equal(1, 0, s:demo.char)
-	call s:Assert_Equal(2, 0, s:demo.sec)
+	call s:Assert_Equal(1, 0, s:Get_Chars())
+	call s:Assert_Equal(2, 0, s:Get_Secs())
 	call s:Assert_True(1, exists('g:demo_info'))
 	let s:print_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -24,13 +24,14 @@ try
 				\ "v:val =~# ".s:demo.data.part[0][1]),
 			\ 1,
 			\ 1)
-	call s:demo.print(s:print_pos,
+	call s:demo.print(s:turn,
+			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
 			\ s:demo.data.part[0][0],
 			\ (s:print_off + 1))
 	let s:demo.data.turn -= 1
-	call s:Assert_Equal(7, s:demo.break, s:mockup.time.before)
-	call s:Assert_Equal(8, 193, s:demo.char)
+	call s:Assert_Equal(7, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(8, 193, s:Get_Chars())
 	call s:Assert_True(2, exists('g:demo_info'))
 	let s:print_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -57,13 +58,14 @@ try
 				\ "v:val =~# ".s:demo.data.part[1][1]),
 			\ 1,
 			\ (1 + s:print_off + 1))
-	call s:demo.print(s:print_pos,
+	call s:demo.print(s:turn,
+			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
 			\ s:demo.data.part[1][0],
 			\ (s:print_off + 1))
 	let s:demo.data.turn -= 1
-	call s:Assert_Equal(14, s:demo.break, s:mockup.time.before)
-	call s:Assert_Equal(15, 386, s:demo.char)
+	call s:Assert_Equal(14, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(15, 386, s:Get_Chars())
 	call s:Assert_True(3, exists('g:demo_info'))
 	let s:print_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -90,13 +92,14 @@ try
 				\ "v:val =~# ".s:demo.data.part[2][1]),
 			\ 1,
 			\ (5 + s:print_off + 1))
-	call s:demo.print(s:print_pos,
+	call s:demo.print(s:turn,
+			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
 			\ s:demo.data.part[2][0],
 			\ (s:print_off + 1))
 	let s:demo.data.turn -= 1
-	call s:Assert_Equal(21, s:demo.break, s:mockup.time.before)
-	call s:Assert_Equal(22, 579, s:demo.char)
+	call s:Assert_Equal(21, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(22, 579, s:Get_Chars())
 	call s:Assert_True(4, exists('g:demo_info'))
 	let s:print_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -123,14 +126,15 @@ try
 				\ "v:val =~# ".s:demo.data.part[3][1]),
 			\ 1,
 			\ (9 + s:print_off + 1))
-	call s:demo.print(s:print_pos,
+	call s:demo.print(s:turn,
+			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
 			\ s:demo.data.part[3][0],
 			\ (s:print_off + 1))
 	let s:demo.data.turn -= 1
-	call s:Assert_Equal(28, s:demo.break, s:mockup.time.before)
-	call s:Assert_Equal(29, 686, s:demo.char)
-	call s:Assert_Equal(30, 0, s:demo.sec)
+	call s:Assert_Equal(28, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(29, 686, s:Get_Chars())
+	call s:Assert_Equal(30, 0, s:Get_Secs())
 	call s:Assert_True(5, exists('g:demo_info'))
 	let s:print_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')

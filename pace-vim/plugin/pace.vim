@@ -32,35 +32,42 @@ else	" NOTE: Call either Pace_Dump() or Pace_Free() to procure g:pace_dump!
 	let s:carryover	= {'0': [[0, 0, 0, 0]]}
 endif	" NOTE: The 0th key value follows a uniform depth: [[]].
 
-" Ponder before ridding of pace.charchar and pace.secsec, and devolving their
-" duties upon pace.char and pace.sec.
+" Ponder before ridding of s:turn.e ((a sum of) characters) and s:turn.f
+" ((a sum of) seconds), and devolving their duties upon s:turn.d (characters)
+" and s:turn.b (seconds).
 "
-" pace.charchar: pace.enter() offers no way of telling event calls from
-" command line calls; consider that one may quit typing with Ctrl-c, should
-" now pace.sec serve to distinguish an aborted-`null' record from a normal-
-" exit record, now pace.dump[0][0][2] == pace.char?  Should the rejected
-" character count be deducted from the pace.char figure in pace.enter()?
+" s:turn.e ((a sum of) characters): s:pace.enter() offers no way of telling
+" event calls from command line calls; consider that one may quit typing with
+" Ctrl-c, should now s:turn.b (seconds) serve to distinguish between aborted-
+" `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn.d (i.e.
+" the total and the recent character counts)?  Should the rejected character
+" count be deducted from the s:turn.d figure in s:pace.enter()?
 "
-" pace.secsec: reltime() returns the time elapsed between events, whereas
-" the total seconds spent typing is the sum of all such runs; therefore,
-" provide another entry that would hold the sum of all Normal-mode time and
-" subtract its value from the value of reltime(first_hit, last_hit) in
-" pace.leave().
+" s:turn.f ((a sum of) seconds): reltime() returns the time elapsed between
+" events, whereas the total seconds spent typing is the sum of all such runs;
+" therefore, provide another entry that would hold the sum of all Normal-mode
+" time and subtract its value from the value of reltime(first_hit, last_hit)
+" in s:pace.leave().
 "
-" Moreover, pace.char and pace.sec must accommodate any run count policy:
-" single (0000), all (1000), or buffer (2000).
+" Moreover, s:turn.d (characters) and s:turn.b (seconds) must accommodate any
+" run count policy: single (0000), all (1000), or buffer (2000).
+
+" (Shorter key names shorten lookup time.)
+" a: tick,
+" b: seconds,
+" c: micro- or nano-seconds,
+" d: characters,
+" e: (a sum of) characters,
+" f: (a sum of) seconds.
+let s:turn	= {'a': reltime(), 'b': -1, 'c': 0, 'd': -1, 'e': 0, 'f': 0}
 
 let s:pace	= {
-	\ 'load':	0,
-	\ 'mark':	0,
 	\ 'buffer':	bufnr('%'),
 	\ 'policy':	10007,
-	\ 'charchar':	0,
-	\ 'secsec':	0,
-	\ 'char':	-1,
-	\ 'sec':	-1,
-	\ 'break':	reltime(),
-	\ 'begin':	reltime(),
+	\ 'carry':	0,
+	\ 'load':	0,
+	\ 'mark':	0,
+	\ 'epoch':	reltime(),
 	\ 'dump':	s:carryover,
 	\ 'pool':	{},
 	\ 'state':	{
@@ -94,32 +101,36 @@ endfunction								" }}}1
 
 if s:parts == 6
 
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
-	let [l:char, l:sec]	= [(l:self.char + l:self.charchar),
-					\ (l:self.sec + l:self.secsec)]
+function! s:pace.eval(go) abort						" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[2].(printf('.%06i', l:tick[3]))[: 2].',',
+			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
 			\ l:sec != 0 ? (l:char / l:sec) : l:char,
 			\ l:char,
 			\ l:sec)
-	let l:self.break	= reltime()
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
-	let [l:char, l:sec]	= [(l:self.char + l:self.charchar),
-					\ (l:self.sec + l:self.secsec)]
+function! s:pace.eval(go) abort						" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[2].(printf('.%09i', l:tick[3]))[: 2].',',
+			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
 			\ l:sec != 0 ? (l:char / l:sec) : l:char,
 			\ l:char,
 			\ l:sec)
-	let l:self.break	= reltime()
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 else
@@ -128,24 +139,27 @@ endif
 
 else
 
+" The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+
 function! s:pace.time(tick) abort					" {{{1
 	let l:unit	= reltimestr(a:tick)
 	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
 endfunction
 
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1),
-					\ str2nr(reltimestr(l:tick[0 : 1]))]
-	let [l:char, l:sec, l:unit]	= [(l:self.char + l:self.charchar),
-					\ (l:self.sec + l:self.secsec),
-					\ reltimestr(l:tick[2 : 3])]
+function! s:pace.eval(go) abort						" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ str2nr(l:unit).l:unit[-7 : -5].',',
 			\ l:sec != 0 ? (l:char / l:sec) : l:char,
 			\ l:char,
 			\ l:sec)
-	let l:self.break	= reltime()
+	let a:go.a	= reltime()
 endfunction								" }}}1
 
 endif
@@ -184,13 +198,15 @@ function! s:pace.test(pass) abort					" {{{1
 		unlet g:pace_policy
 	endif
 
-	if l:self.char < 0
+	if s:turn.d < 0
 		return -1
-	elseif !l:self.char && !l:self.policy[2]
+	elseif !s:turn.d && !l:self.policy[2]
+		let s:turn.c	= l:self.carry
 		return 4				" Discard null.
 	elseif !a:pass
 		return 0				" pace.leave() exit.
 	elseif !l:self.policy[3]
+		let s:turn.c	= l:self.carry
 		return 2				" Discard rejects.
 	endif
 
@@ -215,7 +231,7 @@ function! s:pace.leave() abort						" {{{1
 
 	" Update the logged hits and the whole count.
 	let l:whole		= l:self.dump[0][0]
-	let l:whole[0:3]	+= [1, 0, l:self.char, l:self.sec]
+	let l:whole[0:3]	+= [1, 0, s:turn.d, s:turn.b]
 	unlet! g:pace_amin
 	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
 	lockvar g:pace_amin
@@ -227,13 +243,14 @@ function! s:pace.leave() abort						" {{{1
 	" Append a new hit instance and fetch the buffer total entry.
 	let l:total	= add(l:self.dump[l:self.buffer],
 			\ [(l:self.mark ? -l:whole[0] :	l:whole[0]),
-				\ l:self.time(l:self.begin)[0],
-				\ l:self.char,
-				\ l:self.sec])[0]
+				\ l:self.time(l:self.epoch)[0],
+				\ s:turn.d,
+				\ s:turn.b])[0]
 	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
-	let [l:total[2], l:total[3]]	+= [l:self.char, l:self.sec]
-	let [l:self.char, l:self.sec]	= [-1, -1]	" Invalidate the count.
-	let l:self.pool		= {}			" Invalidate the cache.
+	let [l:total[2], l:total[3]]	+= [s:turn.d, s:turn.b]
+	let [s:turn.b, s:turn.d]	= [-1, -1]	" Invalidate the count.
+	let l:self.pool		= {}			" Invalidate the pool.
+	let l:self.carry	= s:turn.c		" Copy for rejects &c.
 endfunction
 
 function! s:pace.swap(buffer) abort					" {{{1
@@ -292,21 +309,20 @@ function! s:pace.enter() abort						" {{{1
 		call l:self.swap(bufnr('%'))
 	endif
 
-	let [l:self.charchar, l:self.secsec]	= l:self.policy[1] == 1	?
+	let [s:turn.e, s:turn.f]	= l:self.policy[1] == 1	?
 		\ [l:self.dump[0][0][2], l:self.dump[0][0][3]]	:
 		\ l:self.policy[1] == 2 && has_key(l:self.dump, l:self.buffer)	?
 		\ [l:self.dump[l:self.buffer][0][2],
 		\ l:self.dump[l:self.buffer][0][3]]	:
 		\ [0, 0]
-	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
-	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+	let l:self.dump[0][0][1]	+= 1		" All InsertEnter hits.
+	let [s:turn.b, s:turn.d]	= [0, 0]
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
 				\ '0.00,',
-				\ l:self.div(l:self.charchar, l:self.secsec),
-				\ l:self.charchar,
-				\ l:self.secsec)
+				\ l:self.div(s:turn.e, s:turn.f),
+				\ s:turn.e,
+				\ s:turn.f)
 
 	if winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
@@ -316,12 +332,14 @@ function! s:pace.enter() abort						" {{{1
 	endif
 
 	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval()
+		autocmd pace CursorMovedI	* call s:pace.eval(s:turn)
 	endif
 
 	if !exists('#pace#InsertLeave#*')
 		autocmd pace InsertLeave	* call s:pace.leave()
 	endif
+
+	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
 endfunction
 
 function! Pace_Load(entropy) abort					" {{{1
@@ -336,6 +354,11 @@ function! Pace_Load(entropy) abort					" {{{1
 		let &ruler		= s:pace.state.ruler
 		let &maxfuncdepth	= s:pace.state.maxfuncdepth
 		let &laststatus		= s:pace.state.laststatus
+
+		" Counter the overhead of reltime() by not rounding up.
+		let s:turn.b		= -1
+		let s:turn.c		= 0
+		let s:pace.carry	= 0
 		let s:pace.load		= 0
 		silent! autocmd! pace
 		return 2
@@ -410,7 +433,7 @@ function! Pace_Free() abort						" {{{1
 		let g:pace_dump	= s:pace.dump
 		let g:pace_pool	= s:pace.pool
 		silent! augroup! pace
-		unlet s:pace
+		unlet s:pace s:turn
 	endtry
 
 	return 1
@@ -440,6 +463,7 @@ command! -bar -nargs=1 -complete=file
 		\ .fnamemodify(expand(<q-args>), ':p')
 endif
 
+lockvar 1 s:pace s:turn
 let g:pace_lock	= 1
 let &cpoptions	= s:cpoptions
 unlet s:parts s:carryover s:cpoptions

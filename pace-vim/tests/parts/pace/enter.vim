@@ -91,8 +91,8 @@ try
 	call s:Assert_True(21, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
 	call s:Assert_True(22, !has_key(s:pace.dump, bufnr('%')))
-	call s:Assert_Equal(1, 0, s:pace.charchar)
-	call s:Assert_Equal(2, 0, s:pace.secsec)
+	call s:Assert_Equal(1, 0, s:Get_Chars_Sum())
+	call s:Assert_Equal(2, 0, s:Get_Secs_Sum())
 
 	call s:Assert_True(23, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
@@ -106,22 +106,22 @@ try
 	doautocmd pace InsertEnter
 
 	call s:Assert_True(28, has_key(s:pace.dump, bufnr('%')))
-	call s:Assert_Equal(3, s:pace.dump[bufnr('%')][0][2], s:pace.charchar)
-	call s:Assert_Equal(4, s:pace.dump[bufnr('%')][0][3], s:pace.secsec)
+	call s:Assert_Equal(3, s:pace.dump[bufnr('%')][0][2], s:Get_Chars_Sum())
+	call s:Assert_Equal(4, s:pace.dump[bufnr('%')][0][3], s:Get_Secs_Sum())
 
 	unlet! g:pace_policy
 	let g:pace_policy = 11007
 	call s:Assert_True(29, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(5, s:pace.dump[0][0][2], s:pace.charchar)
-	call s:Assert_Equal(6, s:pace.dump[0][0][3], s:pace.secsec)
+	call s:Assert_Equal(5, s:pace.dump[0][0][2], s:Get_Chars_Sum())
+	call s:Assert_Equal(6, s:pace.dump[0][0][3], s:Get_Secs_Sum())
 
 	unlet! g:pace_policy
 	let g:pace_policy = 10007
 	call s:Assert_True(30, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(7, 0, s:pace.charchar)
-	call s:Assert_Equal(8, 0, s:pace.secsec)
+	call s:Assert_Equal(7, 0, s:Get_Chars_Sum())
+	call s:Assert_Equal(8, 0, s:Get_Secs_Sum())
 finally
 	let s:mockup.mode = s:enter_mode
 endtry
@@ -132,10 +132,10 @@ call s:Assert_True(31, exists('#pace'))
 call s:Assert_True(32, exists('#pace#InsertEnter#*'))
 doautocmd pace InsertEnter
 call s:Assert_True(33, s:pace.dump[0][0][1] > s:pace.dump[0][0][0])
-call s:Assert_Equal(9, 0, s:pace.char)
-call s:Assert_Equal(10, 0, s:pace.sec)
-call s:Assert_Equal(11, s:pace.begin, s:mockup.time.before)
-call s:Assert_Equal(12, s:pace.break, s:mockup.time.before)
+call s:Assert_Equal(9, 0, s:Get_Chars())
+call s:Assert_Equal(10, 0, s:Get_Secs())
+call s:Assert_Equal(11, s:mockup.time.before, s:pace.epoch)
+call s:Assert_Equal(12, s:mockup.time.before, s:Get_Tick())
 call s:Assert_True(34, exists('g:pace_info'))
 let s:enter_any = matchlist(g:pace_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')

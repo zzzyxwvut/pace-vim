@@ -4,8 +4,8 @@ set cpoptions-=C					" Join line-breaks.
 
 try
 	call s:Assert_Not_Equal(1, 'i', s:mockup.mode)
-	call s:Assert_Equal(1, 0, s:demo.char)
-	call s:Assert_Equal(2, 0, s:demo.sec)
+	call s:Assert_Equal(1, 0, s:Get_Chars())
+	call s:Assert_Equal(2, 0, s:Get_Secs())
 	call s:Assert_True(1, exists('g:demo_info'))
 	let s:run_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -14,11 +14,11 @@ try
 	call s:Assert_Equal(5, '0', s:run_any[3])	" chars
 	call s:Assert_Equal(6, '0', s:run_any[4])	" secs
 
-	call s:demo.run()
+	call s:demo.run(s:turn)
 
-	call s:Assert_Equal(7, s:demo.break, s:mockup.time.before)
-	call s:Assert_Equal(8, 686, s:demo.char)
-	call s:Assert_Equal(9, 0, s:demo.sec)
+	call s:Assert_Equal(7, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(8, 686, s:Get_Chars())
+	call s:Assert_Equal(9, 0, s:Get_Secs())
 	call s:Assert_True(2, exists('g:demo_info'))
 	let s:run_any = matchlist(g:demo_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')

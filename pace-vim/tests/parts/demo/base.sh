@@ -68,8 +68,11 @@ cd "${cwd}"
 awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.
-stdin=42
-cursor=$((`wc -l "$1"/demo.vim parts/share/mockup.vim parts/share/assert.vim | \
+stdin=49
+cursor=$((`wc -l "$1"/demo.vim \
+parts/share/mockup.vim \
+parts/share/assert.vim \
+parts/demo/share/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
 
 ## Implement the --quiet option for ../../tools/assemble_tests.sh: whether
@@ -77,8 +80,11 @@ cursor=$((`wc -l "$1"/demo.vim parts/share/mockup.vim parts/share/assert.vim | \
 test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
 
 ## Produce a common-base script file.
-cat parts/share/mockup.vim "$1"/demo.vim - parts/share/assert.vim > \
-							"$1"/base.vim <<EOF
+cat parts/share/mockup.vim \
+"$1"/demo.vim \
+- \
+parts/share/assert.vim \
+parts/demo/share/turn.vim > "$1"/base.vim <<EOF
 """"""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
 let s:cpoptions = &cpoptions
 set cpoptions-=C					" Join line-breaks.
@@ -111,6 +117,13 @@ let s:demo.data.part = [
 	\ ['3rd\ quatrain',	"'^‘A stanza'",		3],
 	\ ['the\ couplet',	"'^‘A pair'",		1],
 \ ]
+
+" (Shorter key names shorten lookup time.)
+" a: tick,
+" b: seconds,
+" c: micro- or nano-seconds,
+" d: characters.
+let s:turn = {'a': s:Reltime(), 'b': 0, 'c': 0, 'd': 0}
 setglobal maxfuncdepth& rulerformat& ruler
 setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 unlet! g:demo_info

@@ -204,6 +204,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				ascertained so that ticks can be scaled,
 				|reltimestr()| is resorted to.
 
+				An in-procedure time lag between an epoch
+				and its future referents ceases from being
+				a factor.
+
 	2017-May-14	v1.2.
 				demo.vim: ~
 				The demo buffers allow to re-run a preview.
