@@ -179,11 +179,11 @@ function! s:pace.test(pass) abort					" {{{1
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
