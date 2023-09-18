@@ -41,9 +41,9 @@ parts/demo | parts/pace)
 esac
 
 set +f
-rm -f t[0-9][0-9].vim
+rm -f t[0-9][0-9].vim pace_[0-9][0-9]*
 status="$?"
-test "${clean_up}" -eq 0 || trap 'rm -f t[0-9][0-9].vim || :
+test "${clean_up}" -eq 0 || trap 'rm -f t[0-9][0-9].vim pace_[0-9][0-9]* || :
 exit "${status}"' EXIT HUP INT QUIT TERM
 
 if test "${quiet}" -ne 0
