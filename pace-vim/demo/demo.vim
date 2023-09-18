@@ -257,15 +257,19 @@ finally
 	let &maxfuncdepth	= s:demo.state.maxfuncdepth
 	let &laststatus		= s:demo.state.laststatus
 	let &cpoptions		= s:cpoptions
+	let s:switchbuf		= &switchbuf
 
 	try
+		setglobal switchbuf=useopen
 		execute 'sbuffer '.s:demo.state.buffer
 		lcd -
 	catch	/.*/
 		call s:demo.errmsg(v:exception)
+	finally
+		let &switchbuf	= s:switchbuf
 	endtry
 
-	unlet s:parts s:demo s:cpoptions
+	unlet s:switchbuf s:parts s:demo s:cpoptions
 	silent! autocmd! demo
 	silent! augroup! demo
 endtry

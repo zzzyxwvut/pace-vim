@@ -208,6 +208,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				and its future referents ceases from being
 				a factor.
 
+				demo.vim: ~
+				Allowance is made for the option value of
+				'switchbuf' after the demonstration ends.
+
 	2017-May-14	v1.2.
 				demo.vim: ~
 				The demo buffers allow to re-run a preview.
