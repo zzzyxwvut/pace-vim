@@ -33,6 +33,7 @@ s:Pace_Free('
 tools/comment_1_with_awk.sh "$1"/comment.awk \
 		'^[\t ]+silent! delcommand
 \"'		'^[\t ]+silent! delfunction
+\"'		'^lockvar s:parts
 \"'
 
 ## Arrange filters before the empty pattern.
@@ -61,8 +62,8 @@ cd "${cwd}"
 ## Massage a copy of the original script so that testing it is feasible:
 ##	(1) Mock up mode(), reltime(), reltimestr(), and v:insertmode;
 ##		also, limit the scope of Pace_{Load,Dump,Free}();
-##	(2) Comment out '^[\t ]+silent! delcommand' and
-##		'^[\t ]+silent! delfunction'.
+##	(2) Comment out '^[\t ]+silent! delcommand', '^lockvar s:parts',
+##		and '^[\t ]+silent! delfunction'.
 awk -f "$1"/filter.awk "${TEST_PACE_PATH:-../plugin/pace.vim}" > "$1"/pace.vim
 
 ## Calculate the first line location of a test file.

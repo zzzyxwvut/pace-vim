@@ -1,9 +1,14 @@
-""""""""""""""""""""""""""""""""""|eval.vim|""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""|eval-tail-str.vim|"""""""""""""""""""""""""""""
 let s:cpoptions = &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
+let $TEST_DEMO_CURSOR_OFFSET = 0
+let $TEST_SECOND_PARTS = 0
 let s:eval_mode = s:mockup.mode
 call s:Assert_Not_Equal(1, 'i', s:mockup.mode)
+
+" The real reltime(a, b) result can be opaque.
+call s:Assert_Equal(501, [-1, -1], s:Reltime([0, 0], [0, -1]))
 
 try
 	let s:insertmode = 'i'

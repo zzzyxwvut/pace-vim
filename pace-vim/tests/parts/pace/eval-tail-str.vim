@@ -1,10 +1,15 @@
-""""""""""""""""""""""""""""""""""|eval.vim|""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""|eval-tail-str.vim|"""""""""""""""""""""""""""""
 let s:cpoptions = &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
+let $TEST_PACE_CURSOR_OFFSET = 0
+let $TEST_SECOND_PARTS = 0
 let s:pace.dump = {'0': [[0, 0, 0, 0]]}
 let s:eval_mode = s:mockup.mode
 call s:Assert_Not_Equal(1, 'i', s:mockup.mode)
+
+" The real reltime(a, b) result can be opaque.
+call s:Assert_Equal(501, [-1, -1], s:Reltime([0, 0], [0, -1]))
 
 try
 	let s:eval_1 = s:Pace_Load(1)
@@ -19,8 +24,8 @@ try
 	call s:Assert_True(1, exists('#pace'))
 	call s:Assert_True(2, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(3, 0, s:pace.cchar)
-	call s:Assert_Equal(4, 0, s:pace.ssec)
+	call s:Assert_Equal(3, 0, s:pace.charchar)
+	call s:Assert_Equal(4, 0, s:pace.secsec)
 	call s:Assert_True(3, exists('g:pace_info'))
 	let s:eval_any = matchlist(g:pace_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -85,8 +90,8 @@ try
 	call s:Assert_True(10, exists('#pace'))
 	call s:Assert_True(11, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(35, 4, s:pace.cchar)
-	call s:Assert_Equal(36, 0, s:pace.ssec)
+	call s:Assert_Equal(35, 4, s:pace.charchar)
+	call s:Assert_Equal(36, 0, s:pace.secsec)
 	call s:Assert_True(12, exists('g:pace_info'))
 	let s:eval_any = matchlist(g:pace_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -153,8 +158,8 @@ try
 	call s:Assert_True(19, exists('#pace'))
 	call s:Assert_True(20, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(67, 8, s:pace.cchar)
-	call s:Assert_Equal(68, 0, s:pace.ssec)
+	call s:Assert_Equal(67, 8, s:pace.charchar)
+	call s:Assert_Equal(68, 0, s:pace.secsec)
 	call s:Assert_True(21, exists('g:pace_info'))
 	let s:eval_any = matchlist(g:pace_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')

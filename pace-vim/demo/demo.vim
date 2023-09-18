@@ -20,24 +20,23 @@
 "
 " Caveats:	The "winheight" option is set to 1.
 
-let s:cpoptions	= &cpoptions						" {{{1
+let s:cpoptions	= &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
-if !(has('reltime') && has('cmdline_info') && has('statusline') && len(reltime()) == 2)
+if !(has('reltime') && has('cmdline_info') && has('statusline'))
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
 endif
 
 let s:demo	= {
+	\ 'handle':	expand('<sfile>'),
+	\ 'reg_z':	@z,
+	\ 'gear':	4,
 	\ 'char':	0,
 	\ 'sec':	0,
-	\ 'gear':	4,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
-	\ 'reg_z':	@z,
-	\ 'handle':	expand('<sfile>'),
-	\ 'begin':	reltime(),
 	\ 'break':	reltime(),
+	\ 'begin':	reltime(),
 	\ 'file':	[],
 	\ 'delay':	[70, 90, 80, 60],
 	\ 'state':	{
@@ -64,15 +63,61 @@ let s:demo	= {
 	\ },
 \ }			" [ buffer_name, line_match, line_offset ]
 
+" Try to roll over the sub-second unit (see profile_sub() of profile.c).
+let s:parts	= len(reltime()) == 2
+			\ ? map([reltime([0, 0], [0, -1])],
+				\ "v:val[0] == -1 && v:val[1] =~ '^9\\+$'
+							\ ? strlen(v:val[1])
+							\ : 0")[0]
+			\ : 0
+lockvar s:parts
+
+if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+	throw 'My mind is going...'
+endif
+
+if s:parts == 6
+
 function! s:demo.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
-	let g:demo_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:self.sec ? l:self.char / l:self.sec :	l:self.char),
-		\ l:self.char, l:self.sec)
-	let l:self.break		= reltime()
-endfunction
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[2].(printf('.%06i', l:tick[3]))[: 2].',',
+		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
+		\ l:self.char,
+		\ l:self.sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+elseif s:parts == 9
+
+function! s:demo.eval() abort						" {{{1
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[2].(printf('.%09i', l:tick[3]))[: 2].',',
+		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
+		\ l:self.char,
+		\ l:self.sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+else
+
+function! s:demo.eval() abort						" {{{1
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec, l:unit]	= [(l:self.char + 1),
+					\ str2nr(reltimestr(l:tick[0 : 1])),
+					\ reltimestr(l:tick[2 : 3])]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ l:self.sec != 0 ? (l:self.char / l:self.sec) : l:self.char,
+		\ l:self.char,
+		\ l:self.sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+endif
 
 function! s:demo.print(i, j, bname, lines) abort			" {{{1
 	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
@@ -128,9 +173,9 @@ endfunction
 
 function! s:demo.errmsg(entry) abort					" {{{1
 	echohl ErrorMsg| echomsg l:self.handle.': '.a:entry| echohl None
-endfunction
+endfunction								" }}}1
 
-try									" {{{1
+try
 	if !&g:modifiable || &g:readonly
 		throw 1024
 	elseif !filereadable(s:demo.data.fname)
@@ -198,9 +243,9 @@ finally
 		call s:demo.errmsg(v:exception)
 	endtry
 
-	unlet s:demo s:cpoptions
+	unlet s:parts s:demo s:cpoptions
 	silent! autocmd! demo
 	silent! augroup! demo
-endtry									" }}}1
+endtry
 
 " vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:

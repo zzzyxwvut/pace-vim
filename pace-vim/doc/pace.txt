@@ -30,9 +30,6 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	The 'eventignore' option should not include: all, |CursorMovedI|,
 	|InsertEnter|, |InsertChange|, and |InsertLeave|.
 
-	The returned item of |reltime()| is system-dependent, it is assumed
-	that its format is a [sec, ...] list.
-
 
 ==============================================================================
 3. Demo							*pace-demo*
@@ -202,6 +199,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				demo.vim and pace.vim: ~
 				Links to a repository of the project and
 				archives can be found in the file headers.
+
+				Whenever the sub-_second_ unit cannot be
+				ascertained so that ticks can be scaled,
+				|reltimestr()| is resorted to.
 
 	2017-May-14	v1.2.
 				demo.vim: ~

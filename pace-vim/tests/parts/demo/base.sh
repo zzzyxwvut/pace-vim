@@ -29,6 +29,7 @@ s:ReltimeStr('
 tools/comment_1_with_awk.sh "$1"/comment_1.awk \
 		'^[\t ]+execute "sleep "
 \"'		'^[\t ]+redrawstatus
+\"'		'^lockvar s:parts
 \"'
 tools/comment_n_with_awk.sh "$1"/comment_n.awk \
 		'^try
@@ -61,8 +62,9 @@ cd "${cwd}"
 
 ## Massage a copy of the original script so that testing it is feasible:
 ##	(1) Mock up reltime() and reltimestr();
-##	(2) Comment out '^[\t ]+execute "sleep "', '^[\t ]+redrawstatus', and
-##		'^try'-'^endtry' blocks.
+##	(2) Comment out "^[\t ]+execute 'sleep '", '^[\t ]+redrawstatus',
+##		'^lockvar s:parts';
+##		also, comment out '^try'-'^endtry' blocks.
 awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.

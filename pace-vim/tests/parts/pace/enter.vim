@@ -91,8 +91,8 @@ try
 	call s:Assert_True(21, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
 	call s:Assert_True(22, !has_key(s:pace.dump, bufnr('%')))
-	call s:Assert_Equal(1, 0, s:pace.cchar)
-	call s:Assert_Equal(2, 0, s:pace.ssec)
+	call s:Assert_Equal(1, 0, s:pace.charchar)
+	call s:Assert_Equal(2, 0, s:pace.secsec)
 
 	call s:Assert_True(23, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
@@ -106,22 +106,22 @@ try
 	doautocmd pace InsertEnter
 
 	call s:Assert_True(28, has_key(s:pace.dump, bufnr('%')))
-	call s:Assert_Equal(3, s:pace.dump[bufnr('%')][0][2], s:pace.cchar)
-	call s:Assert_Equal(4, s:pace.dump[bufnr('%')][0][3], s:pace.ssec)
+	call s:Assert_Equal(3, s:pace.dump[bufnr('%')][0][2], s:pace.charchar)
+	call s:Assert_Equal(4, s:pace.dump[bufnr('%')][0][3], s:pace.secsec)
 
 	unlet! g:pace_policy
 	let g:pace_policy = 11007
 	call s:Assert_True(29, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(5, s:pace.dump[0][0][2], s:pace.cchar)
-	call s:Assert_Equal(6, s:pace.dump[0][0][3], s:pace.ssec)
+	call s:Assert_Equal(5, s:pace.dump[0][0][2], s:pace.charchar)
+	call s:Assert_Equal(6, s:pace.dump[0][0][3], s:pace.secsec)
 
 	unlet! g:pace_policy
 	let g:pace_policy = 10007
 	call s:Assert_True(30, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
-	call s:Assert_Equal(7, 0, s:pace.cchar)
-	call s:Assert_Equal(8, 0, s:pace.ssec)
+	call s:Assert_Equal(7, 0, s:pace.charchar)
+	call s:Assert_Equal(8, 0, s:pace.secsec)
 finally
 	let s:mockup.mode = s:enter_mode
 endtry

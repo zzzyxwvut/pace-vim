@@ -5,13 +5,27 @@ set cpoptions-=C					" Join line-breaks.
 let s:insertmode = 'i'
 let s:mockup = {
 	\ 'mode':	'n',
+	\ 'parts':	!empty($TEST_SECOND_PARTS)
+				\ ? str2nr($TEST_SECOND_PARTS)
+				\ : 0,
 	\ 'time':	{
 		\ 'after':	[0, 1],
 		\ 'between':	[0, 1],
 		\ 'before':	[0, 0],
-		\ 'over':	[-1, 999999],
+		\ 'over':	[-1, -1],
 	\ },
 \ }
+lockvar s:mockup.parts
+
+if s:mockup.parts == 9					" nsec
+	let s:mockup.time.after = [0, 1000000]		" 1/1000
+	let s:mockup.time.between = [0, 1000000]	" 1/1000
+	let s:mockup.time.over = [-1, 999999999]
+elseif s:mockup.parts == 6				" usec
+	let s:mockup.time.after = [0, 1000]		" 1/1000
+	let s:mockup.time.between = [0, 1000]		" 1/1000
+	let s:mockup.time.over = [-1, 999999]
+endif
 
 function! s:Mode() abort						" {{{1
 	return s:mockup.mode

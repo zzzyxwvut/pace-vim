@@ -12,12 +12,12 @@
 "		Generate the help tags: ":helptags doc/".
 "		Read the documentation: ":help pace.txt".
 
-let s:cpoptions	= &cpoptions						" {{{1
+let s:cpoptions	= &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
 if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
-	\ has('cmdline_info') && has('statusline') && has('user_commands') &&
-	\ len(reltime()) == 2)
+				\ has('cmdline_info') && has('statusline') &&
+				\ has('user_commands'))
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
@@ -32,18 +32,35 @@ else	" NOTE: Call either Pace_Dump() or Pace_Free() to procure g:pace_dump!
 	let s:carryover	= {'0': [[0, 0, 0, 0]]}
 endif	" NOTE: The 0th key value follows a uniform depth: [[]].
 
+" Ponder before ridding of pace.charchar and pace.secsec, and devolving their
+" duties upon pace.char and pace.sec.
+"
+" pace.charchar: pace.enter() offers no way of telling event calls from
+" command line calls; consider that one may quit typing with Ctrl-c, should
+" now pace.sec serve to distinguish an aborted-`null' record from a normal-
+" exit record, now pace.dump[0][0][2] == pace.char?  Should the rejected
+" character count be deducted from the pace.char figure in pace.enter()?
+"
+" pace.secsec: reltime() returns the time elapsed between events, whereas
+" the total seconds spent typing is the sum of all such runs; therefore,
+" provide another entry that would hold the sum of all Normal-mode time and
+" subtract its value from the value of reltime(first_hit, last_hit) in
+" pace.leave().
+"
+" Moreover, pace.char and pace.sec must accommodate any run count policy:
+" single (0000), all (1000), or buffer (2000).
+
 let s:pace	= {
-	\ 'char':	-1,
-	\ 'sec':	-1,
-	\ 'cchar':	0,
-	\ 'ssec':	0,
 	\ 'load':	0,
 	\ 'mark':	0,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
 	\ 'buffer':	bufnr('%'),
 	\ 'policy':	10007,
-	\ 'begin':	reltime(),
+	\ 'charchar':	0,
+	\ 'secsec':	0,
+	\ 'char':	-1,
+	\ 'sec':	-1,
 	\ 'break':	reltime(),
+	\ 'begin':	reltime(),
 	\ 'dump':	s:carryover,
 	\ 'pool':	{},
 	\ 'state':	{
@@ -56,41 +73,90 @@ let s:pace	= {
 	\ 'status':	{},
 \ }
 
+" Try to roll over the sub-second unit (see profile_sub() of profile.c).
+let s:parts	= len(reltime()) == 2
+			\ ? map([reltime([0, 0], [0, -1])],
+				\ "v:val[0] == -1 && v:val[1] =~ '^9\\+$'
+							\ ? strlen(v:val[1])
+							\ : 0")[0]
+			\ : 0
+lockvar s:parts
+
+if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+	throw 'My mind is going...'
+endif
+
+if s:parts == 6 || s:parts == 9
+
+function! s:pace.time(tick) abort					" {{{1
+	return a:tick
+endfunction								" }}}1
+
+if s:parts == 6
+
+function! s:pace.eval() abort						" {{{1
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+	let [l:char, l:sec]	= [(l:self.char + l:self.charchar),
+					\ (l:self.sec + l:self.secsec)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[2].(printf('.%06i', l:tick[3]))[: 2].',',
+			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ l:char,
+			\ l:sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+elseif s:parts == 9
+
+function! s:pace.eval() abort						" {{{1
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[0]]
+	let [l:char, l:sec]	= [(l:self.char + l:self.charchar),
+					\ (l:self.sec + l:self.secsec)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[2].(printf('.%09i', l:tick[3]))[: 2].',',
+			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ l:char,
+			\ l:sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+else
+	throw 'My mind is going...'
+endif
+
+else
+
+function! s:pace.time(tick) abort					" {{{1
+	let l:unit	= reltimestr(a:tick)
+	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
+endfunction
+
+function! s:pace.eval() abort						" {{{1
+	let l:tick	= reltime(l:self.begin) + reltime(l:self.break)
+	let [l:self.char, l:self.sec]	= [(l:self.char + 1),
+					\ str2nr(reltimestr(l:tick[0 : 1]))]
+	let [l:char, l:sec, l:unit]	= [(l:self.char + l:self.charchar),
+					\ (l:self.sec + l:self.secsec),
+					\ reltimestr(l:tick[2 : 3])]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ l:char,
+			\ l:sec)
+	let l:self.break	= reltime()
+endfunction								" }}}1
+
+endif
+
 function! s:pace.div(dividend, divisor) abort				" {{{1
 	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
-endfunction	" Not used in pace.eval() since it sips ~1e-5 secs a call.
+endfunction
 
 function! s:pace.msg(fname, entry) abort				" {{{1
 	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
 endfunction
-
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
-	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
-		\ l:self.sec + l:self.ssec]
-	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:sec ? l:char / l:sec :	l:char), l:char, l:sec)
-	let l:self.break		= reltime()
-endfunction	" On local machine reltime()[1] spits non-padded microseconds.
-
-" Ponder before ridding of `cchar' and `ssec', and devolving the duties upon
-" `char' and `sec'.
-"
-" `cchar': pace.enter() offers no way of telling event calls from command line
-" calls; consider that one may quit typing with <Ctrl-c>, should now pace.sec
-" serve to distinguish an aborted-`null' record from a normal-exit record, now
-" pace.dump[0][0][2] == pace.char?  Should the rejected count be deducted from
-" the pace.char figure in pace.enter()?
-"
-" `ssec': reltime() returns the time elapsed between events, whereas the total
-" seconds spent typing is the sum of all such runs; therefore, provide another
-" field that would hold the sum of all Normal-mode time and subtract its value
-" from reltime(first_hit, last_hit) in pace.leave().
-"
-" Moreover, `char' and `sec' must accommodate any run count policy: single
-" (0000), all (1000), or buffer (2000).
 
 function! s:pace.test(pass) abort					" {{{1
 	if !exists('#pace')
@@ -159,9 +225,11 @@ function! s:pace.leave() abort						" {{{1
 	endif
 
 	" Append a new hit instance and fetch the buffer total entry.
-	let l:total		= add(l:self.dump[l:self.buffer],
+	let l:total	= add(l:self.dump[l:self.buffer],
 			\ [(l:self.mark ? -l:whole[0] :	l:whole[0]),
-			\ l:self.begin[0], l:self.char, l:self.sec])[0]
+				\ l:self.time(l:self.begin)[0],
+				\ l:self.char,
+				\ l:self.sec])[0]
 	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
 	let [l:total[2], l:total[3]]	+= [l:self.char, l:self.sec]
 	let [l:self.char, l:self.sec]	= [-1, -1]	" Invalidate the count.
@@ -224,7 +292,7 @@ function! s:pace.enter() abort						" {{{1
 		call l:self.swap(bufnr('%'))
 	endif
 
-	let [l:self.cchar, l:self.ssec]	= l:self.policy[1] == 1	?
+	let [l:self.charchar, l:self.secsec]	= l:self.policy[1] == 1	?
 		\ [l:self.dump[0][0][2], l:self.dump[0][0][3]]	:
 		\ l:self.policy[1] == 2 && has_key(l:self.dump, l:self.buffer)	?
 		\ [l:self.dump[l:self.buffer][0][2],
@@ -234,9 +302,11 @@ function! s:pace.enter() abort						" {{{1
 	let [l:self.char, l:self.sec]		= [0, 0]
 	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
-	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
-				\ l:self.div(l:self.cchar, l:self.ssec),
-				\ l:self.cchar, l:self.ssec)
+	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
+				\ '0.00,',
+				\ l:self.div(l:self.charchar, l:self.secsec),
+				\ l:self.charchar,
+				\ l:self.secsec)
 
 	if winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
@@ -344,9 +414,8 @@ function! Pace_Free() abort						" {{{1
 	endtry
 
 	return 1
-endfunction
+endfunction								" }}}1
 
-" COMMANDS								" {{{1
 command! -bar PaceOn	:echo Pace_Load(1)
 command! -bar PaceOff	:echo Pace_Load(0)
 command! -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
@@ -369,10 +438,10 @@ command! -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
 		\ .fnamemodify(expand(<q-args>), ':p:h').' | source '
 		\ .fnamemodify(expand(<q-args>), ':p')
-endif									" }}}1
+endif
 
 let g:pace_lock	= 1
 let &cpoptions	= s:cpoptions
-unlet s:carryover s:cpoptions
+unlet s:parts s:carryover s:cpoptions
 
 " vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
