@@ -222,7 +222,10 @@ try
 		set laststatus&
 	endif
 
-	only
+	if winnr('$') > 1
+		only
+	endif
+
 	redraw!
 	lockvar 1 s:demo
 
