@@ -280,7 +280,10 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
