@@ -12,11 +12,14 @@
 "
 " Usage:	Source the file: ":lcd %:p:h | so %".
 "
-" Notes:	In order to preview any other file, change s:demo.data
-"		keys' values.
+" Notes:	In order to preview any other file, change the values of
+"		"fname" &c. of s:demo.data dictionary.  (Read the innermost
+"		list elements of the value of s:demo.data.part as follows:
+"		seek the leftmost 'line_match' as regexp at the accumulated
+"		'line_offset' and print the line and its current 'line_offset'
+"		lines that follow; otherwise print a null line.)
 "
-"		In order to adjust the typing pace, change s:demo.delay
-"		values.
+"		In order to adjust the typing pace, vary s:demo.delay numbers.
 "
 " Caveats:	The "winheight" option is set to 1.
 
@@ -32,7 +35,6 @@ endif
 let s:demo	= {
 	\ 'handle':	expand('<sfile>'),
 	\ 'reg_z':	@z,
-	\ 'gear':	4,
 	\ 'file':	[],
 	\ 'delay':	[70, 90, 80, 60],
 	\ 'state':	{
@@ -49,12 +51,11 @@ let s:demo	= {
 		\ 'fname':	'vimvat.txt',
 		\ 'cols':	50,
 		\ 'lines':	20,
-		\ 'turn':	3,
 		\ 'part':	[
-			\ ['1st\ quatrain',	"'^Of _vim_'",		3],
-			\ ['2nd\ quatrain',	"'^Mnem0nic\\$'",	3],
-			\ ['3rd\ quatrain',	"'^No pop-ups'",	3],
-			\ ['the\ couplet',	"'^Go to,'",		1],
+			\ ['1st\ quatrain',	'^Of _vim_',		3],
+			\ ['2nd\ quatrain',	'^Mnem0nic\$',		3],
+			\ ['3rd\ quatrain',	'^No pop-ups',		3],
+			\ ['the\ couplet',	'^Go to,',		1],
 		\ ],
 	\ },
 \ }			" [ buffer_name, line_match, line_offset ]
@@ -131,11 +132,15 @@ endfunction								" }}}1
 
 endif
 
-function! s:demo.print(go, i, j, bname, lines) abort			" {{{1
+function! s:demo.print(go, i, j, name, lines, times) abort		" {{{1
+	if a:lines < 1
+		return
+	endif
+
 	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
-		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:bname.'+'
+		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:name.'+'
 
 	if !&l:modifiable
 		setlocal modifiable
@@ -147,23 +152,28 @@ function! s:demo.print(go, i, j, bname, lines) abort			" {{{1
 
 	if join(getbufline('%', 1, a:lines), '') != ''
 		" Add some empty lines at the buffer end and set cursor there.
-		call map(range(a:lines), "setline(line('$') + 1, '')")
+		call map(range(a:lines), "setline((line('$') + 1), '')")
 		normal! G
 	endif
 
 	try
-		let l:k		= localtime() % l:self.gear	" Seed [0-3].
+		if a:i < 0 || a:j < 0 || a:i > a:j
+			return
+		endif
+
+		let l:g	= len(l:self.delay)
+		let l:k	= localtime() % l:g			" Seed [0-3].
 
 		for l:c in split(join(l:self.file[a:i : a:j], "\n"), '\zs')
 			let @z	= l:c
 			normal! "zp
 			call l:self.eval(a:go)
-			execute "sleep ".l:self.delay[l:k % l:self.gear]."m"
+			execute 'sleep '.l:self.delay[l:k % l:g].'m'
 			redrawstatus
 			let l:k	+= 1
 		endfor
 	finally
-		if l:self.data.turn
+		if a:times > 0
 			call setbufvar(bufnr('%'), '&statusline', '')
 			normal! gg
 		endif
@@ -174,12 +184,26 @@ function! s:demo.print(go, i, j, bname, lines) abort			" {{{1
 endfunction
 
 function! s:demo.run(go) abort						" {{{1
+	let l:z	= len(l:self.file)
+	let l:t	= len(l:self.data.part) - 1
+	let l:n	= 0
+	let l:m	= 0
 	let a:go.a	= reltime()
 
-	for [l:bname, l:match, l:off] in l:self.data.part
-		let l:at	= index(map(l:self.file[:], "v:val =~# ".l:match), 1)
-		call l:self.print(a:go, l:at, (l:off + l:at), l:bname, (l:off + 1))
-		let l:self.data.turn	-= 1
+	for [l:name, l:match, l:offset] in l:self.data.part
+		while l:n < l:z && l:self.file[l:n] !~# l:match
+			let l:n	+= 1
+		endwhile
+
+		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
+		call l:self.print(a:go,
+					\ l:p,
+					\ (l:offset + l:p),
+					\ l:name,
+					\ (l:offset + 1),
+					\ l:t)
+		let l:n	= l:m + l:offset + 1
+		let l:t	-= 1
 	endfor
 endfunction
 
@@ -196,7 +220,7 @@ try
 
 	let s:demo.file		= readfile(s:demo.data.fname, '', s:demo.data.lines)
 	lockvar s:demo.file
-	let s:demo.data.cols	= max(map(s:demo.file[:], 'len(v:val)'))
+	let s:demo.data.cols	= max(map(s:demo.file[:], 'strlen(v:val)'))
 
 	if len(s:demo.file) < s:demo.data.lines
 		throw 4096
@@ -215,8 +239,6 @@ try
 	setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 	unlet! g:demo_info
 	let g:demo_info	= printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
-	let s:demo.gear		= len(s:demo.delay)
-	let s:demo.data.turn	= len(s:demo.data.part) - 1
 
 	if !&laststatus
 		set laststatus&

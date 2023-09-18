@@ -212,6 +212,9 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				Allowance is made for the option value of
 				'switchbuf' after the demonstration ends.
 
+				For every header line of a batch to print,
+				successive unprinted batches are searched.
+
 	2017-May-14	v1.2.
 				demo.vim: ~
 				The demo buffers allow to re-run a preview.

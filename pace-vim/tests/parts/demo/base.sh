@@ -27,8 +27,8 @@ s:ReltimeStr('
 
 ## Generate Awk filter templets for commenting.
 tools/comment_1_with_awk.sh "$1"/comment_1.awk \
-		'^[\t ]+execute "sleep "
-\"'		'^[\t ]+redrawstatus
+		"^[\t ]+execute 'sleep '
+\\\""		'^[\t ]+redrawstatus
 \"'		'^lockvar s:parts
 \"'
 tools/comment_n_with_awk.sh "$1"/comment_n.awk \
@@ -68,7 +68,7 @@ cd "${cwd}"
 awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.
-stdin=49
+stdin=48
 cursor=$((`wc -l "$1"/demo.vim \
 parts/share/mockup.vim \
 parts/share/assert.vim \
@@ -110,12 +110,11 @@ lockvar s:demo.file
 let s:demo.data.fname = '<stdin>'
 let s:demo.data.cols = 56
 let s:demo.data.lines = 15
-let s:demo.data.turn = 3
 let s:demo.data.part = [
-	\ ['1st\ quatrain',	"'^‘A stanza'",		3],
-	\ ['2nd\ quatrain',	"'^‘A stanza'",		3],
-	\ ['3rd\ quatrain',	"'^‘A stanza'",		3],
-	\ ['the\ couplet',	"'^‘A pair'",		1],
+	\ ['1st\ quatrain',	'^‘A stanza',		3],
+	\ ['2nd\ quatrain',	'^‘A stanza',		3],
+	\ ['3rd\ quatrain',	'^‘A stanza',		3],
+	\ ['the\ couplet',	'^‘A pair',		1],
 \ ]
 
 " (Shorter key names shorten lookup time.)
