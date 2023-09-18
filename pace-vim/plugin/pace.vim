@@ -327,7 +327,7 @@ function! s:pace.enter() abort						" {{{1
 				\ s:turn.e,
 				\ s:turn.f)
 
-	if winnr('$') == 1
+	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
 	else
 		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
