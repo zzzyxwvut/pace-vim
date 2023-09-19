@@ -264,9 +264,11 @@ function! s:pace.swap(buffer) abort					" {{{1
 	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
 		" Ferret out any doppel-gänger windows.
 		call filter(range(1, winnr('$')),
-				\ "winbufnr(v:val) == l:self.buffer
-				\ ? setwinvar(v:val, '&statusline', l:status)
-				\ : 0")
+					\ printf('winbufnr(v:val) == %d
+				\ ? setwinvar(v:val, "&statusline", %s)
+				\ : 0',
+			\ l:self.buffer,
+			\ string(l:status)))
 	elseif bufexists(l:self.buffer)
 		execute 'sbuffer '.l:self.buffer
 		call setbufvar(l:self.buffer, '&statusline', l:status)
@@ -315,7 +317,7 @@ function! s:pace.enter() abort						" {{{1
 
 	" Pre-empt the statusline value and substitute it for the one assembled.
 	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
-				\ 'winbufnr(v:val) == l:self.buffer')) > 1
+			\ printf('winbufnr(v:val) == %d', l:self.buffer))) > 1
 		call l:self.swap(bufnr('%'))
 	endif
 
