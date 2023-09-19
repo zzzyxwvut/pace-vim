@@ -169,7 +169,10 @@ function! s:pace.div(dividend, divisor) abort				" {{{1
 endfunction
 
 function! s:pace.msg(fname, entry) abort				" {{{1
-	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
+	echomsg printf('%s: @%i: %s',
+				\ split(a:fname, '\v%(\.\.|\s+)')[-1],
+				\ localtime(),
+				\ a:entry)
 endfunction
 
 function! s:pace.test(pass) abort					" {{{1
@@ -190,8 +193,10 @@ function! s:pace.test(pass) abort					" {{{1
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
 		if g:pace_policy != l:self.policy &&
 				\ g:pace_policy =~ '\<1[012][01][012][0-7]\>'
-			call l:self.msg(expand('<sfile>'), 'g:pace_policy: '
-				\ .l:self.policy.'->'.g:pace_policy)
+			call l:self.msg(expand('<sfile>'),
+					\ printf('g:pace_policy: %i->%i',
+							\ l:self.policy,
+							\ g:pace_policy))
 			let l:self.policy	= g:pace_policy
 		endif
 
@@ -242,7 +247,7 @@ function! s:pace.leave() abort						" {{{1
 
 	" Append a new hit instance and fetch the buffer total entry.
 	let l:total	= add(l:self.dump[l:self.buffer],
-			\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
+				\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
 				\ l:self.time(l:self.epoch)[0],
 				\ s:turn.d,
 				\ s:turn.b])[0]
@@ -297,7 +302,7 @@ function! s:pace.enter() abort						" {{{1
 		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
 		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
 		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
-		return -1		" Imitates and(l:self.policy[4], 1) &c.
+		return -1		" Imitate and(l:self.policy[4], 1) &c.
 	endif
 
 	if !&laststatus
@@ -408,9 +413,13 @@ function! Pace_Dump(entropy) abort					" {{{1
 	\ }
 
 	for l:i in keys(s:pace.dump)
-		let [l:hits, l:last, l:char, l:sec]	= s:pace.dump[l:i][0][0 : 3]
+		let [l:hits, l:last, l:char, l:sec]	=
+						\ s:pace.dump[l:i][0][0 : 3]
 		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
-			\ s:pace.div(l:char, l:sec), l:char, l:sec, l:hits)
+						\ s:pace.div(l:char, l:sec),
+						\ l:char,
+						\ l:sec,
+						\ l:hits)
 	endfor
 
 	return copy(s:pace.pool)
@@ -462,12 +471,15 @@ command! -bar PaceFree	:echo Pace_Free()
 if has('modify_fname')
 command! -bar -nargs=1 -complete=dir
 	\ PaceSaveTo	:echo writefile(['let g:pace_dump = '
-		\ .string(Pace_Dump(0))], fnamemodify(expand(<q-args>), ':p')
-		\ .'/pace_'.localtime())
+						\ .string(Pace_Dump(0))],
+				\ fnamemodify(expand(<q-args>), ':p')
+						\ .'/pace_'
+						\ .localtime())
 command! -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
-		\ .fnamemodify(expand(<q-args>), ':p:h').' | source '
-		\ .fnamemodify(expand(<q-args>), ':p')
+				\ .fnamemodify(expand(<q-args>), ':p:h')
+				\ .' | source '
+				\ .fnamemodify(expand(<q-args>), ':p')
 endif
 
 lockvar 1 s:pace s:turn

@@ -3,14 +3,14 @@
 " Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/7/0/master]
 " Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	1.2
-" Last Change:	2023-Sep-18
+" Last Change:	2023-Sep-19
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
 "
 "		The "vimvat.txt" sonnet included.
 "
-" Usage:	Source the file: ":lcd %:p:h | so %".
+" Usage:	Source the file: ":lcd %:p:h | source %".
 "
 " Notes:	In order to preview any other file, change the values of
 "		"fname" &c. of s:demo.data dictionary.  (Read the innermost
@@ -208,7 +208,7 @@ function! s:demo.run(go) abort						" {{{1
 endfunction
 
 function! s:demo.errmsg(entry) abort					" {{{1
-	echohl ErrorMsg| echomsg l:self.handle.': '.a:entry| echohl None
+	echohl ErrorMsg | echomsg l:self.handle.': '.a:entry | echohl None
 endfunction								" }}}1
 
 try
@@ -218,7 +218,9 @@ try
 		throw 2048
 	endif
 
-	let s:demo.file		= readfile(s:demo.data.fname, '', s:demo.data.lines)
+	let s:demo.file		= readfile(s:demo.data.fname,
+							\ '',
+							\ s:demo.data.lines)
 	lockvar s:demo.file
 	let s:demo.data.cols	= max(map(s:demo.file[:], 'strlen(v:val)'))
 
@@ -260,13 +262,18 @@ try
 catch	/\<1024\>/
 	call s:demo.errmsg("Cannot make changes")
 catch	/\<2048\>/
-	call s:demo.errmsg('`'.s:demo.data.fname."': No such file")
+	call s:demo.errmsg('`'.s:demo.data.fname
+					\ ."': No such file")
 catch	/\<4096\>/
 	call s:demo.errmsg('`'.s:demo.data.fname
-		\ ."': Invalid line count: ".len(s:demo.file)." < "
+					\ ."': Invalid line count: "
+					\ .len(s:demo.file)
+					\ ." < "
 					\ .s:demo.data.lines)
 catch	/\<8192\>/
-	call s:demo.errmsg("Narrow width: ".winwidth(0)." < "
+	call s:demo.errmsg("Narrow width: "
+					\ .winwidth(0)
+					\ ." < "
 					\ .s:demo.data.cols)
 catch	/^Vim:Interrupt$/	" Silence this error message.
 finally
