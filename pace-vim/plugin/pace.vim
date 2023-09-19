@@ -21,16 +21,7 @@ if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
-elseif exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
-	\ has_key(g:pace_dump, '0') && !max(map(map(values(g:pace_dump),
-	\ '(type(get((type(v:val) == type([]) ? v:val : []), 0)) == type([]) &&
-	\ len(v:val[0]) == 4 ? v:val[0] : [""])'),
-	\ '(type(get(v:val, 0)) != type(0)) + (type(get(v:val, 1)) != type(0)) +
-	\ (type(get(v:val, 2)) != type(0)) + (type(get(v:val, 3)) != type(0))'))
-	let s:carryover	= deepcopy(g:pace_dump, 1)
-else	" NOTE: Call either Pace_Dump() or Pace_Free() to procure g:pace_dump!
-	let s:carryover	= {'0': [[0, 0, 0, 0]]}
-endif	" NOTE: The 0th key value follows a uniform depth: [[]].
+endif
 
 " Ponder before ridding of s:turn.e ((a sum of) characters) and s:turn.f
 " ((a sum of) seconds), and devolving their duties upon s:turn.d (characters)
@@ -68,7 +59,6 @@ let s:pace	= {
 	\ 'load':	0,
 	\ 'mark':	0,
 	\ 'epoch':	reltime(),
-	\ 'dump':	s:carryover,
 	\ 'pool':	{},
 	\ 'state':	{
 		\ 'laststatus':		&laststatus,
@@ -79,6 +69,20 @@ let s:pace	= {
 	\ },
 	\ 'status':	{},
 \ }
+
+if exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
+					\ has_key(g:pace_dump, '0') &&
+					\ 0 == max(map(map(values(g:pace_dump),
+	\ '(type(get((type(v:val) == type([]) ? v:val : []), 0)) == type([]) &&
+				\ len(v:val[0]) == 4 ? v:val[0] : [""])'),
+	\ '(type(get(v:val, 0)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 1)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 2)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 3)) != type(0) ? 1 : 0)'))
+	let s:pace.dump	= deepcopy(g:pace_dump, 1)
+else	" Call either Pace_Dump() or Pace_Free() to obtain g:pace_dump.
+	let s:pace.dump	= {'0': [[0, 0, 0, 0]]}
+endif	" The 0th key value follows a uniform depth: [[]].
 
 " Try to roll over the sub-second unit (see profile_sub() of profile.c).
 let s:parts	= len(reltime()) == 2
@@ -487,6 +491,6 @@ endif
 lockvar 1 s:pace s:turn
 let g:pace_lock	= 1
 let &cpoptions	= s:cpoptions
-unlet s:parts s:carryover s:cpoptions
+unlet s:parts s:cpoptions
 
 " vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
