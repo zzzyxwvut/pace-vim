@@ -3,7 +3,7 @@
 " Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/7/0/master]
 " Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	1.3
-" Last Change:	2023-Sep-18
+" Last Change:	2023-Sep-19
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -23,8 +23,8 @@ if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
 	finish
 elseif exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
 	\ has_key(g:pace_dump, '0') && !max(map(map(values(g:pace_dump),
-	\ '(type(get((type(v:val) == type([]) ? v:val :	[]), 0)) == type([]) &&
-	\ len(v:val[0]) == 4 ? v:val[0] :	[""])'),
+	\ '(type(get((type(v:val) == type([]) ? v:val : []), 0)) == type([]) &&
+	\ len(v:val[0]) == 4 ? v:val[0] : [""])'),
 	\ '(type(get(v:val, 0)) != type(0)) + (type(get(v:val, 1)) != type(0)) +
 	\ (type(get(v:val, 2)) != type(0)) + (type(get(v:val, 3)) != type(0))'))
 	let s:carryover	= deepcopy(g:pace_dump, 1)
@@ -165,7 +165,7 @@ endfunction								" }}}1
 endif
 
 function! s:pace.div(dividend, divisor) abort				" {{{1
-	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
+	return a:divisor ? (a:dividend / a:divisor) : a:dividend
 endfunction
 
 function! s:pace.msg(fname, entry) abort				" {{{1
@@ -231,7 +231,7 @@ function! s:pace.leave() abort						" {{{1
 
 	" Update the logged hits and the whole count.
 	let l:whole		= l:self.dump[0][0]
-	let l:whole[0:3]	+= [1, 0, s:turn.d, s:turn.b]
+	let l:whole[0 : 3]	+= [1, 0, s:turn.d, s:turn.b]
 	unlet! g:pace_amin
 	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
 	lockvar g:pace_amin
@@ -242,7 +242,7 @@ function! s:pace.leave() abort						" {{{1
 
 	" Append a new hit instance and fetch the buffer total entry.
 	let l:total	= add(l:self.dump[l:self.buffer],
-			\ [(l:self.mark ? -l:whole[0] :	l:whole[0]),
+			\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
 				\ l:self.time(l:self.epoch)[0],
 				\ s:turn.d,
 				\ s:turn.b])[0]
@@ -258,8 +258,10 @@ function! s:pace.swap(buffer) abort					" {{{1
 
 	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
 		" Ferret out any doppel-gänger windows.
-		call filter(range(1, winnr('$')), "winbufnr(v:val) == l:self.buffer ?
-				\ setwinvar(v:val, '&statusline', l:status) : 0")
+		call filter(range(1, winnr('$')),
+				\ "winbufnr(v:val) == l:self.buffer
+				\ ? setwinvar(v:val, '&statusline', l:status)
+				\ : 0")
 	elseif bufexists(l:self.buffer)
 		execute 'sbuffer '.l:self.buffer
 		call setbufvar(l:self.buffer, '&statusline', l:status)
@@ -312,14 +314,16 @@ function! s:pace.enter() abort						" {{{1
 		call l:self.swap(bufnr('%'))
 	endif
 
-	let [s:turn.e, s:turn.f]	= l:self.policy[1] == 1	?
-		\ [l:self.dump[0][0][2], l:self.dump[0][0][3]]	:
-		\ l:self.policy[1] == 2 && has_key(l:self.dump, l:self.buffer)	?
-		\ [l:self.dump[l:self.buffer][0][2],
-		\ l:self.dump[l:self.buffer][0][3]]	:
-		\ [0, 0]
+	" Select the base count values for reporting.
+	let [s:turn.e, s:turn.f]	= l:self.policy[1] == 1
+		\ ? [l:self.dump[0][0][2], l:self.dump[0][0][3]]
+		\ : l:self.policy[1] == 2 &&
+					\ has_key(l:self.dump, l:self.buffer)
+			\ ? [l:self.dump[l:self.buffer][0][2],
+					\ l:self.dump[l:self.buffer][0][3]]
+			\ : [0, 0]
 	let l:self.dump[0][0][1]	+= 1		" All InsertEnter hits.
-	let [s:turn.b, s:turn.d]	= [0, 0]
+	let [s:turn.b, s:turn.d]	= [0, 0]	" Initialise the count.
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
 				\ '0.00,',
@@ -404,7 +408,7 @@ function! Pace_Dump(entropy) abort					" {{{1
 	\ }
 
 	for l:i in keys(s:pace.dump)
-		let [l:hits, l:last, l:char, l:sec]	= s:pace.dump[l:i][0][0:3]
+		let [l:hits, l:last, l:char, l:sec]	= s:pace.dump[l:i][0][0 : 3]
 		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
 			\ s:pace.div(l:char, l:sec), l:char, l:sec, l:hits)
 	endfor
@@ -446,13 +450,13 @@ command! -bar PaceOn	:echo Pace_Load(1)
 command! -bar PaceOff	:echo Pace_Load(0)
 command! -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
 command! -bar -nargs=*
-	\ PaceDump	:echo len([<f-args>]) == 3 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]] :
-	\ len([<f-args>]) == 2 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]] :
-	\ len([<f-args>]) == 1 ?
-	\ Pace_Dump(0)[[<f-args>][0]] :
-	\ Pace_Dump(0)
+	\ PaceDump	:echo len([<f-args>]) == 3
+	\ ? Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]]
+	\ : len([<f-args>]) == 2
+		\ ? Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]]
+		\ : len([<f-args>]) == 1
+			\ ? Pace_Dump(0)[[<f-args>][0]]
+			\ : Pace_Dump(0)
 command! -bar PaceFree	:echo Pace_Free()
 
 if has('modify_fname')
