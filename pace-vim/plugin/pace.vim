@@ -179,11 +179,11 @@ function! s:pace.test(pass) abort					" {{{1
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
@@ -280,7 +280,10 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
@@ -324,7 +327,7 @@ function! s:pace.enter() abort						" {{{1
 				\ s:turn.e,
 				\ s:turn.f)
 
-	if winnr('$') == 1
+	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
 	else
 		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
