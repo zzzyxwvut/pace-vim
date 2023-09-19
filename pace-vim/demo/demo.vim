@@ -65,7 +65,21 @@ endif
 
 if s:parts == 6
 
-function! s:demo.eval(go) abort						" {{{1
+function! s:demo.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:demo.eval0(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -83,7 +97,21 @@ endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:demo.eval(go) abort						" {{{1
+function! s:demo.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:demo.eval0(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -103,7 +131,22 @@ else
 
 " The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-function! s:demo.eval(go) abort						" {{{1
+function! s:demo.eval1(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:demo.eval0(go) abort					" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -151,17 +194,32 @@ function! s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 			return
 		endif
 
-		let l:g	= len(l:self.delay)
-		let l:k	= localtime() % l:g			" Seed [0-3].
+		let l:cc	= split(join(l:self.text[a:i : a:j], "\n"), '\zs')
+		let l:z		= len(l:cc)
+		let l:g		= len(l:self.delay)
+		lockvar l:g l:z l:cc
+		let l:k		= localtime() % l:g		" Seed [0-3].
+		let l:n		= 0
 
-		for l:c in split(join(l:self.text[a:i : a:j], "\n"), '\zs')
-			let @z	= l:c
+		while a:go.b < 1 && l:n < l:z
+			let @z	= l:cc[l:n]
 			normal! "zp
-			call l:self.eval(a:go)
+			call l:self.eval0(a:go)
 			execute 'sleep '.l:self.delay[l:k % l:g].'m'
 			redrawstatus
 			let l:k	+= 1
-		endfor
+			let l:n	+= 1
+		endwhile
+
+		while l:n < l:z
+			let @z	= l:cc[l:n]
+			normal! "zp
+			call l:self.eval1(a:go)
+			execute 'sleep '.l:self.delay[l:k % l:g].'m'
+			redrawstatus
+			let l:k	+= 1
+			let l:n	+= 1
+		endwhile
 	finally
 		if a:times > 0
 			call setbufvar(bufnr('%'), '&statusline', '')

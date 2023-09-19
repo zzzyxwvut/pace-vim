@@ -24,7 +24,7 @@ try
 	call s:Assert_Equal(5, '0', s:eval_any[3])	" chars
 	call s:Assert_Equal(6, '0', s:eval_any[4])	" secs
 
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(7, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(8, 1, s:Get_Chars())
 	call s:Assert_True(2, exists('g:demo_info'))
@@ -35,7 +35,7 @@ try
 	call s:Assert_Equal(11, '1', s:eval_any[3])
 	call s:Assert_Equal(12, '0', s:eval_any[4])
 
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(13, 2, s:Get_Chars())
 	call s:Assert_True(3, exists('g:demo_info'))
 	let s:eval_any = matchlist(g:demo_info,
@@ -45,7 +45,7 @@ try
 	call s:Assert_Equal(16, '2', s:eval_any[3])
 	call s:Assert_Equal(17, '0', s:eval_any[4])
 
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(18, 3, s:Get_Chars())
 	call s:Assert_True(4, exists('g:demo_info'))
 	let s:eval_any = matchlist(g:demo_info,
@@ -55,7 +55,7 @@ try
 	call s:Assert_Equal(21, '3', s:eval_any[3])
 	call s:Assert_Equal(22, '0', s:eval_any[4])
 
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(23, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(24, 4, s:Get_Chars())
 	call s:Assert_Equal(25, 0, s:Get_Secs())
@@ -74,22 +74,22 @@ try
 	call s:Set_Parts(0)
 	call s:Set_Chars(0)
 
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(31, 0, s:Get_Secs())
 	call s:Assert_Equal(32, 166667, s:Get_Parts())
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(33, 0, s:Get_Secs())
 	call s:Assert_Equal(34, 333334, s:Get_Parts())
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(35, 0, s:Get_Secs())
 	call s:Assert_Equal(36, 500001, s:Get_Parts())
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(37, 0, s:Get_Secs())
 	call s:Assert_Equal(38, 666668, s:Get_Parts())
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(39, 0, s:Get_Secs())
 	call s:Assert_Equal(40, 833335, s:Get_Parts())
-	call s:demo.eval(s:turn)
+	call s:demo.eval0(s:turn)
 	call s:Assert_Equal(41, 1, s:Get_Secs())	" (1000002 / 1000000)
 	call s:Assert_Equal(42, 2, s:Get_Parts())	" (1000002 % 1000000)
 	call s:Assert_Equal(43, s:mockup.time.before, s:Get_Tick())
@@ -101,6 +101,17 @@ try
 	call s:Assert_Equal(46, '6', s:eval_any[2])
 	call s:Assert_Equal(47, '6', s:eval_any[3])
 	call s:Assert_Equal(48, '1', s:eval_any[4])
+	call s:demo.eval1(s:turn)
+	call s:Assert_Equal(49, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(50, 7, s:Get_Chars())
+	call s:Assert_Equal(51, 1, s:Get_Secs())
+	call s:Assert_True(7, exists('g:demo_info'))
+	let s:eval_any = matchlist(g:demo_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(52, '0.16', s:eval_any[1])
+	call s:Assert_Equal(53, '7', s:eval_any[2])
+	call s:Assert_Equal(54, '7', s:eval_any[3])
+	call s:Assert_Equal(55, '1', s:eval_any[4])
 finally
 	let s:mockup.mode = s:eval_mode
 	let s:mockup.time.after = s:eval_time_after

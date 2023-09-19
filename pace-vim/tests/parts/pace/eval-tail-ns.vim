@@ -254,13 +254,24 @@ try
 	call s:Assert_Equal(113, '18', s:eval_any[2])
 	call s:Assert_Equal(114, '18', s:eval_any[3])
 	call s:Assert_Equal(115, '1', s:eval_any[4])
+	doautocmd pace CursorMovedI
+	call s:Assert_Equal(116, s:turn.a, s:mockup.time.before)
+	call s:Assert_Equal(117, 7, s:turn.d)
+	call s:Assert_Equal(118, 1, s:turn.b)
+	call s:Assert_True(32, exists('g:pace_info'))
+	let s:eval_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(119, '0.16', s:eval_any[1])
+	call s:Assert_Equal(120, '19', s:eval_any[2])
+	call s:Assert_Equal(121, '19', s:eval_any[3])
+	call s:Assert_Equal(122, '1', s:eval_any[4])
 
-	call s:Assert_True(32, exists('#pace#InsertLeave#*'))
+	call s:Assert_True(33, exists('#pace#InsertLeave#*'))
 	doautocmd pace InsertLeave
-	call s:Assert_Equal(116, 12000002, s:pace.carry)
+	call s:Assert_Equal(123, (166666667 + 12000002), s:pace.carry)
 	let s:mockup.mode = 'n'
 	let s:eval_2 = s:Pace_Load(0)
-	call s:Assert_Equal(117, 0, s:pace.carry)
+	call s:Assert_Equal(124, 0, s:pace.carry)
 finally
 	let s:mockup.mode = s:eval_mode
 	let s:mockup.time.after = s:eval_time_after

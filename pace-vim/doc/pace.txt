@@ -1,4 +1,4 @@
-*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-18
+*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-19
 
 Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
 Copyleft ())
@@ -195,7 +195,7 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 ==============================================================================
 7. History						*pace-history*
 
-	2023-Sep-18	v1.3.
+	2023-Sep-19	v1.3.
 				demo.vim and pace.vim: ~
 				Links to a repository of the project and
 				archives can be found in the file headers.
@@ -208,12 +208,20 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 				and its future referents ceases from being
 				a factor.
 
+				The core calculations of the measuring
+				algorithm have been further whittled down.
+
 				demo.vim: ~
 				Allowance is made for the option value of
 				'switchbuf' after the demonstration ends.
 
 				For every header line of a batch to print,
 				successive unprinted batches are searched.
+
+				pace.vim: ~
+				The precedence of 'statusline' over 'ruler'
+				and 'rulerformat' is recognised as support
+				warrants for 'laststatus'.
 
 	2017-May-14	v1.2.
 				demo.vim: ~

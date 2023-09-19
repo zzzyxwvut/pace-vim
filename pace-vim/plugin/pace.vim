@@ -105,7 +105,7 @@ endfunction								" }}}1
 
 if s:parts == 6
 
-function! s:pace.eval(go) abort						" {{{1
+function! s:pace.eval1(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -114,7 +114,24 @@ function! s:pace.eval(go) abort						" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
-			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
 			\ l:char,
 			\ l:sec)
 	let a:go.a	= reltime()
@@ -122,7 +139,7 @@ endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:pace.eval(go) abort						" {{{1
+function! s:pace.eval1(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -131,7 +148,24 @@ function! s:pace.eval(go) abort						" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
-			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
 			\ l:char,
 			\ l:sec)
 	let a:go.a	= reltime()
@@ -150,7 +184,7 @@ function! s:pace.time(tick) abort					" {{{1
 	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
 endfunction
 
-function! s:pace.eval(go) abort						" {{{1
+function! s:pace.eval1(go) abort					" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -160,13 +194,37 @@ function! s:pace.eval(go) abort						" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ str2nr(l:unit).l:unit[-7 : -5].',',
-			\ l:sec != 0 ? (l:char / l:sec) : l:char,
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval0(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
 			\ l:char,
 			\ l:sec)
 	let a:go.a	= reltime()
 endfunction								" }}}1
 
 endif
+
+function! s:pace.trampolinemoved(value) abort				" {{{1
+	autocmd! pace CursorMovedI
+	autocmd pace CursorMovedI	* call s:pace.eval1(s:turn)
+	return a:value
+endfunction
 
 function! s:pace.div(dividend, divisor) abort				" {{{1
 	return a:divisor ? (a:dividend / a:divisor) : a:dividend
@@ -350,7 +408,7 @@ function! s:pace.enter() abort						" {{{1
 	endif
 
 	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval(s:turn)
+		autocmd pace CursorMovedI	* call s:pace.eval0(s:turn)
 	endif
 
 	if !exists('#pace#InsertLeave#*')
