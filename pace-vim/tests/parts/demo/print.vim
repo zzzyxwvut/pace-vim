@@ -20,19 +20,19 @@ try
 
 
 	" The 1st\ quatrain.
-	let s:print_off = s:demo.data.part[0][2]
-	let s:print_match = s:demo.data.part[0][1]
+	let s:print_off = s:demo.linage[0][2]
+	let s:print_match = s:demo.linage[0][1]
 
-	while s:demo.file[s:print_pos] !~# s:print_match
+	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
 	endwhile
 
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.data.part[0][0],
+			\ s:demo.linage[0][0],
 			\ (s:print_off + 1),
-			\ (len(s:demo.data.part) - 1))
+			\ (len(s:demo.linage) - 1))
 	let s:print_pos += s:print_off + 1
 	call s:Assert_Equal(7, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(8, 193, s:Get_Chars())
@@ -44,32 +44,32 @@ try
 	call s:Assert_Equal(11, '193', s:print_any[3])
 	call s:Assert_Equal(12, '0', s:print_any[4])
 
-	let s:print_any = s:demo.data.part[s:print_num]
+	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(13,
-		\ s:demo.file[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_any[2])],
-		\ getbufline(s:print_any[0],
-			\ (len(getbufline(s:print_any[0], 1, '$')) -
-							\ s:print_any[2]),
+		\ s:demo.text[(s:print_cursor + s:print_num) :
+			\ (s:print_cursor + s:print_num + s:print_linage[2])],
+		\ getbufline(s:print_linage[0],
+			\ (len(getbufline(s:print_linage[0], 1, '$')) -
+							\ s:print_linage[2]),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_any[2]
+	let s:print_cursor += s:print_linage[2]
 
 
 	" The 2nd\ quatrain.
-	let s:print_off = s:demo.data.part[1][2]
-	let s:print_match = s:demo.data.part[1][1]
+	let s:print_off = s:demo.linage[1][2]
+	let s:print_match = s:demo.linage[1][1]
 
-	while s:demo.file[s:print_pos] !~# s:print_match
+	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
 	endwhile
 
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.data.part[1][0],
+			\ s:demo.linage[1][0],
 			\ (s:print_off + 1),
-			\ (len(s:demo.data.part) - 2))
+			\ (len(s:demo.linage) - 2))
 	let s:print_pos += s:print_off + 1
 	call s:Assert_Equal(14, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(15, 386, s:Get_Chars())
@@ -81,32 +81,32 @@ try
 	call s:Assert_Equal(18, '386', s:print_any[3])
 	call s:Assert_Equal(19, '0', s:print_any[4])
 
-	let s:print_any = s:demo.data.part[s:print_num]
+	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(20,
-		\ s:demo.file[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_any[2])],
-		\ getbufline(s:print_any[0],
-			\ (len(getbufline(s:print_any[0], 1, '$')) -
-							\ s:print_any[2]),
+		\ s:demo.text[(s:print_cursor + s:print_num) :
+			\ (s:print_cursor + s:print_num + s:print_linage[2])],
+		\ getbufline(s:print_linage[0],
+			\ (len(getbufline(s:print_linage[0], 1, '$')) -
+							\ s:print_linage[2]),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_any[2]
+	let s:print_cursor += s:print_linage[2]
 
 
 	" The 3rd\ quatrain.
-	let s:print_off = s:demo.data.part[2][2]
-	let s:print_match = s:demo.data.part[2][1]
+	let s:print_off = s:demo.linage[2][2]
+	let s:print_match = s:demo.linage[2][1]
 
-	while s:demo.file[s:print_pos] !~# s:print_match
+	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
 	endwhile
 
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.data.part[2][0],
+			\ s:demo.linage[2][0],
 			\ (s:print_off + 1),
-			\ (len(s:demo.data.part) - 3))
+			\ (len(s:demo.linage) - 3))
 	let s:print_pos += s:print_off + 1
 	call s:Assert_Equal(21, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(22, 579, s:Get_Chars())
@@ -118,32 +118,32 @@ try
 	call s:Assert_Equal(25, '579', s:print_any[3])
 	call s:Assert_Equal(26, '0', s:print_any[4])
 
-	let s:print_any = s:demo.data.part[s:print_num]
+	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(27,
-		\ s:demo.file[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_any[2])],
-		\ getbufline(s:print_any[0],
-			\ (len(getbufline(s:print_any[0], 1, '$')) -
-							\ s:print_any[2]),
+		\ s:demo.text[(s:print_cursor + s:print_num) :
+			\ (s:print_cursor + s:print_num + s:print_linage[2])],
+		\ getbufline(s:print_linage[0],
+			\ (len(getbufline(s:print_linage[0], 1, '$')) -
+							\ s:print_linage[2]),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_any[2]
+	let s:print_cursor += s:print_linage[2]
 
 
 	" The\ couplet.
-	let s:print_off = s:demo.data.part[3][2]
-	let s:print_match = s:demo.data.part[3][1]
+	let s:print_off = s:demo.linage[3][2]
+	let s:print_match = s:demo.linage[3][1]
 
-	while s:demo.file[s:print_pos] !~# s:print_match
+	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
 	endwhile
 
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.data.part[3][0],
+			\ s:demo.linage[3][0],
 			\ (s:print_off + 1),
-			\ (len(s:demo.data.part) - 4))
+			\ (len(s:demo.linage) - 4))
 	let s:print_pos += s:print_off + 1
 	call s:Assert_Equal(28, s:mockup.time.before, s:Get_Tick())
 	call s:Assert_Equal(29, 686, s:Get_Chars())
@@ -156,16 +156,16 @@ try
 	call s:Assert_Equal(33, '686', s:print_any[3])
 	call s:Assert_Equal(34, '0', s:print_any[4])
 
-	let s:print_any = s:demo.data.part[s:print_num]
+	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(35,
-		\ s:demo.file[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_any[2])],
-		\ getbufline(s:print_any[0],
-			\ (len(getbufline(s:print_any[0], 1, '$')) -
-							\ s:print_any[2]),
+		\ s:demo.text[(s:print_cursor + s:print_num) :
+			\ (s:print_cursor + s:print_num + s:print_linage[2])],
+		\ getbufline(s:print_linage[0],
+			\ (len(getbufline(s:print_linage[0], 1, '$')) -
+							\ s:print_linage[2]),
 			\ '$'))
 ""	let s:print_num += 1
-""	let s:print_cursor += s:print_any[2]
+""	let s:print_cursor += s:print_linage[2]
 finally
 	let @z = s:demo.reg_z
 	let &g:statusline = s:demo.state.statusline

@@ -68,7 +68,7 @@ cd "${cwd}"
 awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.
-stdin=48
+stdin=46
 cursor=$((`wc -l "$1"/demo.vim \
 parts/share/mockup.vim \
 parts/share/assert.vim \
@@ -89,7 +89,7 @@ parts/demo/share/turn.vim > "$1"/base.vim <<EOF
 let s:cpoptions = &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
-let s:demo.file = [
+let s:demo.text = [
 	\ '',
 	\ '‘A stanza of four lines, usually with alternate rimes;',
 	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
@@ -106,16 +106,14 @@ let s:demo.file = [
 	\ '‘A pair of successive lines of verse, _esp._ when riming',
 	\ 'together and of the same length.’ (NED, II, 1084.)',
 \ ]
-lockvar s:demo.file
-let s:demo.data.fname = '<stdin>'
-let s:demo.data.cols = 56
-let s:demo.data.lines = 15
-let s:demo.data.part = [
+let s:demo.linage = [
 	\ ['1st\ quatrain',	'^‘A stanza',		3],
 	\ ['2nd\ quatrain',	'^‘A stanza',		3],
 	\ ['3rd\ quatrain',	'^‘A stanza',		3],
 	\ ['the\ couplet',	'^‘A pair',		1],
 \ ]
+let s:demo.delay = [1, 1]
+lockvar s:demo.delay s:demo.linage s:demo.text
 
 " (Shorter key names shorten lookup time.)
 " a: tick,

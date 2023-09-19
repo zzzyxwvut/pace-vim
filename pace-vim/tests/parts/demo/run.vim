@@ -30,15 +30,15 @@ try
 	let s:run_cursor = 1
 
 	for s:run_num in [0, 1, 2, 3]
-		let s:run_any = s:demo.data.part[s:run_num]
+		let s:run_linage = s:demo.linage[s:run_num]
 		call s:Assert_Equal(14,
-			\ s:demo.file[(s:run_cursor + s:run_num) :
-				\ (s:run_cursor + s:run_num + s:run_any[2])],
-			\ getbufline(s:run_any[0],
-				\ (len(getbufline(s:run_any[0], 1, '$')) -
-							\ s:run_any[2]),
+			\ s:demo.text[(s:run_cursor + s:run_num) :
+				\ (s:run_cursor + s:run_num + s:run_linage[2])],
+			\ getbufline(s:run_linage[0],
+				\ (len(getbufline(s:run_linage[0], 1, '$')) -
+							\ s:run_linage[2]),
 				\ '$'))
-		let s:run_cursor += s:run_any[2]
+		let s:run_cursor += s:run_linage[2]
 	endfor
 finally
 	let @z = s:demo.reg_z
