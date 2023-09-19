@@ -180,19 +180,19 @@ function! s:demo.run(go) abort						" {{{1
 	let l:m	= 0
 	let a:go.a	= reltime()
 
-	for [l:name, l:match, l:offset] in l:self.linage
-		while l:n < l:z && l:self.text[l:n] !~# l:match
+	for l:item in l:self.linage
+		while l:n < l:z && l:self.text[l:n] !~# l:item.match
 			let l:n	+= 1
 		endwhile
 
 		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
 		call l:self.print(a:go,
 					\ l:p,
-					\ (l:offset + l:p),
-					\ l:name,
-					\ (l:offset + 1),
+					\ (l:item.offset + l:p),
+					\ l:item.name,
+					\ (l:item.offset + 1),
 					\ l:t)
-		let l:n	= l:m + l:offset + 1
+		let l:n	= l:m + l:item.offset + 1
 		let l:t	-= 1
 	endfor
 endfunction
@@ -244,10 +244,10 @@ endif
 try
 	let s:demo.text		= s:demo.fetch('vimvat.txt', 20)
 	let s:demo.linage	= [
-		\ ['1st\ quatrain',	'^Of _vim_',		3],
-		\ ['2nd\ quatrain',	'^Mnem0nic\$',		3],
-		\ ['3rd\ quatrain',	'^No pop-ups',		3],
-		\ ['the\ couplet',	'^Go to,',		1],
+		\ {'name': '1st\ quatrain', 'match': '^Of _vim_', 'offset': 3},
+		\ {'name': '2nd\ quatrain', 'match': '^Mnem0nic\$', 'offset': 3},
+		\ {'name': '3rd\ quatrain', 'match': '^No pop-ups', 'offset': 3},
+		\ {'name': 'the\ couplet', 'match': '^Go to,', 'offset': 1},
 	\ ]	" [buffer_name, line_match, line_offset]
 	let s:demo.delay	= [70, 90, 80, 60]
 	lockvar s:demo.delay s:demo.linage s:demo.text

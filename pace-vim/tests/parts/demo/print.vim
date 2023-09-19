@@ -20,8 +20,8 @@ try
 
 
 	" The 1st\ quatrain.
-	let s:print_off = s:demo.linage[0][2]
-	let s:print_match = s:demo.linage[0][1]
+	let s:print_off = s:demo.linage[0].offset
+	let s:print_match = s:demo.linage[0].match
 
 	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
@@ -30,7 +30,7 @@ try
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.linage[0][0],
+			\ s:demo.linage[0].name,
 			\ (s:print_off + 1),
 			\ (len(s:demo.linage) - 1))
 	let s:print_pos += s:print_off + 1
@@ -47,18 +47,18 @@ try
 	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(13,
 		\ s:demo.text[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_linage[2])],
-		\ getbufline(s:print_linage[0],
-			\ (len(getbufline(s:print_linage[0], 1, '$')) -
-							\ s:print_linage[2]),
+			\ (s:print_cursor + s:print_num + s:print_linage.offset)],
+		\ getbufline(s:print_linage.name,
+			\ (len(getbufline(s:print_linage.name, 1, '$')) -
+							\ s:print_linage.offset),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_linage[2]
+	let s:print_cursor += s:print_linage.offset
 
 
 	" The 2nd\ quatrain.
-	let s:print_off = s:demo.linage[1][2]
-	let s:print_match = s:demo.linage[1][1]
+	let s:print_off = s:demo.linage[1].offset
+	let s:print_match = s:demo.linage[1].match
 
 	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
@@ -67,7 +67,7 @@ try
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.linage[1][0],
+			\ s:demo.linage[1].name,
 			\ (s:print_off + 1),
 			\ (len(s:demo.linage) - 2))
 	let s:print_pos += s:print_off + 1
@@ -84,18 +84,18 @@ try
 	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(20,
 		\ s:demo.text[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_linage[2])],
-		\ getbufline(s:print_linage[0],
-			\ (len(getbufline(s:print_linage[0], 1, '$')) -
-							\ s:print_linage[2]),
+			\ (s:print_cursor + s:print_num + s:print_linage.offset)],
+		\ getbufline(s:print_linage.name,
+			\ (len(getbufline(s:print_linage.name, 1, '$')) -
+							\ s:print_linage.offset),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_linage[2]
+	let s:print_cursor += s:print_linage.offset
 
 
 	" The 3rd\ quatrain.
-	let s:print_off = s:demo.linage[2][2]
-	let s:print_match = s:demo.linage[2][1]
+	let s:print_off = s:demo.linage[2].offset
+	let s:print_match = s:demo.linage[2].match
 
 	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
@@ -104,7 +104,7 @@ try
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.linage[2][0],
+			\ s:demo.linage[2].name,
 			\ (s:print_off + 1),
 			\ (len(s:demo.linage) - 3))
 	let s:print_pos += s:print_off + 1
@@ -121,18 +121,18 @@ try
 	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(27,
 		\ s:demo.text[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_linage[2])],
-		\ getbufline(s:print_linage[0],
-			\ (len(getbufline(s:print_linage[0], 1, '$')) -
-							\ s:print_linage[2]),
+			\ (s:print_cursor + s:print_num + s:print_linage.offset)],
+		\ getbufline(s:print_linage.name,
+			\ (len(getbufline(s:print_linage.name, 1, '$')) -
+							\ s:print_linage.offset),
 			\ '$'))
 	let s:print_num += 1
-	let s:print_cursor += s:print_linage[2]
+	let s:print_cursor += s:print_linage.offset
 
 
 	" The\ couplet.
-	let s:print_off = s:demo.linage[3][2]
-	let s:print_match = s:demo.linage[3][1]
+	let s:print_off = s:demo.linage[3].offset
+	let s:print_match = s:demo.linage[3].match
 
 	while s:demo.text[s:print_pos] !~# s:print_match
 		let s:print_pos += 1
@@ -141,7 +141,7 @@ try
 	call s:demo.print(s:turn,
 			\ s:print_pos,
 			\ (s:print_off + s:print_pos),
-			\ s:demo.linage[3][0],
+			\ s:demo.linage[3].name,
 			\ (s:print_off + 1),
 			\ (len(s:demo.linage) - 4))
 	let s:print_pos += s:print_off + 1
@@ -159,13 +159,13 @@ try
 	let s:print_linage = s:demo.linage[s:print_num]
 	call s:Assert_Equal(35,
 		\ s:demo.text[(s:print_cursor + s:print_num) :
-			\ (s:print_cursor + s:print_num + s:print_linage[2])],
-		\ getbufline(s:print_linage[0],
-			\ (len(getbufline(s:print_linage[0], 1, '$')) -
-							\ s:print_linage[2]),
+			\ (s:print_cursor + s:print_num + s:print_linage.offset)],
+		\ getbufline(s:print_linage.name,
+			\ (len(getbufline(s:print_linage.name, 1, '$')) -
+							\ s:print_linage.offset),
 			\ '$'))
 ""	let s:print_num += 1
-""	let s:print_cursor += s:print_linage[2]
+""	let s:print_cursor += s:print_linage.offset
 finally
 	let @z = s:demo.reg_z
 	let &g:statusline = s:demo.state.statusline

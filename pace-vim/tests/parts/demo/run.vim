@@ -33,12 +33,12 @@ try
 		let s:run_linage = s:demo.linage[s:run_num]
 		call s:Assert_Equal(14,
 			\ s:demo.text[(s:run_cursor + s:run_num) :
-				\ (s:run_cursor + s:run_num + s:run_linage[2])],
-			\ getbufline(s:run_linage[0],
-				\ (len(getbufline(s:run_linage[0], 1, '$')) -
-							\ s:run_linage[2]),
+				\ (s:run_cursor + s:run_num + s:run_linage.offset)],
+			\ getbufline(s:run_linage.name,
+				\ (len(getbufline(s:run_linage.name, 1, '$')) -
+							\ s:run_linage.offset),
 				\ '$'))
-		let s:run_cursor += s:run_linage[2]
+		let s:run_cursor += s:run_linage.offset
 	endfor
 finally
 	let @z = s:demo.reg_z

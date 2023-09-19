@@ -107,10 +107,10 @@ let s:demo.text = [
 	\ 'together and of the same length.’ (NED, II, 1084.)',
 \ ]
 let s:demo.linage = [
-	\ ['1st\ quatrain',	'^‘A stanza',		3],
-	\ ['2nd\ quatrain',	'^‘A stanza',		3],
-	\ ['3rd\ quatrain',	'^‘A stanza',		3],
-	\ ['the\ couplet',	'^‘A pair',		1],
+	\ {'name': '1st\ quatrain', 'match': '^‘A stanza', 'offset': 3},
+	\ {'name': '2nd\ quatrain', 'match': '^‘A stanza', 'offset': 3},
+	\ {'name': '3rd\ quatrain', 'match': '^‘A stanza', 'offset': 3},
+	\ {'name': 'the\ couplet', 'match': '^‘A pair', 'offset': 1},
 \ ]
 let s:demo.delay = [1, 1]
 lockvar s:demo.delay s:demo.linage s:demo.text
