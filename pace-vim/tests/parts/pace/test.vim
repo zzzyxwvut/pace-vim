@@ -1,4 +1,6 @@
 """"""""""""""""""""""""""""""""""|test.vim|""""""""""""""""""""""""""""""""""
+" Also see {enter,load}.vim.
+
 let s:cpoptions = &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
@@ -409,6 +411,57 @@ try
 	call s:Assert_Equal(574, 20, s:Get_Parts())
 	call s:Assert_Equal(102, (s:pace.dump[0][0][0] + 8),
 						\ s:pace.dump[0][0][1])
+	let s:mockup.mode = 'n'
+	let s:test_2 = s:Pace_Load(0)
+
+	let s:test_3 = s:Pace_Load(1)
+	let s:mockup.mode = 'i'
+	let s:test_updatetime = &updatetime
+	let &updatetime = s:pace.sample.above - 2 * s:pace.sample.below
+	unlet! g:pace_sample
+	call s:Assert_True(93, s:pace.sample.in < s:pace.sample.below)
+
+	try
+		let g:pace_sample = s:pace.sample.above - s:pace.sample.below
+		let s:test_sample_in = s:pace.sample.in
+		doautocmd pace InsertEnter
+		call s:Assert_Not_Equal(2, s:pace.sample.in, s:test_sample_in)
+		call s:Assert_Not_Equal(3, &updatetime, s:pace.state.updatetime)
+		call s:Assert_Equal(103, &updatetime, s:pace.sample.in)
+
+		let g:pace_sample = s:pace.sample.above + 1
+		let s:test_sample_in = s:pace.sample.in
+		doautocmd pace InsertEnter
+		call s:Assert_Not_Equal(4, s:pace.sample.in, s:test_sample_in)
+		call s:Assert_Not_Equal(5, &updatetime, s:pace.sample.in)
+		call s:Assert_Equal(104, &updatetime, s:pace.state.updatetime)
+
+		let g:pace_sample = s:pace.sample.below - 1
+		let s:test_sample_in = s:pace.sample.in
+		doautocmd pace InsertEnter
+		call s:Assert_Not_Equal(6, s:pace.sample.in, s:test_sample_in)
+		call s:Assert_Not_Equal(7, &updatetime, s:pace.sample.in)
+		call s:Assert_Equal(105, &updatetime, s:pace.state.updatetime)
+
+		let g:pace_sample = s:pace.sample.above - s:pace.sample.below
+		let s:test_sample_in = s:pace.sample.in
+		doautocmd pace InsertEnter
+		call s:Assert_Not_Equal(8, s:pace.sample.in, s:test_sample_in)
+		call s:Assert_Not_Equal(9, &updatetime, s:pace.state.updatetime)
+		call s:Assert_Equal(106, &updatetime, s:pace.sample.in)
+
+		let g:pace_sample = s:pace.sample.above - 2 * s:pace.sample.below
+		let s:test_sample_in = s:pace.sample.in
+		doautocmd pace InsertEnter
+		call s:Assert_Not_Equal(10, s:pace.sample.in, s:test_sample_in)
+		call s:Assert_Not_Equal(11, &updatetime, s:pace.state.updatetime)
+		call s:Assert_Equal(107, &updatetime, s:pace.sample.in)
+	finally
+		let &updatetime = s:test_updatetime
+	endtry
+
+	let s:mockup.mode = 'n'
+	let s:test_4 = s:Pace_Load(0)
 finally
 	let s:mockup.mode = s:test_mode
 endtry

@@ -148,6 +148,88 @@ call s:Assert_True(35, (winnr('$') == 1 ? &rulerformat : &l:statusline) =~
 call s:Assert_True(36, exists('#pace#InsertLeave#*'))
 doautocmd pace InsertLeave
 
+try
+	unlet! g:pace_sample
+	call s:Assert_True(37, s:pace.sample.in < s:pace.sample.below)
+
+	" The inhibited updating of g:pace_info.
+	let s:pace.sample.in = s:pace.sample.above + 1
+	call s:Assert_True(38, !exists('#pace#CursorMovedI#*'))
+	call s:Assert_True(39, !exists('#pace#InsertLeave#*'))
+	call s:Assert_True(40, exists('#pace#InsertEnter#*'))
+	doautocmd pace InsertEnter
+	call s:Assert_True(41, exists('#pace#CursorMovedI#*'))
+	doautocmd pace CursorMovedI
+	doautocmd pace CursorMovedI
+	call s:Assert_True(42, exists('g:pace_info'))
+	let s:enter_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(17, '0.00', s:enter_any[1])
+	call s:Assert_Equal(18, '0', s:enter_any[2])
+	call s:Assert_Equal(19, '0', s:enter_any[3])
+	call s:Assert_Equal(20, '0', s:enter_any[4])
+	call s:Assert_True(43, exists('#pace#InsertLeave#*'))
+	doautocmd pace InsertLeave
+	call s:Assert_True(44, exists('g:pace_info'))
+	let s:enter_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(21, '0.00', s:enter_any[1])
+	call s:Assert_Equal(22, '2', s:enter_any[2])
+	call s:Assert_Equal(23, '2', s:enter_any[3])
+	call s:Assert_Equal(24, '0', s:enter_any[4])
+
+	" The continuous updating of g:pace_info.
+	let s:pace.sample.in = s:pace.sample.below - 1
+	call s:Assert_True(45, !exists('#pace#CursorMovedI#*'))
+	call s:Assert_True(46, !exists('#pace#InsertLeave#*'))
+	call s:Assert_True(47, exists('#pace#InsertEnter#*'))
+	doautocmd pace InsertEnter
+	call s:Assert_True(48, exists('#pace#CursorMovedI#*'))
+	doautocmd pace CursorMovedI
+	doautocmd pace CursorMovedI
+	call s:Assert_True(49, exists('g:pace_info'))
+	let s:enter_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(25, '0.00', s:enter_any[1])
+	call s:Assert_Equal(26, '2', s:enter_any[2])
+	call s:Assert_Equal(27, '2', s:enter_any[3])
+	call s:Assert_Equal(28, '0', s:enter_any[4])
+	call s:Assert_True(50, exists('#pace#InsertLeave#*'))
+	call s:Assert_True(51, exists('#pace#InsertLeave#*'))
+	doautocmd pace InsertLeave
+
+	" The sampling updating of g:pace_info.
+	let s:pace.sample.in = s:pace.sample.above - s:pace.sample.below
+	call s:Assert_True(52, !exists('#pace#CursorMovedI#*'))
+	call s:Assert_True(53, !exists('#pace#CursorHoldI#*'))
+	call s:Assert_True(54, !exists('#pace#InsertLeave#*'))
+	call s:Assert_True(55, exists('#pace#InsertEnter#*'))
+	doautocmd pace InsertEnter
+	call s:Assert_True(56, exists('#pace#CursorMovedI#*'))
+	doautocmd pace CursorMovedI
+	doautocmd pace CursorMovedI
+	call s:Assert_True(57, exists('g:pace_info'))
+	let s:enter_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(29, '0.00', s:enter_any[1])
+	call s:Assert_Equal(30, '0', s:enter_any[2])
+	call s:Assert_Equal(31, '0', s:enter_any[3])
+	call s:Assert_Equal(32, '0', s:enter_any[4])
+	call s:Assert_True(58, exists('#pace#CursorHoldI#*'))
+	doautocmd pace CursorHoldI
+	call s:Assert_True(59, exists('g:pace_info'))
+	let s:enter_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	call s:Assert_Equal(33, '0.00', s:enter_any[1])
+	call s:Assert_Equal(34, '2', s:enter_any[2])
+	call s:Assert_Equal(35, '2', s:enter_any[3])
+	call s:Assert_Equal(36, '0', s:enter_any[4])
+	call s:Assert_True(60, exists('#pace#InsertLeave#*'))
+	doautocmd pace InsertLeave
+finally
+	let &updatetime = s:pace.state.updatetime
+endtry
+
 let &cpoptions = s:cpoptions
 unlet s:cpoptions
 quitall

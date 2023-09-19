@@ -267,9 +267,9 @@ try
 	call s:Assert_Equal(117, '6', s:eval_any[3])
 	call s:Assert_Equal(118, '1', s:eval_any[4])
 	doautocmd pace CursorMovedI
-	call s:Assert_Equal(119, s:turn.a, s:mockup.time.before)
-	call s:Assert_Equal(120, 7, s:turn.d)
-	call s:Assert_Equal(121, 1, s:turn.b)
+	call s:Assert_Equal(119, s:mockup.time.before, s:Get_Tick())
+	call s:Assert_Equal(120, 7, s:Get_Chars())
+	call s:Assert_Equal(121, 1, s:Get_Secs())
 	call s:Assert_True(32, exists('g:pace_info'))
 	let s:eval_any = matchlist(g:pace_info,
 				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
@@ -284,6 +284,95 @@ try
 	let s:mockup.mode = 'n'
 	let s:eval_4 = s:Pace_Load(0)
 	call s:Assert_Equal(127, 0, s:pace.carry)
+
+	let s:eval_5 = s:Pace_Load(1)
+	let s:mockup.mode = 'i'
+	unlet! g:pace_info g:pace_policy g:pace_sample
+	let g:pace_policy = 10007
+	call s:Assert_Equal(128, -1, s:Get_Chars())
+	call s:Assert_Equal(129, -1, s:Get_Secs())
+	call s:Assert_True(34, s:pace.sample.in < s:pace.sample.below)
+
+	try
+		let g:pace_sample = s:pace.sample.above - s:pace.sample.below
+		call s:Assert_True(35, exists('#pace'))
+		call s:Assert_True(36, exists('#pace#InsertEnter#*'))
+		doautocmd pace InsertEnter
+		call s:Assert_Equal(130, &updatetime, s:pace.sample.in)
+		call s:Assert_True(37, exists('g:pace_info'))
+		let s:eval_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+		call s:Assert_Equal(131, '0.00', s:eval_any[1])
+		call s:Assert_Equal(132, '0', s:eval_any[2])
+		call s:Assert_Equal(133, '0', s:eval_any[3])
+		call s:Assert_Equal(134, '0', s:eval_any[4])
+
+		call s:Assert_Equal(135, 0, s:pace.carry)
+		call s:Assert_True(38, exists('#pace#CursorMovedI#*'))
+		let s:mockup.time.after = [0, 166667]	" ≈1/6
+		call s:Set_Secs(0)
+
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(136, 0, s:Get_Secs())
+		call s:Assert_Equal(137, 166667, s:Get_Parts())
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(138, 0, s:Get_Secs())
+		call s:Assert_Equal(139, 333334, s:Get_Parts())
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(140, 0, s:Get_Secs())
+		call s:Assert_Equal(141, 500001, s:Get_Parts())
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(142, 0, s:Get_Secs())
+		call s:Assert_Equal(143, 666668, s:Get_Parts())
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(144, 0, s:Get_Secs())
+		call s:Assert_Equal(145, 833335, s:Get_Parts())
+		doautocmd pace CursorMovedI
+		call s:Assert_Equal(146, 1, s:Get_Secs())
+		call s:Assert_Equal(147, 2, s:Get_Parts())
+		call s:Assert_Equal(148, s:mockup.time.before, s:Get_Tick())
+		call s:Assert_Equal(149, 6, s:Get_Chars())
+		call s:Assert_True(39, exists('g:pace_info'))
+		let s:eval_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+		call s:Assert_Equal(150, '0.00', s:eval_any[1])
+		call s:Assert_Equal(151, '0', s:eval_any[2])
+		call s:Assert_Equal(152, '0', s:eval_any[3])
+		call s:Assert_Equal(153, '0', s:eval_any[4])
+		call s:Assert_True(40, exists('#pace#CursorHoldI#*'))
+		doautocmd pace CursorHoldI
+		call s:Assert_True(41, exists('g:pace_info'))
+		let s:eval_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+		call s:Assert_Equal(154, '0.00', s:eval_any[1])
+		call s:Assert_Equal(155, '6', s:eval_any[2])
+		call s:Assert_Equal(156, '6', s:eval_any[3])
+		call s:Assert_Equal(157, '1', s:eval_any[4])
+
+		call s:Assert_True(42, exists('#pace#CursorMovedI#*'))
+		doautocmd pace CursorMovedI
+		call s:Assert_True(43, exists('#pace#CursorHoldI#*'))
+		doautocmd pace CursorHoldI
+		call s:Assert_Equal(158, s:mockup.time.before, s:Get_Tick())
+		call s:Assert_Equal(159, 7, s:Get_Chars())
+		call s:Assert_Equal(160, 1, s:Get_Secs())
+		call s:Assert_True(44, exists('g:pace_info'))
+		let s:eval_any = matchlist(g:pace_info,
+				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+		call s:Assert_Equal(161, '0.00', s:eval_any[1])
+		call s:Assert_Equal(162, '7', s:eval_any[2])
+		call s:Assert_Equal(163, '7', s:eval_any[3])
+		call s:Assert_Equal(164, '1', s:eval_any[4])
+
+		call s:Assert_True(45, exists('#pace#InsertLeave#*'))
+		doautocmd pace InsertLeave
+		call s:Assert_Equal(165, (166667 + 2), s:pace.carry)
+		let s:mockup.mode = 'n'
+		let s:eval_6 = s:Pace_Load(0)
+		call s:Assert_Equal(166, 0, s:pace.carry)
+	finally
+		let &updatetime = s:pace.state.updatetime
+	endtry
 finally
 	let s:mockup.mode = s:eval_mode
 	let s:mockup.time.after = s:eval_time_after

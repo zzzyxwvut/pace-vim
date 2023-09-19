@@ -60,12 +60,18 @@ let s:pace	= {
 	\ 'mark':	0,
 	\ 'epoch':	reltime(),
 	\ 'pool':	{},
+	\ 'sample':	{
+		\ 'above':	2000,
+		\ 'below':	50,
+		\ 'in':		(50 - 5),
+	\ },
 	\ 'state':	{
 		\ 'laststatus':		&laststatus,
 		\ 'maxfuncdepth':	&maxfuncdepth,
 		\ 'ruler':		&ruler,
 		\ 'rulerformat':	&rulerformat,
 		\ 'statusline':		&g:statusline,
+		\ 'updatetime':		&updatetime,
 	\ },
 	\ 'status':	{},
 \ }
@@ -91,10 +97,28 @@ let s:parts	= len(reltime()) == 2
 							\ ? strlen(v:val[1])
 							\ : 0")[0]
 			\ : 0
-lockvar s:parts
+lockvar s:parts s:pace.sample.above s:pace.sample.below
 
 if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
 	throw 'My mind is going...'
+endif
+
+if s:parts == 9
+
+function! s:pace.recordunit(go, time) abort				" {{{1
+	let [a:go.b, a:go.c]	=
+		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000000),
+		\ ((a:time[1] + a:go.c) % 1000000000)]
+endfunction								" }}}1
+
+else
+
+function! s:pace.recordunit(go, time) abort				" {{{1
+	let [a:go.b, a:go.c]	=
+		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000),
+		\ ((a:time[1] + a:go.c) % 1000000)]
+endfunction								" }}}1
+
 endif
 
 if s:parts == 6 || s:parts == 9
@@ -104,6 +128,15 @@ function! s:pace.time(tick) abort					" {{{1
 endfunction								" }}}1
 
 if s:parts == 6
+
+function! s:pace.eval2(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
+endfunction
 
 function! s:pace.eval1(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
@@ -138,6 +171,15 @@ function! s:pace.eval0(go) abort					" {{{1
 endfunction								" }}}1
 
 elseif s:parts == 9
+
+function! s:pace.eval2(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
+endfunction
 
 function! s:pace.eval1(go) abort					" {{{1
 	let l:tick	= reltime(a:go.a)
@@ -184,6 +226,16 @@ function! s:pace.time(tick) abort					" {{{1
 	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
 endfunction
 
+function! s:pace.eval2(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
+endfunction
+
 function! s:pace.eval1(go) abort					" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
@@ -226,8 +278,43 @@ function! s:pace.trampolinemoved(value) abort				" {{{1
 	return a:value
 endfunction
 
+function! s:pace.trampolinehold(value) abort				" {{{1
+	autocmd! pace CursorHoldI
+	autocmd pace CursorHoldI	* call s:pace.sample1(s:turn)
+	return a:value
+endfunction
+
 function! s:pace.div(dividend, divisor) abort				" {{{1
 	return a:divisor ? (a:dividend / a:divisor) : a:dividend
+endfunction
+
+function! s:pace.sample2(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+						\ '0.00,',
+						\ l:self.div(l:char, l:sec),
+						\ l:char,
+						\ l:sec)
+endfunction
+
+function! s:pace.sample1(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+						\ '0.00,',
+						\ (l:char / l:sec),
+						\ l:char,
+						\ l:sec)
+endfunction
+
+function! s:pace.sample0(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ '0.00,',
+			\ l:sec != 0
+				\ ? l:self.trampolinehold(l:char / l:sec)
+				\ : l:char,
+			\ l:char,
+			\ l:sec)
 endfunction
 
 function! s:pace.msg(fname, entry) abort				" {{{1
@@ -242,6 +329,10 @@ function! s:pace.test(pass) abort					" {{{1
 		" Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
 		augroup END
+	endif
+
+	if exists('#pace#CursorHoldI')
+		autocmd! pace CursorHoldI
 	endif
 
 	if exists('#pace#CursorMovedI')
@@ -265,6 +356,35 @@ function! s:pace.test(pass) abort					" {{{1
 		unlet g:pace_policy
 	endif
 
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if g:pace_sample != l:self.sample.in
+			let [l:within, l:candidate]	=
+					\ g:pace_sample > l:self.sample.above
+				\ ? [0, (l:self.sample.above + 5)]
+				\ : g:pace_sample < l:self.sample.below
+					\ ? [0, (l:self.sample.below - 5)]
+					\ : [1, g:pace_sample]
+
+			if l:candidate != l:self.sample.in
+				if l:within != 0
+					let &updatetime	= l:candidate
+				elseif !(l:self.sample.in > l:self.sample.above ||
+						\ l:self.sample.in <
+							\ l:self.sample.below)
+					let &updatetime	= l:self.state.updatetime
+				endif
+
+				call l:self.msg(expand('<sfile>'),
+					\ printf('g:pace_sample: %i->%i',
+							\ l:self.sample.in,
+							\ l:candidate))
+				let l:self.sample.in	= l:candidate
+			endif
+		endif
+
+		unlet g:pace_sample
+	endif
+
 	if s:turn.d < 0
 		return -1
 	elseif !s:turn.d && !l:self.policy[2]
@@ -286,9 +406,26 @@ function! s:pace.test(pass) abort					" {{{1
 endfunction
 
 function! s:pace.leave() abort						" {{{1
+	let l:recordchar_tick	= reltime(l:self.epoch)
+
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
 	endif				" What if :doautocmd pace InsertLeave?
+
+	if !(l:self.sample.in < l:self.sample.below)
+		if l:self.sample.in > l:self.sample.above
+			" Counter the overhead of transition from CursorMovedI
+			" to InsertLeave by not rounding up.
+			call l:self.recordunit(s:turn,
+				\ [l:self.time(l:recordchar_tick)[0], 0])
+		endif
+
+		if exists('g:pace_info')
+			unlockvar g:pace_info
+		endif
+
+		call l:self.sample2(s:turn)
+	endif
 
 	if l:self.test(0)
 		return 1
@@ -359,7 +496,7 @@ function! s:pace.enter() abort						" {{{1
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
 
-	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call l:self.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
 	elseif !l:self.policy[4] ||
@@ -407,8 +544,22 @@ function! s:pace.enter() abort						" {{{1
 					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
-	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval0(s:turn)
+	if l:self.sample.in > l:self.sample.above
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* let s:turn.d	+= 1
+		endif
+	elseif l:self.sample.in < l:self.sample.below
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* call s:pace.eval0(s:turn)
+		endif
+	else
+		if !exists('#pace#CursorHoldI#*')
+			autocmd pace CursorHoldI	* call s:pace.sample0(s:turn)
+		endif
+
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* call s:pace.eval2(s:turn)
+		endif
 	endif
 
 	if !exists('#pace#InsertLeave#*')
@@ -430,6 +581,7 @@ function! Pace_Load(entropy) abort					" {{{1
 		let &ruler		= s:pace.state.ruler
 		let &maxfuncdepth	= s:pace.state.maxfuncdepth
 		let &laststatus		= s:pace.state.laststatus
+		let &updatetime		= s:pace.state.updatetime
 
 		" Counter the overhead of reltime() by not rounding up.
 		let s:turn.b		= -1
@@ -438,13 +590,14 @@ function! Pace_Load(entropy) abort					" {{{1
 		let s:pace.load		= 0
 		silent! autocmd! pace
 		return 2
-	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call s:pace.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
 	elseif s:pace.load
 		return -1
 	endif
 
+	let s:pace.state.updatetime	= &updatetime
 	let s:pace.state.laststatus	= &laststatus
 	let s:pace.state.maxfuncdepth	= &maxfuncdepth
 	let s:pace.state.ruler		= &ruler
@@ -454,6 +607,23 @@ function! Pace_Load(entropy) abort					" {{{1
 	let s:pace.buffer	= bufnr('%')
 	let s:pace.load		= 1
 	let s:pace.status[s:pace.buffer]	= &l:statusline
+
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if exists('g:pace_collect_garbage_early') &&
+				\ !(g:pace_sample > s:pace.sample.above ||
+						\ g:pace_sample <
+							\ s:pace.sample.below)
+			unlet g:pace_collect_garbage_early
+
+			" Libate Wine-bottled GUI builds before their first
+			" sampling.  (The availability of the variable is left
+			" undocumented.)
+			call garbagecollect()
+		endif
+	elseif !(s:pace.sample.in > s:pace.sample.above ||
+				\ s:pace.sample.in < s:pace.sample.below)
+		let &updatetime	= s:pace.sample.in
+	endif
 
 	augroup pace
 		autocmd! pace
