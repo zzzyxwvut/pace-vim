@@ -7,6 +7,7 @@
 
 parts=''
 quiet=0
+vim_script="${TEST_VIM_SCRIPT:-parts/share/legacy/vimscript.vim}"
 
 for a
 do
@@ -34,6 +35,7 @@ done
 
 test -n "${parts}"		|| exit 81
 test -x "${parts}"/base.sh	|| exit 82
+test -r "${vim_script}"		|| exit 83
 dir="${parts}"/scratch
 trap 'test -d "${dir}" && rm -fr "${dir}"' EXIT HUP INT QUIT TERM
 test -d "${dir}" || mkdir "${dir}"
@@ -99,13 +101,15 @@ do
 	"${parts}"/share/*)
 		;;
 	"${parts}/$a"-head-\*.vim)
-		cat "${dir}"/base.vim \
+		cat "${vim_script}" \
+			"${dir}"/base.vim \
 			"${parts}/$a".vim > "`printf 't%02i.vim' "$i"`"
 		i=$(($i + 1))
 		;;
 	*)	for h in ${hh}
 		do
-			cat "$h" \
+			cat "${vim_script}" \
+				"$h" \
 				"${dir}"/base.vim \
 				"${h%-head-*}"-tail-"${h#*-head-}" > \
 					"`printf 't%02i.vim' "$i"`"

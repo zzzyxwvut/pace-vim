@@ -62,9 +62,7 @@ t\[0-9\]\[0-9\].vim)
 *)	for f in ${ff}
 	do
 		sleep 1 || status="$?"
-		vim -i NONE \
-			-U NONE \
-			-u \$VIMRUNTIME/vimrc_example.vim \
+		vim --clean \
 			+source\ % \
 			"$f" || status="$?"
 		test "${status}" -eq 0 || exit "${status}"
