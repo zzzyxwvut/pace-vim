@@ -1,33 +1,35 @@
-"""""""""""""""""""""""""""""|demo/share/turn.vim|""""""""""""""""""""""""""""
-function s:Get_Tick() abort						" {{{1
-	return s:turn.a
-endfunction
+#############################|demo/share/turn.vim|############################
+def Get_Tick(): list<number>
+	return turn.a
+enddef
 
-function s:Set_Tick(value) abort					" {{{1
-	let s:turn.a = a:value
-endfunction
+def Set_Tick(value: list<number>)
+	turn.a = value
+enddef
 
-function s:Get_Secs() abort						" {{{1
-	return s:turn.b
-endfunction
+def Get_Secs(): number
+	return turn.b
+enddef
 
-function s:Set_Secs(value) abort					" {{{1
-	let s:turn.b = a:value
-endfunction
+def Set_Secs(value: number)
+	turn.b = value
+enddef
 
-function s:Get_Parts() abort						" {{{1
-	return s:turn.c
-endfunction
+def Get_Parts(): number
+	return turn.c
+enddef
 
-function s:Set_Parts(value) abort					" {{{1
-	let s:turn.c = a:value
-endfunction
+def Set_Parts(value: number)
+	turn.c = value
+enddef
 
-function s:Get_Chars() abort						" {{{1
-	return s:turn.d
-endfunction
+def Get_Chars(): number
+	return turn.d
+enddef
 
-function s:Set_Chars(value) abort					" {{{1
-	let s:turn.d = a:value
-endfunction								" }}}1
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+def Set_Chars(value: number)
+	turn.d = value
+enddef
+
+defcompile
+#####################################|EOF|####################################
