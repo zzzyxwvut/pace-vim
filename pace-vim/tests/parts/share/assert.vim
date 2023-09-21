@@ -12,7 +12,7 @@ function s:Go_To_Match(pattern) abort					" {{{1
 endfunction
 
 function s:Peek_Call_Stack() abort					" {{{1
-	return expand('<sfile>:t')
+	return expand('<stack>:t')
 endfunction
 
 function s:Write_Errors() abort						" {{{1
@@ -36,7 +36,7 @@ function s:Assert_True(id, predicate) abort				" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<sfile>:t')
+		let l:stack = expand('<stack>:t')
 		let l:top = stridx(l:stack, ']')
 		call add(s:assert_errors,
 			\ [l:top < 3
@@ -58,7 +58,7 @@ function s:Assert_Equal(id, left, right) abort				" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<sfile>:t')
+		let l:stack = expand('<stack>:t')
 		let l:top = stridx(l:stack, ']')
 		call add(s:assert_errors,
 			\ [l:top < 3
@@ -80,7 +80,7 @@ function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<sfile>:t')
+		let l:stack = expand('<stack>:t')
 		let l:top = stridx(l:stack, ']')
 		call add(s:assert_errors,
 			\ [l:top < 3
@@ -106,7 +106,7 @@ function s:Assert_True(id, predicate) abort				" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<sfile>:t'),
+		let l:top = matchlist(expand('<stack>:t'),
 						\ '^.\{-1,}\[\(\d\+\)\]')
 		let l:error = [empty(l:top)
 				\ ? printf('@%s: %s[%d]',
@@ -133,7 +133,7 @@ function s:Assert_Equal(id, left, right) abort				" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<sfile>:t'),
+		let l:top = matchlist(expand('<stack>:t'),
 						\ '^.\{-1,}\[\(\d\+\)\]')
 		let l:error = [empty(l:top)
 				\ ? printf('@%s: %s[%d]',
@@ -160,7 +160,7 @@ function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<sfile>:t'),
+		let l:top = matchlist(expand('<stack>:t'),
 						\ '^.\{-1,}\[\(\d\+\)\]')
 		let l:error = [empty(l:top)
 				\ ? printf('@%s: %s[%d]',
