@@ -74,7 +74,7 @@ stdin=4
 cursor=$((`wc -l "$1"/pace.vim \
 parts/share/legacy/mockup.vim \
 parts/share/legacy/assert.vim \
-parts/pace/share/turn.vim | \
+parts/pace/share/legacy/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
 
 ## Implement the --quiet option for ../../tools/assemble_tests.sh: whether
@@ -86,7 +86,7 @@ cat parts/share/legacy/mockup.vim \
 "$1"/pace.vim \
 - \
 parts/share/legacy/assert.vim \
-parts/pace/share/turn.vim > "$1"/base.vim <<EOF
+parts/pace/share/legacy/turn.vim > "$1"/base.vim <<EOF
 """"""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
 call cursor((${cursor} + str2nr(\$TEST_PACE_CURSOR_OFFSET)), 1)
 ${quiet}

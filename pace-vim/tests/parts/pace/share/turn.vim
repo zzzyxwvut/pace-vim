@@ -1,49 +1,51 @@
-"""""""""""""""""""""""""""""|pace/share/turn.vim|""""""""""""""""""""""""""""
-function s:Get_Tick() abort						" {{{1
-	return s:turn.a
-endfunction
+#############################|pace/share/turn.vim|############################
+def Get_Tick(): list<number>
+	return turn.a
+enddef
 
-function s:Set_Tick(value) abort					" {{{1
-	let s:turn.a = a:value
-endfunction
+def Set_Tick(value: list<number>)
+	turn.a = value
+enddef
 
-function s:Get_Secs() abort						" {{{1
-	return s:turn.b
-endfunction
+def Get_Secs(): number
+	return turn.b
+enddef
 
-function s:Set_Secs(value) abort					" {{{1
-	let s:turn.b = a:value
-endfunction
+def Set_Secs(value: number)
+	turn.b = value
+enddef
 
-function s:Get_Parts() abort						" {{{1
-	return s:turn.c
-endfunction
+def Get_Parts(): number
+	return turn.c
+enddef
 
-function s:Set_Parts(value) abort					" {{{1
-	let s:turn.c = a:value
-endfunction
+def Set_Parts(value: number)
+	turn.c = value
+enddef
 
-function s:Get_Chars() abort						" {{{1
-	return s:turn.d
-endfunction
+def Get_Chars(): number
+	return turn.d
+enddef
 
-function s:Set_Chars(value) abort					" {{{1
-	let s:turn.d = a:value
-endfunction
+def Set_Chars(value: number)
+	turn.d = value
+enddef
 
-function s:Get_Chars_Sum() abort					" {{{1
-	return s:turn.e
-endfunction
+def Get_Chars_Sum(): number
+	return turn.e
+enddef
 
-function s:Set_Chars_Sum(value) abort					" {{{1
-	let s:turn.e = a:value
-endfunction
+def Set_Chars_Sum(value: number)
+	turn.e = value
+enddef
 
-function s:Get_Secs_Sum() abort						" {{{1
-	return s:turn.f
-endfunction
+def Get_Secs_Sum(): number
+	return turn.f
+enddef
 
-function s:Set_Secs_Sum(value) abort					" {{{1
-	let s:turn.f = a:value
-endfunction								" }}}1
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+def Set_Secs_Sum(value: number)
+	turn.f = value
+enddef
+
+defcompile
+#####################################|EOF|####################################
