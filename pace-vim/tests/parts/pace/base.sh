@@ -27,7 +27,8 @@ s:ReltimeStr('	'v:insertmode
 s:insertmode'	'Pace_Load\(
 s:Pace_Load('	'Pace_Dump\(
 s:Pace_Dump('	'Pace_Free\(
-s:Pace_Free('
+s:Pace_Free('	'^[\t ]*command[ \t]
+command! '
 
 ## Generate an Awk filter templet for commenting.
 tools/comment_1_with_awk.sh "$1"/comment.awk \
@@ -63,6 +64,7 @@ cd "${cwd}"
 ## Massage a copy of the original script so that testing it is feasible:
 ##	(1) Mock up mode(), reltime(), reltimestr(), and v:insertmode;
 ##		also, limit the scope of Pace_{Load,Dump,Free}();
+##		also, permit command redefinition;
 ##	(2) Comment out '^[\t ]+silent! delcommand', '^lockvar s:parts',
 ##		'^[\t ]+silent! delfunction', and '^lockvar 1 s:pace s:turn'.
 awk -f "$1"/filter.awk "${TEST_PACE_PATH:-../plugin/pace.vim}" > "$1"/pace.vim

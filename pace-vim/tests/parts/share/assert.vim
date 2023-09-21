@@ -7,15 +7,15 @@ let s:script_name = !empty($TEST_SCRIPT_NAME)
 	\ ? $TEST_SCRIPT_NAME
 	\ : expand('<sfile>:t')
 
-function! s:Go_To_Match(pattern) abort					" {{{1
+function s:Go_To_Match(pattern) abort					" {{{1
 	return search(a:pattern, 'eW')
 endfunction
 
-function! s:Peek_Call_Stack() abort					" {{{1
+function s:Peek_Call_Stack() abort					" {{{1
 	return expand('<sfile>:t')
 endfunction
 
-function! s:Write_Errors() abort					" {{{1
+function s:Write_Errors() abort						" {{{1
 	if !empty(s:assert_errors)
 		" Allow for repeatable sources.
 		call writefile(map(s:assert_errors[:], 'string(v:val)'),
@@ -28,7 +28,7 @@ if s:Peek_Call_Stack() =~ '\[\d\+\]'
 
 if exists('s:assert_quiet')
 
-function! s:Assert_True(id, predicate) abort				" {{{1
+function s:Assert_True(id, predicate) abort				" {{{1
 	if !((type(a:predicate) == type(0) ||
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
@@ -52,7 +52,7 @@ function! s:Assert_True(id, predicate) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Equal(id, left, right) abort				" {{{1
+function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -74,7 +74,7 @@ function! s:Assert_Equal(id, left, right) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Not_Equal(id, left, right) abort			" {{{1
+function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -98,7 +98,7 @@ endfunction								" }}}1
 
 else
 
-function! s:Assert_True(id, predicate) abort				" {{{1
+function s:Assert_True(id, predicate) abort				" {{{1
 	if !((type(a:predicate) == type(0) ||
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
@@ -127,7 +127,7 @@ function! s:Assert_True(id, predicate) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Equal(id, left, right) abort				" {{{1
+function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -154,7 +154,7 @@ function! s:Assert_Equal(id, left, right) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Not_Equal(id, left, right) abort			" {{{1
+function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -187,7 +187,7 @@ else
 
 if exists('s:assert_quiet')
 
-function! s:Assert_True(id, predicate) abort				" {{{1
+function s:Assert_True(id, predicate) abort				" {{{1
 	if !((type(a:predicate) == type(0) ||
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
@@ -207,7 +207,7 @@ function! s:Assert_True(id, predicate) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Equal(id, left, right) abort				" {{{1
+function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -227,7 +227,7 @@ function! s:Assert_Equal(id, left, right) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Not_Equal(id, left, right) abort			" {{{1
+function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -249,7 +249,7 @@ endfunction								" }}}1
 
 else
 
-function! s:Assert_True(id, predicate) abort				" {{{1
+function s:Assert_True(id, predicate) abort				" {{{1
 	if !((type(a:predicate) == type(0) ||
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
@@ -269,7 +269,7 @@ function! s:Assert_True(id, predicate) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Equal(id, left, right) abort				" {{{1
+function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'
@@ -289,7 +289,7 @@ function! s:Assert_Equal(id, left, right) abort				" {{{1
 	endif
 endfunction
 
-function! s:Assert_Not_Equal(id, left, right) abort			" {{{1
+function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
 			execute bufwinnr(s:script_name).'wincmd w'

@@ -27,7 +27,7 @@ elseif s:mockup.parts == 6				" usec
 	let s:mockup.time.over = [-1, 999999]
 endif
 
-function! s:Mode() abort						" {{{1
+function s:Mode() abort							" {{{1
 	return s:mockup.mode
 endfunction								" }}}1
 
@@ -37,7 +37,7 @@ endfunction								" }}}1
 "	reltime()
 "	reltime(start)
 "	reltime(start, end)
-function! s:Reltime(...) abort						" {{{1
+function s:Reltime(...) abort						" {{{1
 	let l:kind = a:0 == 0
 		\ ? 0
 		\ : a:0 == 1 && type(a:1) == type([]) &&
@@ -73,7 +73,7 @@ endfunction								" }}}1
 " Track f_reltimestr of time.c and profile_msg of profiler.c.
 "
 " Beware that the time format is assumed as if it were timespec or timeval.
-function! s:ReltimeStr(time) abort					" {{{1
+function s:ReltimeStr(time) abort					" {{{1
 	if type(a:time) != type([]) ||
 					\ len(a:time) != 2 ||
 					\ type(a:time[0]) != type(0) ||

@@ -65,7 +65,7 @@ endif
 
 if s:parts == 6
 
-function! s:demo.eval1(go) abort					" {{{1
+function s:demo.eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -79,7 +79,7 @@ function! s:demo.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:demo.eval0(go) abort					" {{{1
+function s:demo.eval0(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -97,7 +97,7 @@ endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:demo.eval1(go) abort					" {{{1
+function s:demo.eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -111,7 +111,7 @@ function! s:demo.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:demo.eval0(go) abort					" {{{1
+function s:demo.eval0(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -131,7 +131,7 @@ else
 
 " The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-function! s:demo.eval1(go) abort					" {{{1
+function s:demo.eval1(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -146,7 +146,7 @@ function! s:demo.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:demo.eval0(go) abort					" {{{1
+function s:demo.eval0(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -165,7 +165,7 @@ endfunction								" }}}1
 
 endif
 
-function! s:demo.print(go, i, j, name, lines, times) abort		" {{{1
+function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 	if a:lines < 1
 		return
 	endif
@@ -231,7 +231,7 @@ function! s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 	endtry
 endfunction
 
-function! s:demo.run(go) abort						" {{{1
+function s:demo.run(go) abort						" {{{1
 	let l:z	= len(l:self.text)
 	let l:t	= len(l:self.linage) - 1
 	let l:n	= 0
@@ -255,11 +255,11 @@ function! s:demo.run(go) abort						" {{{1
 	endfor
 endfunction
 
-function! s:demo.errmsg(entry) abort					" {{{1
+function s:demo.errmsg(entry) abort					" {{{1
 	echohl ErrorMsg | echomsg l:self.handle.': '.a:entry | echohl None
 endfunction
 
-function! s:demo.fetch(fname, lines) abort				" {{{1
+function s:demo.fetch(fname, lines) abort				" {{{1
 	if !filereadable(a:fname)
 		call l:self.errmsg('`'
 				\ .a:fname

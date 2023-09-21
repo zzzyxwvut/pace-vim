@@ -105,7 +105,7 @@ endif
 
 if s:parts == 9
 
-function! s:pace.recordunit(go, time) abort				" {{{1
+function s:pace.recordunit(go, time) abort				" {{{1
 	let [a:go.b, a:go.c]	=
 		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000000),
 		\ ((a:time[1] + a:go.c) % 1000000000)]
@@ -113,7 +113,7 @@ endfunction								" }}}1
 
 else
 
-function! s:pace.recordunit(go, time) abort				" {{{1
+function s:pace.recordunit(go, time) abort				" {{{1
 	let [a:go.b, a:go.c]	=
 		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000),
 		\ ((a:time[1] + a:go.c) % 1000000)]
@@ -123,13 +123,13 @@ endif
 
 if s:parts == 6 || s:parts == 9
 
-function! s:pace.time(tick) abort					" {{{1
+function s:pace.time(tick) abort					" {{{1
 	return a:tick
 endfunction								" }}}1
 
 if s:parts == 6
 
-function! s:pace.eval2(go) abort					" {{{1
+function s:pace.eval2(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -138,7 +138,7 @@ function! s:pace.eval2(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval1(go) abort					" {{{1
+function s:pace.eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -153,7 +153,7 @@ function! s:pace.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval0(go) abort					" {{{1
+function s:pace.eval0(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -172,7 +172,7 @@ endfunction								" }}}1
 
 elseif s:parts == 9
 
-function! s:pace.eval2(go) abort					" {{{1
+function s:pace.eval2(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -181,7 +181,7 @@ function! s:pace.eval2(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval1(go) abort					" {{{1
+function s:pace.eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -196,7 +196,7 @@ function! s:pace.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval0(go) abort					" {{{1
+function s:pace.eval0(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -221,12 +221,12 @@ else
 
 " The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-function! s:pace.time(tick) abort					" {{{1
+function s:pace.time(tick) abort					" {{{1
 	let l:unit	= reltimestr(a:tick)
 	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
 endfunction
 
-function! s:pace.eval2(go) abort					" {{{1
+function s:pace.eval2(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -236,7 +236,7 @@ function! s:pace.eval2(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval1(go) abort					" {{{1
+function s:pace.eval1(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -252,7 +252,7 @@ function! s:pace.eval1(go) abort					" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval0(go) abort					" {{{1
+function s:pace.eval0(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -272,23 +272,23 @@ endfunction								" }}}1
 
 endif
 
-function! s:pace.trampolinemoved(value) abort				" {{{1
+function s:pace.trampolinemoved(value) abort				" {{{1
 	autocmd! pace CursorMovedI
 	autocmd pace CursorMovedI	* call s:pace.eval1(s:turn)
 	return a:value
 endfunction
 
-function! s:pace.trampolinehold(value) abort				" {{{1
+function s:pace.trampolinehold(value) abort				" {{{1
 	autocmd! pace CursorHoldI
 	autocmd pace CursorHoldI	* call s:pace.sample1(s:turn)
 	return a:value
 endfunction
 
-function! s:pace.div(dividend, divisor) abort				" {{{1
+function s:pace.div(dividend, divisor) abort				" {{{1
 	return a:divisor ? (a:dividend / a:divisor) : a:dividend
 endfunction
 
-function! s:pace.sample2(go) abort					" {{{1
+function s:pace.sample2(go) abort					" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 						\ '0.00,',
@@ -297,7 +297,7 @@ function! s:pace.sample2(go) abort					" {{{1
 						\ l:sec)
 endfunction
 
-function! s:pace.sample1(go) abort					" {{{1
+function s:pace.sample1(go) abort					" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 						\ '0.00,',
@@ -306,7 +306,7 @@ function! s:pace.sample1(go) abort					" {{{1
 						\ l:sec)
 endfunction
 
-function! s:pace.sample0(go) abort					" {{{1
+function s:pace.sample0(go) abort					" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ '0.00,',
@@ -317,14 +317,14 @@ function! s:pace.sample0(go) abort					" {{{1
 			\ l:sec)
 endfunction
 
-function! s:pace.msg(fname, entry) abort				" {{{1
+function s:pace.msg(fname, entry) abort					" {{{1
 	echomsg printf('%s: @%i: %s',
 				\ split(a:fname, '\v%(\.\.|\s+)')[-1],
 				\ localtime(),
 				\ a:entry)
 endfunction
 
-function! s:pace.test(pass) abort					" {{{1
+function s:pace.test(pass) abort					" {{{1
 	if !exists('#pace')
 		" Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
@@ -405,7 +405,7 @@ function! s:pace.test(pass) abort					" {{{1
 	endtry
 endfunction
 
-function! s:pace.leave() abort						" {{{1
+function s:pace.leave() abort						" {{{1
 	let l:recordchar_tick	= reltime(l:self.epoch)
 
 	if &maxfuncdepth < 16		" An arbitrary bound.
@@ -457,7 +457,7 @@ function! s:pace.leave() abort						" {{{1
 	let l:self.carry	= s:turn.c		" Copy for rejects &c.
 endfunction
 
-function! s:pace.swap(buffer) abort					" {{{1
+function s:pace.swap(buffer) abort					" {{{1
 	let l:status	= get(l:self.status, l:self.buffer, &g:statusline)
 
 	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
@@ -481,7 +481,7 @@ function! s:pace.swap(buffer) abort					" {{{1
 	let [l:self.status[a:buffer], l:self.buffer]	= [&l:statusline, a:buffer]
 endfunction
 
-function! s:pace.enter() abort						" {{{1
+function s:pace.enter() abort						" {{{1
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
 	endif				" Graduate a sounding-rod before _test_.
@@ -569,7 +569,7 @@ function! s:pace.enter() abort						" {{{1
 	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
 endfunction
 
-function! Pace_Load(entropy) abort					" {{{1
+function Pace_Load(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
 		if !s:pace.load || mode() != 'n'
 			return 1
@@ -631,7 +631,7 @@ function! Pace_Load(entropy) abort					" {{{1
 	augroup END
 endfunction
 
-function! Pace_Dump(entropy) abort					" {{{1
+function Pace_Dump(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
 		return deepcopy(s:pace.dump, 1)
 	elseif !empty(s:pace.pool)			" pace.leave() empties.
@@ -659,7 +659,7 @@ function! Pace_Dump(entropy) abort					" {{{1
 	return copy(s:pace.pool)
 endfunction
 
-function! Pace_Free() abort						" {{{1
+function Pace_Free() abort						" {{{1
 	if !exists('s:pace') || mode() != 'n'
 		return 0
 	endif
@@ -689,10 +689,10 @@ function! Pace_Free() abort						" {{{1
 	return 1
 endfunction								" }}}1
 
-command! -bar PaceOn	:echo Pace_Load(1)
-command! -bar PaceOff	:echo Pace_Load(0)
-command! -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
-command! -bar -nargs=*
+command -bar PaceOn	:echo Pace_Load(1)
+command -bar PaceOff	:echo Pace_Load(0)
+command -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
+command -bar -nargs=*
 	\ PaceDump	:echo len([<f-args>]) == 3
 	\ ? Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]]
 	\ : len([<f-args>]) == 2
@@ -700,16 +700,16 @@ command! -bar -nargs=*
 		\ : len([<f-args>]) == 1
 			\ ? Pace_Dump(0)[[<f-args>][0]]
 			\ : Pace_Dump(0)
-command! -bar PaceFree	:echo Pace_Free()
+command -bar PaceFree	:echo Pace_Free()
 
 if has('modify_fname')
-command! -bar -nargs=1 -complete=dir
+command -bar -nargs=1 -complete=dir
 	\ PaceSaveTo	:echo writefile(['let g:pace_dump = '
 						\ .string(Pace_Dump(0))],
 				\ fnamemodify(expand(<q-args>), ':p')
 						\ .'/pace_'
 						\ .localtime())
-command! -bar -nargs=1 -complete=file
+command -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
 				\ .fnamemodify(expand(<q-args>), ':p:h')
 				\ .' | source '
