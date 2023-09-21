@@ -73,7 +73,7 @@ awk -f "$1"/filter.awk "${TEST_PACE_PATH:-../plugin/pace.vim}" > "$1"/pace.vim
 stdin=4
 cursor=$((`wc -l "$1"/pace.vim \
 parts/share/mockup.vim \
-parts/share/assert.vim \
+parts/share/legacy/assert.vim \
 parts/pace/share/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
 
@@ -85,7 +85,7 @@ test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
 cat parts/share/mockup.vim \
 "$1"/pace.vim \
 - \
-parts/share/assert.vim \
+parts/share/legacy/assert.vim \
 parts/pace/share/turn.vim > "$1"/base.vim <<EOF
 """"""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
 call cursor((${cursor} + str2nr(\$TEST_PACE_CURSOR_OFFSET)), 1)

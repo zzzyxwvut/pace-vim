@@ -1,313 +1,301 @@
-""""""""""""""""""""""""""""""|share/assert.vim|""""""""""""""""""""""""""""""
-let s:cpoptions = &cpoptions
-set cpoptions-=C					" Join line-breaks.
+##############################|share/assert.vim|##############################
+var assert_errors: list<list<string>> = []
 
-let s:assert_errors = []
-let s:script_name = !empty($TEST_SCRIPT_NAME)
-	\ ? $TEST_SCRIPT_NAME
-	\ : expand('<script>:t')
+const script_name: string = !empty($TEST_SCRIPT_NAME)
+	? $TEST_SCRIPT_NAME
+	: expand('<script>:t')
 
-function s:Go_To_Match(pattern) abort					" {{{1
-	return search(a:pattern, 'eW')
-endfunction
+def Go_To_Match(pattern: string): number
+	return search(pattern, 'eW')
+enddef
 
-function s:Peek_Call_Stack() abort					" {{{1
+def Peek_Call_Stack(): string
 	return expand('<stack>:t')
-endfunction
+enddef
 
-function s:Write_Errors() abort						" {{{1
-	if !empty(s:assert_errors)
-		" Allow for repeatable sources.
-		call writefile(map(s:assert_errors[:], 'string(v:val)'),
-								\ 'errors',
-								\ 'a')
+def Write_Errors()
+	if !empty(assert_errors)
+		# Allow for repeatable sources.
+		writefile(map(assert_errors[:], 'string(v:val)'), 'errors', 'a')
 	endif
-endfunction								" }}}1
+enddef
 
-if s:Peek_Call_Stack() =~ '\[\d\+\]'
+if Peek_Call_Stack() =~ '\[\d\+\]'
 
-if exists('s:assert_quiet')
+if exists('assert_quiet')
 
-function s:Assert_True(id, predicate) abort				" {{{1
-	if !((type(a:predicate) == type(0) ||
-				\ type(a:predicate) == type(v:false)) &&
-							\ !!a:predicate)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_True(id: number, predicate: bool)
+	if !predicate
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<stack>:t')
-		let l:top = stridx(l:stack, ']')
-		call add(s:assert_errors,
-			\ [l:top < 3
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_True('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:stack[: l:top],
-			\ 'false'])
+		const stack: string = expand('<stack>:t')
+		const top: number = stridx(stack, ']')
+		add(assert_errors,
+			[top < 3
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_True('
+							.. id
+							.. ','))
+				: stack[: top],
+			'false'])
 		quitall
 	endif
-endfunction
+enddef
 
-function s:Assert_Equal(id, left, right) abort				" {{{1
-	if !(type(a:left) == type(a:right) && a:left == a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Equal(id: number, left: any, right: any)
+	if !(type(left) == type(right) && left == right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<stack>:t')
-		let l:top = stridx(l:stack, ']')
-		call add(s:assert_errors,
-			\ [l:top < 3
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:stack[: l:top],
-			\ printf('%s != %s', string(a:left), string(a:right))])
+		const stack: string = expand('<stack>:t')
+		const top: number = stridx(stack, ']')
+		add(assert_errors,
+			[top < 3
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Equal('
+							.. id
+							.. ','))
+				: stack[: top],
+			printf('%s != %s', string(left), string(right))])
 		quitall
 	endif
-endfunction
+enddef
 
-function s:Assert_Not_Equal(id, left, right) abort			" {{{1
-	if !(type(a:left) != type(a:right) || a:left != a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Not_Equal(id: number, left: any, right: any)
+	if !(type(left) != type(right) || left != right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:stack = expand('<stack>:t')
-		let l:top = stridx(l:stack, ']')
-		call add(s:assert_errors,
-			\ [l:top < 3
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:stack[: l:top],
-			\ printf('%s == %s', string(a:left), string(a:right))])
+		const stack: string = expand('<stack>:t')
+		const top: number = stridx(stack, ']')
+		add(assert_errors,
+			[top < 3
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Not_Equal('
+							.. id
+							.. ','))
+				: stack[: top],
+			printf('%s == %s', string(left), string(right))])
 		quitall
 	endif
-endfunction								" }}}1
+enddef
 
 else
 
-function s:Assert_True(id, predicate) abort				" {{{1
-	if !((type(a:predicate) == type(0) ||
-				\ type(a:predicate) == type(v:false)) &&
-							\ !!a:predicate)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_True(id: number, predicate: bool)
+	if !predicate
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<stack>:t'),
-						\ '^.\{-1,}\[\(\d\+\)\]')
-		let l:error = [empty(l:top)
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_True('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:top[0],
-			\ 'false']
-		call add(s:assert_errors, l:error)
+		const top: list<string> = matchlist(expand('<stack>:t'),
+						'^.\{-1,}\[\(\d\+\)\]')
+		const error: list<string> = [empty(top)
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_True('
+							.. id
+							.. ','))
+				: top[0],
+			'false']
+		add(assert_errors, error)
 
-		if len(l:top) > 1 && l:top[1] != ''
-			call cursor(str2nr(l:top[1]), 1)
+		if len(top) > 1 && top[1] != ''
+			cursor(str2nr(top[1]), 1)
 		endif
 
-		throw printf('TEST: %s: %s', l:error[0], l:error[1])
+		throw printf('TEST: %s: %s', error[0], error[1])
 	endif
-endfunction
+enddef
 
-function s:Assert_Equal(id, left, right) abort				" {{{1
-	if !(type(a:left) == type(a:right) && a:left == a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Equal(id: number, left: any, right: any)
+	if !(type(left) == type(right) && left == right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<stack>:t'),
-						\ '^.\{-1,}\[\(\d\+\)\]')
-		let l:error = [empty(l:top)
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:top[0],
-			\ printf('%s != %s', string(a:left), string(a:right))]
-		call add(s:assert_errors, l:error)
+		const top: list<string> = matchlist(expand('<stack>:t'),
+						'^.\{-1,}\[\(\d\+\)\]')
+		const error: list<string> = [empty(top)
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Equal('
+							.. id
+							.. ','))
+				: top[0],
+			printf('%s != %s', string(left), string(right))]
+		add(assert_errors, error)
 
-		if len(l:top) > 1 && l:top[1] != ''
-			call cursor(str2nr(l:top[1]), 1)
+		if len(top) > 1 && top[1] != ''
+			cursor(str2nr(top[1]), 1)
 		endif
 
-		throw printf('TEST: %s: "%s"', l:error[0], l:error[1])
+		throw printf('TEST: %s: "%s"', error[0], error[1])
 	endif
-endfunction
+enddef
 
-function s:Assert_Not_Equal(id, left, right) abort			" {{{1
-	if !(type(a:left) != type(a:right) || a:left != a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Not_Equal(id: number, left: any, right: any)
+	if !(type(left) != type(right) || left != right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:top = matchlist(expand('<stack>:t'),
-						\ '^.\{-1,}\[\(\d\+\)\]')
-		let l:error = [empty(l:top)
-				\ ? printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .. string(a:id)
-							\ .. ','))
-				\ : l:top[0],
-			\ printf('%s == %s', string(a:left), string(a:right))]
-		call add(s:assert_errors, l:error)
+		const top: list<string> = matchlist(expand('<stack>:t'),
+						'^.\{-1,}\[\(\d\+\)\]')
+		const error: list<string> = [empty(top)
+				? printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Not_Equal('
+							.. id
+							.. ','))
+				: top[0],
+			printf('%s == %s', string(left), string(right))]
+		add(assert_errors, error)
 
-		if len(l:top) > 1 && l:top[1] != ''
-			call cursor(str2nr(l:top[1]), 1)
+		if len(top) > 1 && top[1] != ''
+			cursor(str2nr(top[1]), 1)
 		endif
 
-		throw printf('TEST: %s: "%s"', l:error[0], l:error[1])
+		throw printf('TEST: %s: "%s"', error[0], error[1])
 	endif
-endfunction								" }}}1
+enddef
 
 endif
 
 else
 
-if exists('s:assert_quiet')
+if exists('assert_quiet')
 
-function s:Assert_True(id, predicate) abort				" {{{1
-	if !((type(a:predicate) == type(0) ||
-				\ type(a:predicate) == type(v:false)) &&
-							\ !!a:predicate)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_True(id: number, predicate: bool)
+	if !predicate
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		call add(s:assert_errors,
-			\ [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_True('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ 'false'])
+		add(assert_errors,
+			[printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_True('
+							.. id
+							.. ',')),
+				'false'])
 		quitall
 	endif
-endfunction
+enddef
 
-function s:Assert_Equal(id, left, right) abort				" {{{1
-	if !(type(a:left) == type(a:right) && a:left == a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Equal(id: number, left: any, right: any)
+	if !(type(left) == type(right) && left == right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		call add(s:assert_errors,
-			\ [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ printf('%s != %s',
-						\ string(a:left),
-						\ string(a:right))])
+		add(assert_errors,
+			[printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Equal('
+							.. id
+							.. ',')),
+				printf('%s != %s',
+						string(left),
+						string(right))])
 		quitall
 	endif
-endfunction
+enddef
 
-function s:Assert_Not_Equal(id, left, right) abort			" {{{1
-	if !(type(a:left) != type(a:right) || a:left != a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Not_Equal(id: number, left: any, right: any)
+	if !(type(left) != type(right) || left != right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		call add(s:assert_errors,
-			\ [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ printf('%s == %s',
-						\ string(a:left),
-						\ string(a:right))])
+		add(assert_errors,
+			[printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Not_Equal('
+							.. id
+							.. ',')),
+				printf('%s == %s',
+						string(left),
+						string(right))])
 		quitall
 	endif
-endfunction								" }}}1
+enddef
 
 else
 
-function s:Assert_True(id, predicate) abort				" {{{1
-	if !((type(a:predicate) == type(0) ||
-				\ type(a:predicate) == type(v:false)) &&
-							\ !!a:predicate)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_True(id: number, predicate: bool)
+	if !predicate
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:error = [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_True('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ 'false']
-		call add(s:assert_errors, l:error)
-		throw printf('TEST: %s: %s', l:error[0], l:error[1])
+		const error: list<string> = [printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_True('
+							.. id
+							.. ',')),
+				'false']
+		add(assert_errors, error)
+		throw printf('TEST: %s: %s', error[0], error[1])
 	endif
-endfunction
+enddef
 
-function s:Assert_Equal(id, left, right) abort				" {{{1
-	if !(type(a:left) == type(a:right) && a:left == a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Equal(id: number, left: any, right: any)
+	if !(type(left) == type(right) && left == right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:error = [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ printf('%s != %s',
-						\ string(a:left),
-						\ string(a:right))]
-		call add(s:assert_errors, l:error)
-		throw printf('TEST: %s: "%s"', l:error[0], l:error[1])
+		const error: list<string> = [printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Equal('
+							.. id
+							.. ',')),
+				printf('%s != %s',
+						string(left),
+						string(right))]
+		add(assert_errors, error)
+		throw printf('TEST: %s: "%s"', error[0], error[1])
 	endif
-endfunction
+enddef
 
-function s:Assert_Not_Equal(id, left, right) abort			" {{{1
-	if !(type(a:left) != type(a:right) || a:left != a:right)
-		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name) .. 'wincmd w'
+def Assert_Not_Equal(id: number, left: any, right: any)
+	if !(type(left) != type(right) || left != right)
+		if bufname('%') != script_name && bufwinnr(script_name) > -1
+			execute ':' .. bufwinnr(script_name) .. 'wincmd w'
 		endif
 
-		let l:error = [printf('@%s: %s[%d]',
-					\ string(a:id),
-					\ s:script_name,
-					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .. string(a:id)
-							\ .. ',')),
-				\ printf('%s == %s',
-						\ string(a:left),
-						\ string(a:right))]
-		call add(s:assert_errors, l:error)
-		throw printf('TEST: %s: "%s"', l:error[0], l:error[1])
+		const error: list<string> = [printf('@%s: %s[%d]',
+					string(id),
+					script_name,
+					Go_To_Match('\<Assert_Not_Equal('
+							.. id
+							.. ',')),
+				printf('%s == %s',
+						string(left),
+						string(right))]
+		add(assert_errors, error)
+		throw printf('TEST: %s: "%s"', error[0], error[1])
 	endif
-endfunction								" }}}1
+enddef
 
 endif
 
@@ -315,10 +303,8 @@ endif
 
 augroup test
 	autocmd! test
-	autocmd test VimLeave		* call s:Write_Errors()
+	autocmd test VimLeave		* Write_Errors()
 augroup END
 
-delfunction s:Peek_Call_Stack
-let &cpoptions = s:cpoptions
-unlet s:cpoptions
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+defcompile
+#####################################|EOF|####################################

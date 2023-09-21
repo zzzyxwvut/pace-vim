@@ -71,7 +71,7 @@ awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 stdin=46
 cursor=$((`wc -l "$1"/demo.vim \
 parts/share/mockup.vim \
-parts/share/assert.vim \
+parts/share/legacy/assert.vim \
 parts/demo/share/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
 
@@ -83,7 +83,7 @@ test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
 cat parts/share/mockup.vim \
 "$1"/demo.vim \
 - \
-parts/share/assert.vim \
+parts/share/legacy/assert.vim \
 parts/demo/share/turn.vim > "$1"/base.vim <<EOF
 """"""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
 let s:cpoptions = &cpoptions
