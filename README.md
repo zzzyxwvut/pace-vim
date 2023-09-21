@@ -14,6 +14,12 @@ Vim directory, either clone this repository and copy all
 `pace-vim/pace-vim` files _or_ fetch the most recent zipped  
 [archive](https://www.vim.org/scripts/script.php?script_id=5472) and extract its files.
 
+Since Vim 8, consider assembling a Vim package for either  
+cloning, copying, or extracting:
+```vim
+help packages
+```
+
 Having the files installed, launch Vim and list all `doc/`  
 locations:
 ```vim
