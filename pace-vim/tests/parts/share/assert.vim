@@ -5,7 +5,7 @@ set cpoptions-=C					" Join line-breaks.
 let s:assert_errors = []
 let s:script_name = !empty($TEST_SCRIPT_NAME)
 	\ ? $TEST_SCRIPT_NAME
-	\ : expand('<sfile>:t')
+	\ : expand('<script>:t')
 
 function s:Go_To_Match(pattern) abort					" {{{1
 	return search(a:pattern, 'eW')

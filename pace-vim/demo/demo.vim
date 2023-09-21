@@ -33,7 +33,7 @@ if !(has('reltime') && has('cmdline_info') && has('statusline'))
 endif
 
 let s:demo	= {
-	\ 'handle':	expand('<sfile>'),
+	\ 'handle':	expand('<script>'),
 	\ 'reg_z':	@z,
 	\ 'delay':	[],
 	\ 'linage':	[],
