@@ -54,7 +54,7 @@ let s:turn	= {'a': reltime(), 'b': -1, 'c': 0, 'd': -1, 'e': 0, 'f': 0}
 
 let s:pace	= {
 	\ 'buffer':	bufnr('%'),
-	\ 'policy':	10007,
+	\ 'policy':	0x10007,
 	\ 'carry':	0,
 	\ 'load':	0,
 	\ 'mark':	0,
@@ -344,13 +344,16 @@ function s:pace.test(pass) abort					" {{{1
 	endif
 
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
-		if g:pace_policy != l:self.policy &&
-				\ g:pace_policy =~ '\<1[012][01][012][0-7]\>'
+		let l:policy_base_16	= string(g:pace_policy)
+		let l:policy_base_10	= eval('0x' .. l:policy_base_16)
+
+		if l:policy_base_10 != l:self.policy &&
+				\ l:policy_base_16 =~ '\<1[012][01][012][0-7]\>'
 			call l:self.msg(expand('<sfile>'),
-					\ printf('g:pace_policy: %i->%i',
+					\ printf('g:pace_policy: %x->%s',
 							\ l:self.policy,
-							\ g:pace_policy))
-			let l:self.policy	= g:pace_policy
+							\ l:policy_base_16))
+			let l:self.policy	= l:policy_base_10
 		endif
 
 		unlet g:pace_policy
@@ -387,18 +390,18 @@ function s:pace.test(pass) abort					" {{{1
 
 	if s:turn.d < 0
 		return -1
-	elseif !s:turn.d && !l:self.policy[2]
+	elseif !s:turn.d && and(l:self.policy, 0x10100) == 0x10000
 		let s:turn.c	= l:self.carry
 		return 4				" Discard null.
 	elseif !a:pass
 		return 0				" pace.leave() exit.
-	elseif !l:self.policy[3]
+	elseif and(l:self.policy, 0x10030) == 0x10000
 		let s:turn.c	= l:self.carry
 		return 2				" Discard rejects.
 	endif
 
 	try
-		let l:self.mark	= l:self.policy[3] == 2	" Add (-) to hit.
+		let l:self.mark	= and(l:self.policy, 0x10020) == 0x10020
 		return l:self.leave()			" Collect rejects.
 	finally
 		let l:self.mark	= 0
@@ -499,11 +502,11 @@ function s:pace.enter() abort						" {{{1
 	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call l:self.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
-	elseif !l:self.policy[4] ||
-		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
-		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
-		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
-		return -1		" Imitate and(l:self.policy[4], 1) &c.
+	elseif and(l:self.policy, 0x10007) == 0x10000 ||
+		\ (v:insertmode == 'i' && and(l:self.policy, 0x10001) != 0x10001) ||
+		\ (v:insertmode == 'r' && and(l:self.policy, 0x10002) != 0x10002) ||
+		\ (v:insertmode == 'v' && and(l:self.policy, 0x10004) != 0x10004)
+		return -1
 	endif
 
 	if !&laststatus
@@ -521,9 +524,10 @@ function s:pace.enter() abort						" {{{1
 	endif
 
 	" Select the base count values for reporting.
-	let [s:turn.e, s:turn.f]	= l:self.policy[1] == 1
+	let [s:turn.e, s:turn.f]	=
+				\ and(l:self.policy, 0x11000) == 0x11000
 		\ ? [l:self.dump[0][0][2], l:self.dump[0][0][3]]
-		\ : l:self.policy[1] == 2 &&
+		\ : and(l:self.policy, 0x12000) == 0x12000 &&
 					\ has_key(l:self.dump, l:self.buffer)
 			\ ? [l:self.dump[l:self.buffer][0][2],
 					\ l:self.dump[l:self.buffer][0][3]]

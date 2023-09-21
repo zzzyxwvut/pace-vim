@@ -48,7 +48,7 @@ try
 	doautocmd pace InsertLeave		" 1/2: Discard null.
 	call s:Assert_Equal(507, 2, s:pace.carry)
 	call s:Assert_Equal(508, 2, s:Get_Parts())
-	call s:Assert_Equal(8, 0, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(8, 0x10000, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(9, 2, s:pace.dump[0][0][2])
 	call s:Assert_Equal(10, (s:pace.dump[0][0][0] + 1),
 						\ s:pace.dump[0][0][1])
@@ -69,7 +69,7 @@ try
 	doautocmd pace InsertEnter		" 1/4: Discard rejects.
 	call s:Assert_Equal(511, 2, s:pace.carry)
 	call s:Assert_Equal(512, 2, s:Get_Parts())
-	call s:Assert_Equal(14, 0, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(14, 0x10000, and(s:pace.policy, 0x10030))
 	call s:Assert_Equal(15, 2, s:pace.dump[0][0][2])
 	call s:Assert_Equal(16, (s:pace.dump[0][0][0] + 3),
 						\ s:pace.dump[0][0][1])
@@ -114,7 +114,7 @@ try
 	doautocmd pace InsertLeave		" 2/6: Discard null.
 	call s:Assert_Equal(519, 4, s:pace.carry)
 	call s:Assert_Equal(520, 4, s:Get_Parts())
-	call s:Assert_Equal(25, 0, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(25, 0x10000, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(26, 4, s:pace.dump[0][0][2])
 	call s:Assert_Equal(27, (s:pace.dump[0][0][0] + 4),
 						\ s:pace.dump[0][0][1])
@@ -135,7 +135,7 @@ try
 	doautocmd pace InsertEnter		" 3/8: Keep rejects.
 	call s:Assert_Equal(523, 6, s:pace.carry)
 	call s:Assert_Equal(524, 6, s:Get_Parts())
-	call s:Assert_Equal(31, 1, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(31, 0x10010, and(s:pace.policy, 0x10010))
 	call s:Assert_Equal(32, 6, s:pace.dump[0][0][2])
 	call s:Assert_Equal(33, (s:pace.dump[0][0][0] + 5),
 						\ s:pace.dump[0][0][1])
@@ -180,7 +180,7 @@ try
 	doautocmd pace InsertLeave		" 4/10: Discard null.
 	call s:Assert_Equal(531, 8, s:pace.carry)
 	call s:Assert_Equal(532, 8, s:Get_Parts())
-	call s:Assert_Equal(42, 0, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(42, 0x10000, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(43, 8, s:pace.dump[0][0][2])
 	call s:Assert_Equal(44, (s:pace.dump[0][0][0] + 6),
 						\ s:pace.dump[0][0][1])
@@ -201,7 +201,7 @@ try
 	doautocmd pace InsertEnter		" 5/12: Mark rejects.
 	call s:Assert_Equal(535, 10, s:pace.carry)
 	call s:Assert_Equal(536, 10, s:Get_Parts())
-	call s:Assert_Equal(48, 2, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(48, 0x10020, and(s:pace.policy, 0x10020))
 	call s:Assert_Equal(49, 10, s:pace.dump[0][0][2])
 	call s:Assert_Equal(50, (s:pace.dump[0][0][0] + 7),
 						\ s:pace.dump[0][0][1])
@@ -247,7 +247,7 @@ try
 	doautocmd pace InsertLeave		" 7/14: Keep null.
 	call s:Assert_Equal(543, 12, s:pace.carry)
 	call s:Assert_Equal(544, 12, s:Get_Parts())
-	call s:Assert_Equal(59, 1, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(59, 0x10100, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(60, 12, s:pace.dump[0][0][2])
 	call s:Assert_Equal(61, (s:pace.dump[0][0][0] + 7),
 						\ s:pace.dump[0][0][1])
@@ -268,7 +268,7 @@ try
 	doautocmd pace InsertEnter		" 7/16: Discard rejects.
 	call s:Assert_Equal(547, 12, s:pace.carry)
 	call s:Assert_Equal(548, 12, s:Get_Parts())
-	call s:Assert_Equal(65, 0, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(65, 0x10000, and(s:pace.policy, 0x10030))
 	call s:Assert_Equal(66, 12, s:pace.dump[0][0][2])
 	call s:Assert_Equal(67, (s:pace.dump[0][0][0] + 9),
 						\ s:pace.dump[0][0][1])
@@ -313,7 +313,7 @@ try
 	doautocmd pace InsertLeave		" 10/18: Keep null.
 	call s:Assert_Equal(555, 14, s:pace.carry)
 	call s:Assert_Equal(556, 14, s:Get_Parts())
-	call s:Assert_Equal(76, 1, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(76, 0x10100, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(77, 14, s:pace.dump[0][0][2])
 	call s:Assert_Equal(78, (s:pace.dump[0][0][0] + 8),
 						\ s:pace.dump[0][0][1])
@@ -334,7 +334,7 @@ try
 	doautocmd pace InsertEnter		" 11/20: Keep rejects.
 	call s:Assert_Equal(559, 16, s:pace.carry)
 	call s:Assert_Equal(560, 16, s:Get_Parts())
-	call s:Assert_Equal(82, 1, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(82, 0x10010, and(s:pace.policy, 0x10010))
 	call s:Assert_Equal(83, 16, s:pace.dump[0][0][2])
 	call s:Assert_Equal(84, (s:pace.dump[0][0][0] + 9),
 						\ s:pace.dump[0][0][1])
@@ -379,7 +379,7 @@ try
 	doautocmd pace InsertLeave		" 14/22: Keep null.
 	call s:Assert_Equal(567, 18, s:pace.carry)
 	call s:Assert_Equal(568, 18, s:Get_Parts())
-	call s:Assert_Equal(93, 1, str2nr(s:pace.policy[2]))
+	call s:Assert_Equal(93, 0x10100, and(s:pace.policy, 0x10100))
 	call s:Assert_Equal(94, 18, s:pace.dump[0][0][2])
 	call s:Assert_Equal(95, (s:pace.dump[0][0][0] + 8),
 						\ s:pace.dump[0][0][1])
@@ -400,7 +400,7 @@ try
 	doautocmd pace InsertEnter		" 15/24: Mark rejects.
 	call s:Assert_Equal(571, 20, s:pace.carry)
 	call s:Assert_Equal(572, 20, s:Get_Parts())
-	call s:Assert_Equal(99, 2, str2nr(s:pace.policy[3]))
+	call s:Assert_Equal(99, 0x10020, and(s:pace.policy, 0x10020))
 	call s:Assert_Equal(100, 20, s:pace.dump[0][0][2])
 	call s:Assert_Equal(101, (s:pace.dump[0][0][0] + 9),
 						\ s:pace.dump[0][0][1])
