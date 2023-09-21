@@ -70,7 +70,7 @@ awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 ## Calculate the first line location of a test file.
 stdin=46
 cursor=$((`wc -l "$1"/demo.vim \
-parts/share/mockup.vim \
+parts/share/legacy/mockup.vim \
 parts/share/legacy/assert.vim \
 parts/demo/share/turn.vim | \
 { t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
@@ -80,7 +80,7 @@ parts/demo/share/turn.vim | \
 test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
 
 ## Produce a common-base script file.
-cat parts/share/mockup.vim \
+cat parts/share/legacy/mockup.vim \
 "$1"/demo.vim \
 - \
 parts/share/legacy/assert.vim \

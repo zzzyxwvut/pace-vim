@@ -1,98 +1,86 @@
-""""""""""""""""""""""""""""""|share/mockup.vim|""""""""""""""""""""""""""""""
-let s:cpoptions = &cpoptions
-set cpoptions-=C					" Join line-breaks.
+##############################|share/mockup.vim|##############################
+var insertmode: string = 'i'
+var mockup: dict<any> = {
+	mode:	'n',
+	parts:	!empty($TEST_SECOND_PARTS)
+			? str2nr($TEST_SECOND_PARTS)
+			: 0,
+	time:	{
+		after:		[0, 1],
+		between:	[0, 1],
+		before:		[0, 0],
+		over:		[-1, -1],
+	},
+}
+lockvar mockup.parts
 
-let s:insertmode = 'i'
-let s:mockup = {
-	\ 'mode':	'n',
-	\ 'parts':	!empty($TEST_SECOND_PARTS)
-				\ ? str2nr($TEST_SECOND_PARTS)
-				\ : 0,
-	\ 'time':	{
-		\ 'after':	[0, 1],
-		\ 'between':	[0, 1],
-		\ 'before':	[0, 0],
-		\ 'over':	[-1, -1],
-	\ },
-\ }
-lockvar s:mockup.parts
-
-if s:mockup.parts == 9					" nsec
-	let s:mockup.time.after = [0, 1000000]		" 1/1000
-	let s:mockup.time.between = [0, 1000000]	" 1/1000
-	let s:mockup.time.over = [-1, 999999999]
-elseif s:mockup.parts == 6				" usec
-	let s:mockup.time.after = [0, 1000]		" 1/1000
-	let s:mockup.time.between = [0, 1000]		" 1/1000
-	let s:mockup.time.over = [-1, 999999]
+if mockup.parts == 9				# nsec
+	mockup.time.after = [0, 1000000]	# 1/1000
+	mockup.time.between = [0, 1000000]	# 1/1000
+	mockup.time.over = [-1, 999999999]
+elseif mockup.parts == 6			# usec
+	mockup.time.after = [0, 1000]		# 1/1000
+	mockup.time.between = [0, 1000]		# 1/1000
+	mockup.time.over = [-1, 999999]
 endif
 
-function s:Mode() abort							" {{{1
-	return s:mockup.mode
-endfunction								" }}}1
+def Mode(): string
+	return mockup.mode
+enddef
 
-" Track f_reltime of time.c and profile_* of profiler.c.
-"
-" Mock the following function signatures:
-"	reltime()
-"	reltime(start)
-"	reltime(start, end)
-function s:Reltime(...) abort						" {{{1
-	let l:kind = a:0 == 0
-		\ ? 0
-		\ : a:0 == 1 && type(a:1) == type([]) &&
-						\ len(a:1) == 2 &&
-						\ type(a:1[0]) == type(0) &&
-						\ type(a:1[1]) == type(0)
-			\ ? 1
-			\ : a:0 == 2 && type(a:1) == type([]) &&
-						\ len(a:1) == 2 &&
-						\ type(a:1[0]) == type(0) &&
-						\ type(a:1[1]) == type(0) &&
-						\ type(a:2) == type([]) &&
-						\ len(a:2) == 2 &&
-						\ type(a:2[0]) == type(0) &&
-						\ type(a:2[1]) == type(0)
-				\ ? 2
-				\ : -1
+# Track f_reltime of time.c and profile_* of profiler.c.
+#
+# Mock the following function signatures:
+#	reltime()
+#	reltime(start)
+#	reltime(start, end)
+def Reltime(...items: list<list<number>>): list<number>
+	const kind: number = empty(items)
+		? 0
+		: len(items) == 1 && len(items[0]) == 2
+			? 1
+			: len(items) == 2 &&
+					len(items[0]) == 2 &&
+					len(items[1]) == 2
+				? 2
+				: -1
 
-	if l:kind < 0
+	if kind < 0
 		throw 'Illegal argument'
 	endif
 
-	" Also handle reltime([0, 0], [0, -1]).
-	return l:kind == 2
-		\ ? a:2[1] == -1 && a:2[0] == 0 && a:1[1] == 0 && a:1[0] == 0
-			\ ? s:mockup.time.over
-			\ : s:mockup.time.between
-		\ : l:kind == 1
-			\ ? s:mockup.time.after
-			\ : s:mockup.time.before
-endfunction								" }}}1
+	# Also handle reltime([0, 0], [0, -1]).
+	return kind == 2
+		? items[1][1] == -1 &&
+					items[1][0] == 0 &&
+					items[0][1] == 0 &&
+					items[0][0] == 0
+			? mockup.time.over
+			: mockup.time.between
+		: kind == 1
+			? mockup.time.after
+			: mockup.time.before
+enddef
 
-" Track f_reltimestr of time.c and profile_msg of profiler.c.
-"
-" Beware that the time format is assumed as if it were timespec or timeval.
-function s:ReltimeStr(time) abort					" {{{1
-	if type(a:time) != type([]) ||
-					\ len(a:time) != 2 ||
-					\ type(a:time[0]) != type(0) ||
-					\ type(a:time[1]) != type(0)
+# Track f_reltimestr of time.c and profile_msg of profiler.c.
+#
+# Beware that the time format is assumed as if it were timespec or timeval.
+def ReltimeStr(time: list<number>): string
+	if len(time) != 2
 		throw 'Illegal argument'
 	endif
 
-	let l:scale = len(string(a:time[1]))
-	let l:micros = a:time[1]
+	var scale: number = len(string(time[1]))
+	var micros: number = time[1]
 
-	while l:scale > 6
-		let l:micros = l:micros / 1000
-		let l:scale -= 3
+	while scale > 6
+		micros /= 1000
+		scale -= 3
 	endwhile
 
-	" Don't bother with Win32's '%10.6f' for mocked-up time.
-	return printf('%3d.%06d', a:time[0], l:micros)
-endfunction								" }}}1
+	# Don't bother with Win32's '%10.6f' for mocked-up time.
+	return printf('%3d.%06d', time[0], micros)
+enddef
 
-let &cpoptions = s:cpoptions
-unlet s:cpoptions
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+defcompile
+#####################################|EOF|####################################
