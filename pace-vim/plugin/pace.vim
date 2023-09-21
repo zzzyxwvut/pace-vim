@@ -146,7 +146,7 @@ function s:pace.eval1(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+			\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
 			\ (l:char / l:sec),
 			\ l:char,
 			\ l:sec)
@@ -161,7 +161,7 @@ function s:pace.eval0(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+			\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
 			\ l:sec != 0
 				\ ? l:self.trampolinemoved(l:char / l:sec)
 				\ : l:char,
@@ -189,7 +189,7 @@ function s:pace.eval1(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+			\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
 			\ (l:char / l:sec),
 			\ l:char,
 			\ l:sec)
@@ -204,7 +204,7 @@ function s:pace.eval0(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+			\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
 			\ l:sec != 0
 				\ ? l:self.trampolinemoved(l:char / l:sec)
 				\ : l:char,
@@ -245,7 +245,7 @@ function s:pace.eval1(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
 			\ (l:char / l:sec),
 			\ l:char,
 			\ l:sec)
@@ -261,7 +261,7 @@ function s:pace.eval0(go) abort						" {{{1
 		\ (a:go.d + 1)]
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
 			\ l:sec != 0
 				\ ? l:self.trampolinemoved(l:char / l:sec)
 				\ : l:char,
@@ -469,7 +469,7 @@ function s:pace.swap(buffer) abort					" {{{1
 			\ l:self.buffer,
 			\ string(l:status)))
 	elseif bufexists(l:self.buffer)
-		execute 'sbuffer '.l:self.buffer
+		execute 'sbuffer ' .. l:self.buffer
 		call setbufvar(l:self.buffer, '&statusline', l:status)
 		silent! close!
 	endif
@@ -705,15 +705,15 @@ command -bar PaceFree	:echo Pace_Free()
 if has('modify_fname')
 command -bar -nargs=1 -complete=dir
 	\ PaceSaveTo	:echo writefile(['let g:pace_dump = '
-						\ .string(Pace_Dump(0))],
+						\ .. string(Pace_Dump(0))],
 				\ fnamemodify(expand(<q-args>), ':p')
-						\ .'/pace_'
-						\ .localtime())
+						\ .. '/pace_'
+						\ .. localtime())
 command -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
-				\ .fnamemodify(expand(<q-args>), ':p:h')
-				\ .' | source '
-				\ .fnamemodify(expand(<q-args>), ':p')
+				\ .. fnamemodify(expand(<q-args>), ':p:h')
+				\ .. ' | source '
+				\ .. fnamemodify(expand(<q-args>), ':p')
 endif
 
 lockvar 1 s:pace s:turn

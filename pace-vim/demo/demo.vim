@@ -72,7 +72,7 @@ function s:demo.eval1(go) abort						" {{{1
 		\ ((l:tick[1] + a:go.c) % 1000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
 		\ (a:go.d / a:go.b),
 		\ a:go.d,
 		\ a:go.b)
@@ -86,7 +86,7 @@ function s:demo.eval0(go) abort						" {{{1
 		\ ((l:tick[1] + a:go.c) % 1000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
 		\ a:go.b != 0
 			\ ? (a:go.d / a:go.b)
 			\ : a:go.d,
@@ -104,7 +104,7 @@ function s:demo.eval1(go) abort						" {{{1
 		\ ((l:tick[1] + a:go.c) % 1000000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
 		\ (a:go.d / a:go.b),
 		\ a:go.d,
 		\ a:go.b)
@@ -118,7 +118,7 @@ function s:demo.eval0(go) abort						" {{{1
 		\ ((l:tick[1] + a:go.c) % 1000000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
 		\ a:go.b != 0
 			\ ? (a:go.d / a:go.b)
 			\ : a:go.d,
@@ -139,7 +139,7 @@ function s:demo.eval1(go) abort						" {{{1
 		\ (l:micros % 1000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
 		\ (a:go.d / a:go.b),
 		\ a:go.d,
 		\ a:go.b)
@@ -154,7 +154,7 @@ function s:demo.eval0(go) abort						" {{{1
 		\ (l:micros % 1000000),
 		\ (a:go.d + 1)]
 	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
 		\ a:go.b != 0
 			\ ? (a:go.d / a:go.b)
 			\ : a:go.d,
@@ -170,10 +170,10 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 		return
 	endif
 
-	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
+	execute 'noautocmd belowright keepalt keepjumps ' .. a:lines .. 'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
-		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:name.'+'
+		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +' .. a:name .. '+'
 
 	if !&l:modifiable
 		setlocal modifiable
@@ -205,7 +205,7 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 			let @z	= l:cc[l:n]
 			normal! "zp
 			call l:self.eval0(a:go)
-			execute 'sleep '.l:self.delay[l:k % l:g].'m'
+			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
 			redrawstatus
 			let l:k	+= 1
 			let l:n	+= 1
@@ -215,7 +215,7 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 			let @z	= l:cc[l:n]
 			normal! "zp
 			call l:self.eval1(a:go)
-			execute 'sleep '.l:self.delay[l:k % l:g].'m'
+			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
 			redrawstatus
 			let l:k	+= 1
 			let l:n	+= 1
@@ -256,14 +256,14 @@ function s:demo.run(go) abort						" {{{1
 endfunction
 
 function s:demo.errmsg(entry) abort					" {{{1
-	echohl ErrorMsg | echomsg l:self.handle.': '.a:entry | echohl None
+	echohl ErrorMsg | echomsg l:self.handle .. ': ' .. a:entry | echohl None
 endfunction
 
 function s:demo.fetch(fname, lines) abort				" {{{1
 	if !filereadable(a:fname)
 		call l:self.errmsg('`'
-				\ .a:fname
-				\ ."': No such file")
+				\ .. a:fname
+				\ .. "': No such file")
 		return []
 	endif
 
@@ -271,11 +271,11 @@ function s:demo.fetch(fname, lines) abort				" {{{1
 
 	if len(l:text) < a:lines
 		call l:self.errmsg('`'
-				\ .a:fname
-				\ ."': Invalid line count: "
-				\ .len(l:text)
-				\ ." < "
-				\ .a:lines)
+				\ .. a:fname
+				\ .. "': Invalid line count: "
+				\ .. len(l:text)
+				\ .. " < "
+				\ .. a:lines)
 		return []
 	endif
 
@@ -283,9 +283,9 @@ function s:demo.fetch(fname, lines) abort				" {{{1
 
 	if winwidth(0) < l:columns
 		call l:self.errmsg("Narrow width: "
-				\ .winwidth(0)
-				\ ." < "
-				\ .l:columns)
+				\ .. winwidth(0)
+				\ .. " < "
+				\ .. l:columns)
 		return []
 	endif
 
@@ -354,7 +354,7 @@ finally
 
 	try
 		setglobal switchbuf=useopen
-		execute 'sbuffer '.s:demo.state.buffer
+		execute 'sbuffer ' .. s:demo.state.buffer
 		lcd -
 	catch	/.*/
 		call s:demo.errmsg(v:exception)

@@ -1,4 +1,4 @@
-*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-19
+*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-21
 
 Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
 Copyleft ())
@@ -79,8 +79,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 					*:PaceSaveTo*
 		Carry over all data (consider a |VimLeave| event): >
 
-		:echo writefile(['let g:pace_dump = '.string(Pace_Dump(0))],
-				\ 'path/to/dir/pace_'.localtime())
+		:vim9cmd echo writefile(['let g:pace_dump = '
+					.. string(g:Pace_Dump(0))],
+				'path/to/dir/pace_'
+					.. localtime())
 		:PaceSaveTo path/to/dir
 <
 		Note: Substitute the real path for the `path/to/dir'.

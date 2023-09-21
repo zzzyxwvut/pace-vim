@@ -30,7 +30,7 @@ endtry
 
 PaceSaveTo .
 unlet! g:pace_dump
-execute 'source '.split(expand('pace_*'), "\n")[-1]
+execute 'source ' .. split(expand('pace_*'), "\n")[-1]
 call s:Assert_True(5, exists('g:pace_dump'))
 call s:Assert_Equal(1, s:pace.dump, g:pace_dump)
 unlet! g:pace_dump

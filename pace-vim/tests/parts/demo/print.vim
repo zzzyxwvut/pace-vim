@@ -178,7 +178,7 @@ finally
 
 	try
 		setglobal switchbuf=useopen
-		execute 'sbuffer '.s:demo.state.buffer
+		execute 'sbuffer ' .. s:demo.state.buffer
 	catch	/.*/
 		call s:demo.errmsg(v:exception)
 	finally

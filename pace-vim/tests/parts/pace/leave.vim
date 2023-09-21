@@ -109,9 +109,9 @@ try
 	call s:Assert_Equal(42, -1, s:Get_Secs())
 
 	" Allow for re-sourcing.
-	execute bufwinnr(s:leave_buffer_1).'wincmd w'
+	execute bufwinnr(s:leave_buffer_1) .. 'wincmd w'
 	only
-	execute 'bwipeout '.s:leave_buffer_2
+	execute 'bwipeout ' .. s:leave_buffer_2
 finally
 	let s:mockup.mode = s:leave_mode
 endtry

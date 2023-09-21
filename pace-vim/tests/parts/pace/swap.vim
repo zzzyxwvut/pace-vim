@@ -60,7 +60,7 @@ try
 	call s:Assert_True(15, &l:statusline !~ 'g:pace_info')
 
 	" Attempt and abandon typing in the initial window.
-	execute bufwinnr(s:swap_buffer_1).'wincmd w'
+	execute bufwinnr(s:swap_buffer_1) .. 'wincmd w'
 	call s:Assert_True(16, exists('#pace'))
 	call s:Assert_True(17, exists('#pace#InsertEnter#*'))
 	doautocmd pace InsertEnter
@@ -93,9 +93,9 @@ try
 	call s:Assert_True(25, &l:statusline !~ 'g:pace_info')
 
 	" Allow for re-sourcing.
-	execute bufwinnr(s:swap_buffer_1).'wincmd w'
+	execute bufwinnr(s:swap_buffer_1) .. 'wincmd w'
 	only
-	execute 'bwipeout '.s:swap_buffer_2
+	execute 'bwipeout ' .. s:swap_buffer_2
 finally
 	let s:mockup.mode = s:swap_mode
 endtry

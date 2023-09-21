@@ -33,7 +33,7 @@ function s:Assert_True(id, predicate) abort				" {{{1
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:stack = expand('<sfile>:t')
@@ -44,8 +44,8 @@ function s:Assert_True(id, predicate) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_True('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:stack[: l:top],
 			\ 'false'])
 		quitall
@@ -55,7 +55,7 @@ endfunction
 function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:stack = expand('<sfile>:t')
@@ -66,8 +66,8 @@ function s:Assert_Equal(id, left, right) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:stack[: l:top],
 			\ printf('%s != %s', string(a:left), string(a:right))])
 		quitall
@@ -77,7 +77,7 @@ endfunction
 function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:stack = expand('<sfile>:t')
@@ -88,8 +88,8 @@ function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:stack[: l:top],
 			\ printf('%s == %s', string(a:left), string(a:right))])
 		quitall
@@ -103,7 +103,7 @@ function s:Assert_True(id, predicate) abort				" {{{1
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:top = matchlist(expand('<sfile>:t'),
@@ -113,8 +113,8 @@ function s:Assert_True(id, predicate) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_True('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:top[0],
 			\ 'false']
 		call add(s:assert_errors, l:error)
@@ -130,7 +130,7 @@ endfunction
 function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:top = matchlist(expand('<sfile>:t'),
@@ -140,8 +140,8 @@ function s:Assert_Equal(id, left, right) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:top[0],
 			\ printf('%s != %s', string(a:left), string(a:right))]
 		call add(s:assert_errors, l:error)
@@ -157,7 +157,7 @@ endfunction
 function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:top = matchlist(expand('<sfile>:t'),
@@ -167,8 +167,8 @@ function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .string(a:id)
-							\ .','))
+							\ .. string(a:id)
+							\ .. ','))
 				\ : l:top[0],
 			\ printf('%s == %s', string(a:left), string(a:right))]
 		call add(s:assert_errors, l:error)
@@ -192,7 +192,7 @@ function s:Assert_True(id, predicate) abort				" {{{1
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		call add(s:assert_errors,
@@ -200,8 +200,8 @@ function s:Assert_True(id, predicate) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_True('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ 'false'])
 		quitall
 	endif
@@ -210,7 +210,7 @@ endfunction
 function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		call add(s:assert_errors,
@@ -218,8 +218,8 @@ function s:Assert_Equal(id, left, right) abort				" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ printf('%s != %s',
 						\ string(a:left),
 						\ string(a:right))])
@@ -230,7 +230,7 @@ endfunction
 function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		call add(s:assert_errors,
@@ -238,8 +238,8 @@ function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ printf('%s == %s',
 						\ string(a:left),
 						\ string(a:right))])
@@ -254,15 +254,15 @@ function s:Assert_True(id, predicate) abort				" {{{1
 				\ type(a:predicate) == type(v:false)) &&
 							\ !!a:predicate)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:error = [printf('@%s: %s[%d]',
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_True('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ 'false']
 		call add(s:assert_errors, l:error)
 		throw printf('TEST: %s: %s', l:error[0], l:error[1])
@@ -272,15 +272,15 @@ endfunction
 function s:Assert_Equal(id, left, right) abort				" {{{1
 	if !(type(a:left) == type(a:right) && a:left == a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:error = [printf('@%s: %s[%d]',
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Equal('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ printf('%s != %s',
 						\ string(a:left),
 						\ string(a:right))]
@@ -292,15 +292,15 @@ endfunction
 function s:Assert_Not_Equal(id, left, right) abort			" {{{1
 	if !(type(a:left) != type(a:right) || a:left != a:right)
 		if bufname('%') != s:script_name && bufwinnr(s:script_name) > -1
-			execute bufwinnr(s:script_name).'wincmd w'
+			execute bufwinnr(s:script_name) .. 'wincmd w'
 		endif
 
 		let l:error = [printf('@%s: %s[%d]',
 					\ string(a:id),
 					\ s:script_name,
 					\ s:Go_To_Match('\<s:Assert_Not_Equal('
-							\ .string(a:id)
-							\ .',')),
+							\ .. string(a:id)
+							\ .. ',')),
 				\ printf('%s == %s',
 						\ string(a:left),
 						\ string(a:right))]
