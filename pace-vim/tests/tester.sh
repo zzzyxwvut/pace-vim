@@ -72,15 +72,11 @@ t\[0-9\]\[0-9\].vim)
 	;;
 esac
 
-ff="`printf '%s\n' errors_[0-9]*`"
-
-case "${ff}" in
-errors_\[0-9\]\*)
+if test ! -r errors
+then
+	# For a _cleaned-up_ audit.
 	touch errors || status="$?"
-	;;
-*)	cat errors_[0-9]* > errors && rm -f errors_[0-9]* || status="$?"
-	;;
-esac
+fi
 
 test ! -s errors || status=$((32 + ${status}))
 exit "${status}"

@@ -17,20 +17,10 @@ endfunction
 
 function! s:Write_Errors() abort					" {{{1
 	if !empty(s:assert_errors)
-		let l:fname = 'errors_'.localtime()
-		let l:times = 0
-
-		while filereadable(l:fname) && l:times < 10
-			sleep 200m
-			let l:times += 1
-			let l:fname = 'errors_'.(l:times + localtime())
-		endwhile
-
-		" Allow for repeatable sources and possibly clobber "errors".
+		" Allow for repeatable sources.
 		call writefile(map(s:assert_errors[:], 'string(v:val)'),
-						\ filereadable(l:fname)
-							\ ? 'errors'
-							\ : l:fname)
+								\ 'errors',
+								\ 'a')
 	endif
 endfunction								" }}}1
 
