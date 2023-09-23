@@ -8,6 +8,8 @@ vim9script
 #
 # Dependencies:	cmdline_info, eval, reltime, and statusline features.
 #
+# Usage:	This script is run by "../profiler.vim".
+#
 # Caveats:	The "winheight" option is set to 1.
 
 if !(has('reltime') && has('cmdline_info') && has('statusline') &&
