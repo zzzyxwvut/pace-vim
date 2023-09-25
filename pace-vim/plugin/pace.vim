@@ -283,15 +283,15 @@ function s:Trampoline_Moved(value) abort				" {{{1
 	return s:Do_Trampoline_Moved(a:value)
 endfunction
 
-function s:pace.dotrampolinehold(value) abort				" {{{1
+def s:Do_Trampoline_Hold(value: number): number				# {{{1
 	autocmd! pace CursorHoldI
-	autocmd pace CursorHoldI	* call s:pace.sample1(s:turn)
-	return a:value
-endfunction
+	autocmd pace CursorHoldI	* Sample1(turn)
+	return value
+enddef
 
 function s:Trampoline_Hold(value) abort					" {{{1
 	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:pace.dotrampolinehold(a:value)
+	return s:Do_Trampoline_Hold(a:value)
 endfunction
 
 def s:Div(dividend: number, divisor: number): number			# {{{1
@@ -307,7 +307,7 @@ function s:pace.sample2(go) abort					" {{{1
 						\ l:sec)
 endfunction
 
-function s:pace.sample1(go) abort					" {{{1
+function s:Sample1(go) abort						" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 						\ '0.00,',
