@@ -298,34 +298,34 @@ def s:Div(dividend: number, divisor: number): number			# {{{1
 	return divisor != 0 ? (dividend / divisor) : dividend
 enddef
 
-function s:pace.sample2(go) abort					" {{{1
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-						\ '0.00,',
-						\ s:Div(l:char, l:sec),
-						\ l:char,
-						\ l:sec)
-endfunction
+def s:Sample2(go: dict<any>)						# {{{1
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			Div(char, sec),
+			char,
+			sec)
+enddef
 
-function s:Sample1(go) abort						" {{{1
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-						\ '0.00,',
-						\ (l:char / l:sec),
-						\ l:char,
-						\ l:sec)
-endfunction
+def s:Sample1(go: dict<any>)						# {{{1
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			(char / sec),
+			char,
+			sec)
+enddef
 
-function s:pace.sample0(go) abort					" {{{1
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ '0.00,',
-			\ l:sec != 0
-				\ ? s:Trampoline_Hold(l:char / l:sec)
-				\ : l:char,
-			\ l:char,
-			\ l:sec)
-endfunction
+def s:Sample0(go: dict<any>)						# {{{1
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			sec != 0
+				? Trampoline_Hold(char / sec)
+				: char,
+			char,
+			sec)
+enddef
 
 function s:pace.msg(fname, entry) abort					" {{{1
 	echomsg printf('%s: @%i: %s',
@@ -437,7 +437,7 @@ function s:pace.leave() abort						" {{{1
 			unlockvar g:pace_info
 		endif
 
-		call l:self.sample2(s:turn)
+		call s:Sample2(s:turn)
 	endif
 
 	if l:self.test(0)
@@ -568,7 +568,7 @@ function s:pace.doenter() abort						" {{{1
 		endif
 	else
 		if !exists('#pace#CursorHoldI#*')
-			autocmd pace CursorHoldI	* call s:pace.sample0(s:turn)
+			autocmd pace CursorHoldI	* call s:Sample0(s:turn)
 		endif
 
 		if !exists('#pace#CursorMovedI#*')
