@@ -129,89 +129,89 @@ endfunction								" }}}1
 
 if s:parts == 6
 
-function s:pace.eval2(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
-		\ ((l:tick[1] + a:go.c) % 1000000),
-		\ (a:go.d + 1)]
-	let a:go.a	= reltime()
-endfunction
+def s:Eval2(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
 
-function s:Eval1(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
-		\ ((l:tick[1] + a:go.c) % 1000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
-			\ (l:char / l:sec),
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
 
-function s:pace.eval0(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
-		\ ((l:tick[1] + a:go.c) % 1000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
-			\ l:sec != 0
-				\ ? s:Trampoline_Moved(l:char / l:sec)
-				\ : l:char,
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef									# }}}1
 
 elseif s:parts == 9
 
-function s:pace.eval2(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
-		\ ((l:tick[1] + a:go.c) % 1000000000),
-		\ (a:go.d + 1)]
-	let a:go.a	= reltime()
-endfunction
+def s:Eval2(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
 
-function s:Eval1(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
-		\ ((l:tick[1] + a:go.c) % 1000000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
-			\ (l:char / l:sec),
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
 
-function s:pace.eval0(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
-		\ ((l:tick[1] + a:go.c) % 1000000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
-			\ l:sec != 0
-				\ ? s:Trampoline_Moved(l:char / l:sec)
-				\ : l:char,
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef									# }}}1
 
 else
 	throw 'My mind is going...'
@@ -226,49 +226,49 @@ function s:pace.time(tick) abort					" {{{1
 	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
 endfunction
 
-function s:pace.eval2(go) abort						" {{{1
-	let l:unit	= reltimestr(reltime(a:go.a))
-	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
-		\ (l:micros % 1000000),
-		\ (a:go.d + 1)]
-	let a:go.a	= reltime()
-endfunction
+def s:Eval2(go: dict<any>)						# {{{1
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
 
-function s:Eval1(go) abort						" {{{1
-	let l:unit	= reltimestr(reltime(a:go.a))
-	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
-		\ (l:micros % 1000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
-			\ (l:char / l:sec),
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
 
-function s:pace.eval0(go) abort						" {{{1
-	let l:unit	= reltimestr(reltime(a:go.a))
-	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
-		\ (l:micros % 1000000),
-		\ (a:go.d + 1)]
-	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
-	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
-			\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
-			\ l:sec != 0
-				\ ? s:Trampoline_Moved(l:char / l:sec)
-				\ : l:char,
-			\ l:char,
-			\ l:sec)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef									# }}}1
 
 endif
 
@@ -564,7 +564,7 @@ function s:pace.doenter() abort						" {{{1
 		endif
 	elseif l:self.sample.in < l:self.sample.below
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* call s:pace.eval0(s:turn)
+			autocmd pace CursorMovedI	* call s:Eval0(s:turn)
 		endif
 	else
 		if !exists('#pace#CursorHoldI#*')
@@ -572,7 +572,7 @@ function s:pace.doenter() abort						" {{{1
 		endif
 
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* call s:pace.eval2(s:turn)
+			autocmd pace CursorMovedI	* call s:Eval2(s:turn)
 		endif
 	endif
 
