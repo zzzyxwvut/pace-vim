@@ -38,7 +38,7 @@ endif
 " events, whereas the total seconds spent typing is the sum of all such runs;
 " therefore, provide another entry that would hold the sum of all Normal-mode
 " time and subtract its value from the value of reltime(first_hit, last_hit)
-" in s:pace.leave().
+" in s:Leave().
 "
 " Moreover, s:turn.d (characters) and s:turn.b (seconds) must accommodate any
 " run count policy: single (0000), all (1000), or buffer (2000).
@@ -402,7 +402,7 @@ def s:Test(self: dict<any>, pass: bool): number				# {{{1
 		turn.c = self.carry
 		return 4				# Discard null.
 	elseif !pass
-		return 0				# pace.leave() exit.
+		return 0				# s:Leave() exit.
 	elseif and(self.policy, 0x10030) == 0x10000
 		turn.c = self.carry
 		return 2				# Discard rejects.
@@ -410,7 +410,7 @@ def s:Test(self: dict<any>, pass: bool): number				# {{{1
 
 	try
 		self.mark = and(self.policy, 0x10020) == 0x10020
-		return self.leave()			# Collect rejects.
+		return Leave(self)			# Collect rejects.
 	finally
 		self.mark = false
 	endtry
@@ -418,57 +418,57 @@ def s:Test(self: dict<any>, pass: bool): number				# {{{1
 	return 0
 enddef
 
-function s:pace.leave() abort						" {{{1
-	let l:record_char_tick	= reltime(l:self.epoch)
+def s:Leave(self: dict<any>): number					# {{{1
+	const record_char_tick: list<number> = reltime(self.epoch)
 
-	if &maxfuncdepth < 16		" An arbitrary bound.
+	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
-	endif				" What if :doautocmd pace InsertLeave?
+	endif				# What if :doautocmd pace InsertLeave?
 
-	if !(l:self.sample.in < l:self.sample.below)
-		if l:self.sample.in > l:self.sample.above
-			" Counter the overhead of transition from CursorMovedI
-			" to InsertLeave by not rounding up.
-			call s:Record_Unit(s:turn,
-					\ [s:Time(l:record_char_tick)[0], 0])
+	if !(self.sample.in < self.sample.below)
+		if self.sample.in > self.sample.above
+			# Counter the overhead of transition from CursorMovedI
+			# to InsertLeave by not rounding up.
+			Record_Unit(turn, [Time(record_char_tick)[0], 0])
 		endif
 
 		if exists('g:pace_info')
 			unlockvar g:pace_info
 		endif
 
-		call s:Sample2(s:turn)
+		Sample2(turn)
 	endif
 
-	if s:Test(l:self, v:false) != 0
+	if Test(self, false) != 0
 		return 1
-	elseif !has_key(l:self.dump, l:self.buffer)
-		let l:self.dump[l:self.buffer]	= [[0, 0, 0, 0]]
+	elseif !has_key(self.dump, self.buffer)
+		self.dump[self.buffer] = [[0, 0, 0, 0]]
 	endif
 
-	" Update the logged hits and the whole count.
-	let l:whole		= l:self.dump[0][0]
-	let l:whole[0 : 3]	+= [1, 0, s:turn.d, s:turn.b]
+	# Update the logged hits and the whole count.
+	var whole: list<number> = self.dump[0][0]
+	[whole[0], whole[2], whole[3]] += [1, turn.d, turn.b]
 	unlet! g:pace_amin
-	let g:pace_amin		= s:Div((l:whole[2] * 60), l:whole[3])
+	g:pace_amin = Div((whole[2] * 60), whole[3])
 	lockvar g:pace_amin
 
 	if exists('g:pace_info')
 		lockvar g:pace_info
 	endif
 
-	" Append a new hit instance and fetch the buffer total entry.
-	let l:total	= add(l:self.dump[l:self.buffer],
-				\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
-				\ s:Time(l:self.epoch)[0],
-				\ s:turn.d,
-				\ s:turn.b])[0]
-	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
-	let [l:total[2], l:total[3]]	+= [s:turn.d, s:turn.b]
-	let [s:turn.b, s:turn.d]	= [-1, -1]	" Invalidate the count.
-	let l:self.pool		= {}			" Invalidate the pool.
-	let l:self.carry	= s:turn.c		" Copy for rejects &c.
-endfunction
+	# Append a new hit instance and fetch the buffer total entry.
+	var total: list<number> = add(self.dump[self.buffer],
+					[(self.mark ? -whole[0] : whole[0]),
+					Time(self.epoch)[0],
+					turn.d,
+					turn.b])[0]
+	[total[0], total[1]] = [(total[0] + 1), whole[0]]
+	[total[2], total[3]] += [turn.d, turn.b]
+	[turn.b, turn.d] = [-1, -1]			# Invalidate the count.
+	self.pool = {}					# Invalidate the pool.
+	self.carry = turn.c				# Copy for rejects &c.
+	return 0
+enddef
 
 def s:Buffer_Matcher(): func(number): func(number, number): bool	# {{{1
 	return (buffer) => (_, value) => winbufnr(value) == buffer
@@ -516,7 +516,7 @@ function s:pace.doenter() abort						" {{{1
 	" undecidable without recourse to mode book-keeping: [r->]i->r or
 	" [v->]i->v.)
 	autocmd! pace InsertChange
-	autocmd pace InsertChange	* call s:pace.leave()
+	autocmd pace InsertChange	* call s:Leave(s:pace)
 	autocmd pace InsertChange	* call s:Enter()
 
 	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
@@ -587,7 +587,7 @@ function s:pace.doenter() abort						" {{{1
 	endif
 
 	if !exists('#pace#InsertLeave#*')
-		autocmd pace InsertLeave	* call s:pace.leave()
+		autocmd pace InsertLeave	* call s:Leave(s:pace)
 	endif
 
 	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
@@ -668,7 +668,7 @@ endfunction
 function Pace_Dump(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
 		return deepcopy(s:pace.dump, 1)
-	elseif !empty(s:pace.pool)			" pace.leave() empties.
+	elseif !empty(s:pace.pool)			" See s:Leave().
 		let s:pace.pool['_rejects']	= printf('%+31i',
 			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0]))
 		return copy(s:pace.pool)
