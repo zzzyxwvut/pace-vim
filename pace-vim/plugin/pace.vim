@@ -105,19 +105,17 @@ endif
 
 if s:parts == 9
 
-function s:pace.recordunit(go, time) abort				" {{{1
-	let [a:go.b, a:go.c]	=
-		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000000),
-		\ ((a:time[1] + a:go.c) % 1000000000)]
-endfunction								" }}}1
+def s:Record_Unit(go: dict<any>, time: list<number>)			# {{{1
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000000),
+			((time[1] + go.c) % 1000000000)]
+enddef									# }}}1
 
 else
 
-function s:pace.recordunit(go, time) abort				" {{{1
-	let [a:go.b, a:go.c]	=
-		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000),
-		\ ((a:time[1] + a:go.c) % 1000000)]
-endfunction								" }}}1
+def s:Record_Unit(go: dict<any>, time: list<number>)			# {{{1
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000),
+			((time[1] + go.c) % 1000000)]
+enddef									# }}}1
 
 endif
 
@@ -421,7 +419,7 @@ def s:Test(self: dict<any>, pass: bool): number				# {{{1
 enddef
 
 function s:pace.leave() abort						" {{{1
-	let l:recordchar_tick	= reltime(l:self.epoch)
+	let l:record_char_tick	= reltime(l:self.epoch)
 
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
@@ -431,8 +429,8 @@ function s:pace.leave() abort						" {{{1
 		if l:self.sample.in > l:self.sample.above
 			" Counter the overhead of transition from CursorMovedI
 			" to InsertLeave by not rounding up.
-			call l:self.recordunit(s:turn,
-					\ [s:Time(l:recordchar_tick)[0], 0])
+			call s:Record_Unit(s:turn,
+					\ [s:Time(l:record_char_tick)[0], 0])
 		endif
 
 		if exists('g:pace_info')
