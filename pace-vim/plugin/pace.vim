@@ -485,26 +485,24 @@ def s:Status_Setter(): func(func(number, number): bool, string):
 	}
 enddef
 
-function s:pace.swap(buffer) abort					" {{{1
-	let l:status	= get(l:self.status, l:self.buffer, &g:statusline)
+def s:Swap(self: dict<any>, buffer: number)				# {{{1
+	const status: string = get(self.status, self.buffer, &g:statusline)
 
-	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
-		" Ferret out any doppel-gänger windows.
-		call filter(range(1, winnr('$')),
-			\ s:Status_Setter()(s:Buffer_Matcher()(l:self.buffer),
-								\ l:status))
-	elseif bufexists(l:self.buffer)
-		execute 'sbuffer ' .. l:self.buffer
-		call setbufvar(l:self.buffer, '&statusline', l:status)
+	if bufwinnr(self.buffer) > 0		# Protect from local change.
+		# Ferret out any doppel-gänger windows.
+		filter(range(1, winnr('$')),
+			Status_Setter()(Buffer_Matcher()(self.buffer),
+								status))
+	elseif bufexists(self.buffer)
+		execute 'sbuffer ' .. string(self.buffer)
+		setbufvar(self.buffer, '&statusline', status)
 		silent! close!
 	endif
 
-	if l:self.buffer == a:buffer
-		return 1
+	if self.buffer != buffer
+		[self.status[buffer], self.buffer] = [&l:statusline, buffer]
 	endif
-
-	let [l:self.status[a:buffer], l:self.buffer]	= [&l:statusline, a:buffer]
-endfunction
+enddef
 
 function s:pace.doenter() abort						" {{{1
 	if &maxfuncdepth < 16		" An arbitrary bound.
@@ -542,7 +540,7 @@ function s:pace.doenter() abort						" {{{1
 	" Pre-empt the statusline value and substitute it for the one assembled.
 	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
 				\ s:Buffer_Matcher()(l:self.buffer))) > 1
-		call l:self.swap(bufnr('%'))
+		call s:Swap(l:self, bufnr('%'))
 	endif
 
 	" Select the base count values for reporting.
@@ -606,7 +604,7 @@ function s:Do_Pace_Load(entropy) abort					" {{{1
 			return 1
 		endif
 
-		call s:pace.swap(bufnr('%'))
+		call s:Swap(s:pace, bufnr('%'))
 		let &g:statusline	= s:pace.state.statusline
 		let &rulerformat	= s:pace.state.rulerformat
 		let &ruler		= s:pace.state.ruler
@@ -705,7 +703,7 @@ function Pace_Free() abort						" {{{1
 		call Pace_Dump(1)
 		call Pace_Load(0)
 	catch	/^Vim\%((\a\+)\)\=:E117/		" An unknown function.
-		call s:pace.swap(bufnr('%'))
+		call s:Swap(s:pace, bufnr('%'))
 		silent! autocmd! pace
 	finally
 		silent! delcommand PaceOn
