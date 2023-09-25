@@ -138,7 +138,7 @@ function s:pace.eval2(go) abort						" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function s:pace.eval1(go) abort						" {{{1
+function s:Eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
@@ -181,7 +181,7 @@ function s:pace.eval2(go) abort						" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function s:pace.eval1(go) abort						" {{{1
+function s:Eval1(go) abort						" {{{1
 	let l:tick	= reltime(a:go.a)
 	let [a:go.b, a:go.c, a:go.d]	=
 		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
@@ -236,7 +236,7 @@ function s:pace.eval2(go) abort						" {{{1
 	let a:go.a	= reltime()
 endfunction
 
-function s:pace.eval1(go) abort						" {{{1
+function s:Eval1(go) abort						" {{{1
 	let l:unit	= reltimestr(reltime(a:go.a))
 	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
 	let [a:go.b, a:go.c, a:go.d]	=
@@ -272,15 +272,15 @@ endfunction								" }}}1
 
 endif
 
-function s:pace.dotrampolinemoved(value) abort				" {{{1
+def s:Do_Trampoline_Moved(value: number): number			# {{{1
 	autocmd! pace CursorMovedI
-	autocmd pace CursorMovedI	* call s:pace.eval1(s:turn)
-	return a:value
-endfunction
+	autocmd pace CursorMovedI	* Eval1(turn)
+	return value
+enddef
 
 function s:Trampoline_Moved(value) abort				" {{{1
 	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:pace.dotrampolinemoved(a:value)
+	return s:Do_Trampoline_Moved(a:value)
 endfunction
 
 function s:pace.dotrampolinehold(value) abort				" {{{1
@@ -740,6 +740,7 @@ command -bar -nargs=1 -complete=file
 				\ .. fnamemodify(expand(<q-args>), ':p')
 endif
 
+defcompile
 lockvar 1 s:pace s:turn
 let g:pace_lock	= 1
 let &cpoptions	= s:cpoptions
