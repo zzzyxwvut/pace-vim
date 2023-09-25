@@ -123,9 +123,9 @@ endif
 
 if s:parts == 6 || s:parts == 9
 
-function s:pace.time(tick) abort					" {{{1
-	return a:tick
-endfunction								" }}}1
+def s:Time(tick: list<number>): list<number>				# {{{1
+	return tick
+enddef									# }}}1
 
 if s:parts == 6
 
@@ -221,10 +221,10 @@ else
 
 " The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-function s:pace.time(tick) abort					" {{{1
-	let l:unit	= reltimestr(a:tick)
-	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
-endfunction
+def s:Time(tick: list<number>): list<number>				# {{{1
+	const unit: string = reltimestr(tick)
+	return [str2nr(unit), str2nr(unit[-6 :])]
+enddef
 
 def s:Eval2(go: dict<any>)						# {{{1
 	const unit: string = reltimestr(reltime(go.a))
@@ -432,7 +432,7 @@ function s:pace.leave() abort						" {{{1
 			" Counter the overhead of transition from CursorMovedI
 			" to InsertLeave by not rounding up.
 			call l:self.recordunit(s:turn,
-				\ [l:self.time(l:recordchar_tick)[0], 0])
+					\ [s:Time(l:recordchar_tick)[0], 0])
 		endif
 
 		if exists('g:pace_info')
@@ -462,7 +462,7 @@ function s:pace.leave() abort						" {{{1
 	" Append a new hit instance and fetch the buffer total entry.
 	let l:total	= add(l:self.dump[l:self.buffer],
 				\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
-				\ l:self.time(l:self.epoch)[0],
+				\ s:Time(l:self.epoch)[0],
 				\ s:turn.d,
 				\ s:turn.b])[0]
 	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
