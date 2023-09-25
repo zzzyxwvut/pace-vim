@@ -294,15 +294,15 @@ function s:Trampoline_Hold(value) abort					" {{{1
 	return s:pace.dotrampolinehold(a:value)
 endfunction
 
-function s:pace.div(dividend, divisor) abort				" {{{1
-	return a:divisor ? (a:dividend / a:divisor) : a:dividend
-endfunction
+def s:Div(dividend: number, divisor: number): number			# {{{1
+	return divisor != 0 ? (dividend / divisor) : dividend
+enddef
 
 function s:pace.sample2(go) abort					" {{{1
 	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 						\ '0.00,',
-						\ l:self.div(l:char, l:sec),
+						\ s:Div(l:char, l:sec),
 						\ l:char,
 						\ l:sec)
 endfunction
@@ -450,7 +450,7 @@ function s:pace.leave() abort						" {{{1
 	let l:whole		= l:self.dump[0][0]
 	let l:whole[0 : 3]	+= [1, 0, s:turn.d, s:turn.b]
 	unlet! g:pace_amin
-	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
+	let g:pace_amin		= s:Div((l:whole[2] * 60), l:whole[3])
 	lockvar g:pace_amin
 
 	if exists('g:pace_info')
@@ -547,7 +547,7 @@ function s:pace.doenter() abort						" {{{1
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
 				\ '0.00,',
-				\ l:self.div(s:turn.e, s:turn.f),
+				\ s:Div(s:turn.e, s:turn.f),
 				\ s:turn.e,
 				\ s:turn.f)
 
@@ -674,7 +674,7 @@ function Pace_Dump(entropy) abort					" {{{1
 		let [l:hits, l:last, l:char, l:sec]	=
 						\ s:pace.dump[l:i][0][0 : 3]
 		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
-						\ s:pace.div(l:char, l:sec),
+						\ s:Div(l:char, l:sec),
 						\ l:char,
 						\ l:sec,
 						\ l:hits)
