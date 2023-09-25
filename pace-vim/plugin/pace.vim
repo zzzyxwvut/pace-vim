@@ -3,7 +3,7 @@
 " Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
 " Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	2.0
-" Last Change:	2023-Sep-21
+" Last Change:	2023-Sep-25
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -27,12 +27,12 @@ endif
 " ((a sum of) seconds), and devolving their duties upon s:turn.d (characters)
 " and s:turn.b (seconds).
 "
-" s:turn.e ((a sum of) characters): s:pace.enter() offers no way of telling
-" event calls from command line calls; consider that one may quit typing with
+" s:turn.e ((a sum of) characters): s:Enter() offers no way of telling event
+" calls from command line calls; consider that one may quit typing with
 " Ctrl-c, should now s:turn.b (seconds) serve to distinguish between aborted-
 " `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn.d (i.e.
 " the total and the recent character counts)?  Should the rejected character
-" count be deducted from the s:turn.d figure in s:pace.enter()?
+" count be deducted from the s:turn.d figure in s:Enter()?
 "
 " s:turn.f ((a sum of) seconds): reltime() returns the time elapsed between
 " events, whereas the total seconds spent typing is the sum of all such runs;
@@ -163,7 +163,7 @@ function s:pace.eval0(go) abort						" {{{1
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
 			\ l:sec != 0
-				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ ? s:Trampoline_Moved(l:char / l:sec)
 				\ : l:char,
 			\ l:char,
 			\ l:sec)
@@ -206,7 +206,7 @@ function s:pace.eval0(go) abort						" {{{1
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
 			\ l:sec != 0
-				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ ? s:Trampoline_Moved(l:char / l:sec)
 				\ : l:char,
 			\ l:char,
 			\ l:sec)
@@ -263,7 +263,7 @@ function s:pace.eval0(go) abort						" {{{1
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
 			\ l:sec != 0
-				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ ? s:Trampoline_Moved(l:char / l:sec)
 				\ : l:char,
 			\ l:char,
 			\ l:sec)
@@ -272,16 +272,26 @@ endfunction								" }}}1
 
 endif
 
-function s:pace.trampolinemoved(value) abort				" {{{1
+function s:pace.dotrampolinemoved(value) abort				" {{{1
 	autocmd! pace CursorMovedI
 	autocmd pace CursorMovedI	* call s:pace.eval1(s:turn)
 	return a:value
 endfunction
 
-function s:pace.trampolinehold(value) abort				" {{{1
+function s:Trampoline_Moved(value) abort				" {{{1
+	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
+	return s:pace.dotrampolinemoved(a:value)
+endfunction
+
+function s:pace.dotrampolinehold(value) abort				" {{{1
 	autocmd! pace CursorHoldI
 	autocmd pace CursorHoldI	* call s:pace.sample1(s:turn)
 	return a:value
+endfunction
+
+function s:Trampoline_Hold(value) abort					" {{{1
+	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
+	return s:pace.dotrampolinehold(a:value)
 endfunction
 
 function s:pace.div(dividend, divisor) abort				" {{{1
@@ -311,7 +321,7 @@ function s:pace.sample0(go) abort					" {{{1
 	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
 			\ '0.00,',
 			\ l:sec != 0
-				\ ? l:self.trampolinehold(l:char / l:sec)
+				\ ? s:Trampoline_Hold(l:char / l:sec)
 				\ : l:char,
 			\ l:char,
 			\ l:sec)
@@ -484,7 +494,7 @@ function s:pace.swap(buffer) abort					" {{{1
 	let [l:self.status[a:buffer], l:self.buffer]	= [&l:statusline, a:buffer]
 endfunction
 
-function s:pace.enter() abort						" {{{1
+function s:pace.doenter() abort						" {{{1
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
 	endif				" Graduate a sounding-rod before _test_.
@@ -497,7 +507,7 @@ function s:pace.enter() abort						" {{{1
 	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
-	autocmd pace InsertChange	* call s:pace.enter()
+	autocmd pace InsertChange	* call s:Enter()
 
 	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call l:self.msg(expand('<stack>'), '&eventignore mask')
@@ -573,7 +583,12 @@ function s:pace.enter() abort						" {{{1
 	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
 endfunction
 
-function Pace_Load(entropy) abort					" {{{1
+function s:Enter() abort						" {{{1
+	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
+	return s:pace.doenter()
+endfunction
+
+function s:Do_Pace_Load(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
 		if !s:pace.load || mode() != 'n'
 			return 1
@@ -631,8 +646,13 @@ function Pace_Load(entropy) abort					" {{{1
 
 	augroup pace
 		autocmd! pace
-		autocmd InsertEnter	* call s:pace.enter()
+		autocmd InsertEnter	* call s:Enter()
 	augroup END
+endfunction
+
+function Pace_Load(entropy) abort					" {{{1
+	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
+	return s:Do_Pace_Load(a:entropy)
 endfunction
 
 function Pace_Dump(entropy) abort					" {{{1
