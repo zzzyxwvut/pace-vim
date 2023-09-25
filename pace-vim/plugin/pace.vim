@@ -504,28 +504,28 @@ def s:Swap(self: dict<any>, buffer: number)				# {{{1
 	endif
 enddef
 
-function s:pace.doenter() abort						" {{{1
-	if &maxfuncdepth < 16		" An arbitrary bound.
+def s:Do_Enter(self: dict<any>): number					# {{{1
+	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
-	endif				" Graduate a sounding-rod before s:Test().
+	endif				# Graduate a sounding-rod before s:Test().
 
-	call s:Test(l:self, v:true)	" Make allowance for any leftovers.
+	Test(self, true)		# Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.  (Although the current
-	" mode may be masked, what its InsertChange complement is can be
-	" undecidable without recourse to mode book-keeping: [r->]i->r or
-	" [v->]i->v.)
+	# Leave and enter gracefully at the switch.  (Although the current
+	# mode may be masked, what its InsertChange complement is can be
+	# undecidable without recourse to mode book-keeping: [r->]i->r or
+	# [v->]i->v.)
 	autocmd! pace InsertChange
-	autocmd pace InsertChange	* call s:Leave(s:pace)
-	autocmd pace InsertChange	* call s:Enter()
+	autocmd pace InsertChange	* Leave(pace)
+	autocmd pace InsertChange	* Enter(pace)
 
 	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
-		call s:Msg(expand('<stack>'), '&eventignore mask')
+		Msg(expand('<stack>'), '&eventignore mask')
 		return -128
-	elseif and(l:self.policy, 0x10007) == 0x10000 ||
-		\ (v:insertmode == 'i' && and(l:self.policy, 0x10001) != 0x10001) ||
-		\ (v:insertmode == 'r' && and(l:self.policy, 0x10002) != 0x10002) ||
-		\ (v:insertmode == 'v' && and(l:self.policy, 0x10004) != 0x10004)
+	elseif and(self.policy, 0x10007) == 0x10000 ||
+		(v:insertmode == 'i' && and(self.policy, 0x10001) != 0x10001) ||
+		(v:insertmode == 'r' && and(self.policy, 0x10002) != 0x10002) ||
+		(v:insertmode == 'v' && and(self.policy, 0x10004) != 0x10004)
 		return -1
 	endif
 
@@ -537,29 +537,28 @@ function s:pace.doenter() abort						" {{{1
 		set ruler
 	endif
 
-	" Pre-empt the statusline value and substitute it for the one assembled.
-	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
-				\ s:Buffer_Matcher()(l:self.buffer))) > 1
-		call s:Swap(l:self, bufnr('%'))
+	# Pre-empt the statusline value and substitute it for the one assembled.
+	if bufnr('%') != self.buffer || len(filter(range(1, winnr('$')),
+					Buffer_Matcher()(self.buffer))) > 1
+		Swap(self, bufnr('%'))
 	endif
 
-	" Select the base count values for reporting.
-	let [s:turn.e, s:turn.f]	=
-				\ and(l:self.policy, 0x11000) == 0x11000
-		\ ? [l:self.dump[0][0][2], l:self.dump[0][0][3]]
-		\ : and(l:self.policy, 0x12000) == 0x12000 &&
-					\ has_key(l:self.dump, l:self.buffer)
-			\ ? [l:self.dump[l:self.buffer][0][2],
-					\ l:self.dump[l:self.buffer][0][3]]
-			\ : [0, 0]
-	let l:self.dump[0][0][1]	+= 1		" All InsertEnter hits.
-	let [s:turn.b, s:turn.d]	= [0, 0]	" Initialise the count.
-	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
-	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
-				\ '0.00,',
-				\ s:Div(s:turn.e, s:turn.f),
-				\ s:turn.e,
-				\ s:turn.f)
+	# Select the base count values for reporting.
+	[turn.e, turn.f] = and(self.policy, 0x11000) == 0x11000
+		? [self.dump[0][0][2], self.dump[0][0][3]]
+		: and(self.policy, 0x12000) == 0x12000 &&
+					has_key(self.dump, self.buffer)
+			? [self.dump[self.buffer][0][2],
+					self.dump[self.buffer][0][3]]
+			: [0, 0]
+	self.dump[0][0][1] += 1			# All InsertEnter hits.
+	[turn.b, turn.d] = [0, 0]		# Initialise the count.
+	unlet! g:pace_info	# Fits: 27:46:39 wait|type @ 99 char/sec pace.
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+						'0.00,',
+						Div(turn.e, turn.f),
+						turn.e,
+						turn.f)
 
 	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
@@ -568,34 +567,35 @@ function s:pace.doenter() abort						" {{{1
 					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
-	if l:self.sample.in > l:self.sample.above
+	if self.sample.in > self.sample.above
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* let s:turn.d	+= 1
+			autocmd pace CursorMovedI	* turn.d += 1
 		endif
-	elseif l:self.sample.in < l:self.sample.below
+	elseif self.sample.in < self.sample.below
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* call s:Eval0(s:turn)
+			autocmd pace CursorMovedI	* Eval0(turn)
 		endif
 	else
 		if !exists('#pace#CursorHoldI#*')
-			autocmd pace CursorHoldI	* call s:Sample0(s:turn)
+			autocmd pace CursorHoldI	* Sample0(turn)
 		endif
 
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* call s:Eval2(s:turn)
+			autocmd pace CursorMovedI	* Eval2(turn)
 		endif
 	endif
 
 	if !exists('#pace#InsertLeave#*')
-		autocmd pace InsertLeave	* call s:Leave(s:pace)
+		autocmd pace InsertLeave	* Leave(pace)
 	endif
 
-	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
-endfunction
+	[turn.a, self.epoch] = [reltime(), reltime()]
+	return 0
+enddef
 
-function s:Enter() abort						" {{{1
+function s:Enter(self) abort						" {{{1
 	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:pace.doenter()
+	return s:Do_Enter(a:self)
 endfunction
 
 function s:Do_Pace_Load(entropy) abort					" {{{1
@@ -656,7 +656,7 @@ function s:Do_Pace_Load(entropy) abort					" {{{1
 
 	augroup pace
 		autocmd! pace
-		autocmd InsertEnter	* call s:Enter()
+		autocmd InsertEnter	* call s:Enter(s:pace)
 	augroup END
 endfunction
 
