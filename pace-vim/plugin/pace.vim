@@ -327,12 +327,12 @@ def s:Sample0(go: dict<any>)						# {{{1
 			sec)
 enddef
 
-function s:pace.msg(fname, entry) abort					" {{{1
+def s:Msg(stack: string, entry: string)					# {{{1
 	echomsg printf('%s: @%i: %s',
-				\ split(a:fname, '\v%(\.\.|\s+)')[-1],
-				\ localtime(),
-				\ a:entry)
-endfunction
+				split(stack, '\v%(\.\.|\s+)')[-1],
+				localtime(),
+				entry)
+enddef
 
 function s:pace.test(pass) abort					" {{{1
 	if !exists('#pace')
@@ -359,7 +359,7 @@ function s:pace.test(pass) abort					" {{{1
 
 		if l:policy_base_10 != l:self.policy &&
 				\ l:policy_base_16 =~ '\<1[012][01][012][0-7]\>'
-			call l:self.msg(expand('<stack>'),
+			call s:Msg(expand('<stack>'),
 					\ printf('g:pace_policy: %x->%s',
 							\ l:self.policy,
 							\ l:policy_base_16))
@@ -387,7 +387,7 @@ function s:pace.test(pass) abort					" {{{1
 					let &updatetime	= l:self.state.updatetime
 				endif
 
-				call l:self.msg(expand('<stack>'),
+				call s:Msg(expand('<stack>'),
 					\ printf('g:pace_sample: %i->%i',
 							\ l:self.sample.in,
 							\ l:candidate))
@@ -510,7 +510,7 @@ function s:pace.doenter() abort						" {{{1
 	autocmd pace InsertChange	* call s:Enter()
 
 	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
-		call l:self.msg(expand('<stack>'), '&eventignore mask')
+		call s:Msg(expand('<stack>'), '&eventignore mask')
 		return -128
 	elseif and(l:self.policy, 0x10007) == 0x10000 ||
 		\ (v:insertmode == 'i' && and(l:self.policy, 0x10001) != 0x10001) ||
@@ -610,7 +610,7 @@ function s:Do_Pace_Load(entropy) abort					" {{{1
 		silent! autocmd! pace
 		return 2
 	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
-		call s:pace.msg(expand('<stack>'), '&eventignore mask')
+		call s:Msg(expand('<stack>'), '&eventignore mask')
 		return -128
 	elseif s:pace.load
 		return -1
