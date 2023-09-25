@@ -334,9 +334,9 @@ def s:Msg(stack: string, entry: string)					# {{{1
 				entry)
 enddef
 
-function s:pace.test(pass) abort					" {{{1
+def s:Test(self: dict<any>, pass: bool): number				# {{{1
 	if !exists('#pace')
-		" Redefine the _pace_ group, but do not touch its commands!
+		# Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
 		augroup END
 	endif
@@ -354,69 +354,71 @@ function s:pace.test(pass) abort					" {{{1
 	endif
 
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
-		let l:policy_base_16	= string(g:pace_policy)
-		let l:policy_base_10	= eval('0x' .. l:policy_base_16)
+		const policy_base_16: string = string(g:pace_policy)
+		const policy_base_10: number = eval('0x' .. policy_base_16)
 
-		if l:policy_base_10 != l:self.policy &&
-				\ l:policy_base_16 =~ '\<1[012][01][012][0-7]\>'
-			call s:Msg(expand('<stack>'),
-					\ printf('g:pace_policy: %x->%s',
-							\ l:self.policy,
-							\ l:policy_base_16))
-			let l:self.policy	= l:policy_base_10
+		if policy_base_10 != self.policy &&
+				policy_base_16 =~ '\<1[012][01][012][0-7]\>'
+			Msg(expand('<stack>'),
+					printf('g:pace_policy: %x->%s',
+							self.policy,
+							policy_base_16))
+			self.policy = policy_base_10
 		endif
 
 		unlet g:pace_policy
 	endif
 
 	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
-		if g:pace_sample != l:self.sample.in
-			let [l:within, l:candidate]	=
-					\ g:pace_sample > l:self.sample.above
-				\ ? [0, (l:self.sample.above + 5)]
-				\ : g:pace_sample < l:self.sample.below
-					\ ? [0, (l:self.sample.below - 5)]
-					\ : [1, g:pace_sample]
+		if g:pace_sample != self.sample.in
+			const [within: bool, candidate: number] =
+					g:pace_sample > self.sample.above
+				? [false, (self.sample.above + 5)]
+				: g:pace_sample < self.sample.below
+					? [false, (self.sample.below - 5)]
+					: [true, g:pace_sample]
 
-			if l:candidate != l:self.sample.in
-				if l:within != 0
-					let &updatetime	= l:candidate
-				elseif !(l:self.sample.in > l:self.sample.above ||
-						\ l:self.sample.in <
-							\ l:self.sample.below)
-					let &updatetime	= l:self.state.updatetime
+			if candidate != self.sample.in
+				if within
+					&updatetime = candidate
+				elseif !(self.sample.in > self.sample.above ||
+						self.sample.in <
+							self.sample.below)
+					&updatetime = self.state.updatetime
 				endif
 
-				call s:Msg(expand('<stack>'),
-					\ printf('g:pace_sample: %i->%i',
-							\ l:self.sample.in,
-							\ l:candidate))
-				let l:self.sample.in	= l:candidate
+				Msg(expand('<stack>'),
+					printf('g:pace_sample: %i->%i',
+							self.sample.in,
+							candidate))
+				self.sample.in = candidate
 			endif
 		endif
 
 		unlet g:pace_sample
 	endif
 
-	if s:turn.d < 0
+	if turn.d < 0
 		return -1
-	elseif !s:turn.d && and(l:self.policy, 0x10100) == 0x10000
-		let s:turn.c	= l:self.carry
-		return 4				" Discard null.
-	elseif !a:pass
-		return 0				" pace.leave() exit.
-	elseif and(l:self.policy, 0x10030) == 0x10000
-		let s:turn.c	= l:self.carry
-		return 2				" Discard rejects.
+	elseif turn.d == 0 && and(self.policy, 0x10100) == 0x10000
+		turn.c = self.carry
+		return 4				# Discard null.
+	elseif !pass
+		return 0				# pace.leave() exit.
+	elseif and(self.policy, 0x10030) == 0x10000
+		turn.c = self.carry
+		return 2				# Discard rejects.
 	endif
 
 	try
-		let l:self.mark	= and(l:self.policy, 0x10020) == 0x10020
-		return l:self.leave()			" Collect rejects.
+		self.mark = and(self.policy, 0x10020) == 0x10020
+		return self.leave()			# Collect rejects.
 	finally
-		let l:self.mark	= 0
+		self.mark = false
 	endtry
-endfunction
+
+	return 0
+enddef
 
 function s:pace.leave() abort						" {{{1
 	let l:recordchar_tick	= reltime(l:self.epoch)
@@ -440,7 +442,7 @@ function s:pace.leave() abort						" {{{1
 		call s:Sample2(s:turn)
 	endif
 
-	if l:self.test(0)
+	if s:Test(l:self, v:false) != 0
 		return 1
 	elseif !has_key(l:self.dump, l:self.buffer)
 		let l:self.dump[l:self.buffer]	= [[0, 0, 0, 0]]
@@ -507,9 +509,9 @@ enddef
 function s:pace.doenter() abort						" {{{1
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
-	endif				" Graduate a sounding-rod before _test_.
+	endif				" Graduate a sounding-rod before s:Test().
 
-	call l:self.test(1)		" Make allowance for any leftovers.
+	call s:Test(l:self, v:true)	" Make allowance for any leftovers.
 
 	" Leave and enter gracefully at the switch.  (Although the current
 	" mode may be masked, what its InsertChange complement is can be
