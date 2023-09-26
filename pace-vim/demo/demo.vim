@@ -1,43 +1,43 @@
 " Description:	The demo-imitation of the "pace.vim" script
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.1
-" Last Change:	2017-May-14
+" Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/7/0/master]
+" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+" Version:	1.2
+" Last Change:	2023-Sep-19
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
 "
 "		The "vimvat.txt" sonnet included.
 "
-" Usage:	Source the file: ":lcd %:p:h | so %".
+" Usage:	Source the file: ":lcd %:p:h | source %".
 "
-" Notes:	In order to preview any other file, change s:demo.data
-"		keys' values.
+" Notes:	In order to preview any other file, change the values of
+"		"text" and "linage" of the s:demo dictionary.  (Read "linage"
+"		elements as follows: seek the leftmost 'line_match' as regexp
+"		at the accumulated 'line_offset' and print the line and its
+"		current 'line_offset' lines that follow; otherwise print
+"		a null line.)
 "
-"		In order to adjust the typing pace, change s:demo.delay
-"		values.
+"		In order to adjust the typing pace, vary s:demo.delay numbers.
 "
 " Caveats:	The "winheight" option is set to 1.
 
-let s:cpoptions	= &cpoptions						" {{{1
+let s:cpoptions	= &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
-if !(has('reltime') && has('cmdline_info') && has('statusline') && len(reltime()) == 2)
+if !(has('reltime') && has('cmdline_info') && has('statusline'))
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
 endif
 
 let s:demo	= {
-	\ 'char':	0,
-	\ 'sec':	0,
-	\ 'gear':	4,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
-	\ 'reg_z':	@z,
 	\ 'handle':	expand('<sfile>'),
-	\ 'begin':	reltime(),
-	\ 'break':	reltime(),
-	\ 'file':	[],
-	\ 'delay':	[70, 90, 80, 60],
+	\ 'reg_z':	@z,
+	\ 'delay':	[],
+	\ 'linage':	[],
+	\ 'text':	[],
 	\ 'state':	{
 		\ 'buffer':		bufnr('%'),
 		\ 'laststatus':		&laststatus,
@@ -48,35 +48,132 @@ let s:demo	= {
 		\ 'equalalways':	&equalalways,
 		\ 'statusline':		&g:statusline,
 	\ },
-	\ 'data':	{
-		\ 'fname':	'vimvat.txt',
-		\ 'cols':	50,
-		\ 'lines':	20,
-		\ 'turn':	3,
-		\ 'part':	[
-			\ ['1st\ quatrain',	"'^Of _vim_'",		3],
-			\ ['2nd\ quatrain',	"'^Mnem0nic\\$'",	3],
-			\ ['3rd\ quatrain',	"'^No pop-ups'",	3],
-			\ ['the\ couplet',	"'^Go to,'",		1],
-		\ ],
-	\ },
-\ }			" [ buffer_name, line_match, line_offset ]
+\ }
 
-function! s:demo.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
-	let g:demo_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:self.sec ? l:self.char / l:self.sec :	l:self.char),
-		\ l:self.char, l:self.sec)
-	let l:self.break		= reltime()
+" Try to roll over the sub-second unit (see profile_sub() of profile.c).
+let s:parts	= len(reltime()) == 2
+			\ ? map([reltime([0, 0], [0, -1])],
+				\ "v:val[0] == -1 && v:val[1] =~ '^9\\+$'
+							\ ? strlen(v:val[1])
+							\ : 0")[0]
+			\ : 0
+lockvar s:parts
+
+if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+	throw 'My mind is going...'
+endif
+
+if s:parts == 6
+
+function! s:demo.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
 endfunction
 
-function! s:demo.print(i, j, bname, lines) abort			" {{{1
+function! s:demo.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+elseif s:parts == 9
+
+function! s:demo.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:demo.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+else
+
+" The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+
+function! s:demo.eval1(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ (a:go.d / a:go.b),
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:demo.eval0(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
+		\ str2nr(l:unit).l:unit[-7 : -5].',',
+		\ a:go.b != 0
+			\ ? (a:go.d / a:go.b)
+			\ : a:go.d,
+		\ a:go.d,
+		\ a:go.b)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+endif
+
+function! s:demo.print(go, i, j, name, lines, times) abort		" {{{1
+	if a:lines < 1
+		return
+	endif
+
 	execute 'noautocmd belowright keepalt keepjumps '.a:lines.'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
-		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:bname.'+'
+		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +'.a:name.'+'
 
 	if !&l:modifiable
 		setlocal modifiable
@@ -88,23 +185,43 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 
 	if join(getbufline('%', 1, a:lines), '') != ''
 		" Add some empty lines at the buffer end and set cursor there.
-		call map(range(a:lines), "setline(line('$') + 1, '')")
+		call map(range(a:lines), "setline((line('$') + 1), '')")
 		normal! G
 	endif
 
 	try
-		let l:k		= localtime() % l:self.gear	" Seed [0-3].
+		if a:i < 0 || a:j < 0 || a:i > a:j
+			return
+		endif
 
-		for l:c in split(join(l:self.file[a:i : a:j], "\n"), '\zs')
-			let @z	= l:c
+		let l:cc	= split(join(l:self.text[a:i : a:j], "\n"), '\zs')
+		let l:z		= len(l:cc)
+		let l:g		= len(l:self.delay)
+		lockvar l:g l:z l:cc
+		let l:k		= localtime() % l:g		" Seed [0-3].
+		let l:n		= 0
+
+		while a:go.b < 1 && l:n < l:z
+			let @z	= l:cc[l:n]
 			normal! "zp
-			call l:self.eval()
-			execute "sleep ".l:self.delay[l:k % l:self.gear]."m"
+			call l:self.eval0(a:go)
+			execute 'sleep '.l:self.delay[l:k % l:g].'m'
 			redrawstatus
 			let l:k	+= 1
-		endfor
+			let l:n	+= 1
+		endwhile
+
+		while l:n < l:z
+			let @z	= l:cc[l:n]
+			normal! "zp
+			call l:self.eval1(a:go)
+			execute 'sleep '.l:self.delay[l:k % l:g].'m'
+			redrawstatus
+			let l:k	+= 1
+			let l:n	+= 1
+		endwhile
 	finally
-		if l:self.data.turn
+		if a:times > 0
 			call setbufvar(bufnr('%'), '&statusline', '')
 			normal! gg
 		endif
@@ -114,36 +231,84 @@ function! s:demo.print(i, j, bname, lines) abort			" {{{1
 	endtry
 endfunction
 
-function! s:demo.run() abort						" {{{1
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+function! s:demo.run(go) abort						" {{{1
+	let l:z	= len(l:self.text)
+	let l:t	= len(l:self.linage) - 1
+	let l:n	= 0
+	let l:m	= 0
+	let a:go.a	= reltime()
 
-	for [l:bname, l:match, l:off] in l:self.data.part
-		let l:at	= index(map(l:self.file[:], "v:val =~# ".l:match), 1)
-		call l:self.print(l:at, l:at + l:off, l:bname, l:off + 1)
-		let l:self.data.turn	-= 1
+	for l:item in l:self.linage
+		while l:n < l:z && l:self.text[l:n] !~# l:item.match
+			let l:n	+= 1
+		endwhile
+
+		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
+		call l:self.print(a:go,
+					\ l:p,
+					\ (l:item.offset + l:p),
+					\ l:item.name,
+					\ (l:item.offset + 1),
+					\ l:t)
+		let l:n	= l:m + l:item.offset + 1
+		let l:t	-= 1
 	endfor
 endfunction
 
 function! s:demo.errmsg(entry) abort					" {{{1
-	echohl ErrorMsg| echomsg l:self.handle.': '.a:entry| echohl None
+	echohl ErrorMsg | echomsg l:self.handle.': '.a:entry | echohl None
 endfunction
 
-try									" {{{1
-	if !&g:modifiable || &g:readonly
-		throw 1024
-	elseif !filereadable(s:demo.data.fname)
-		throw 2048
+function! s:demo.fetch(fname, lines) abort				" {{{1
+	if !filereadable(a:fname)
+		call l:self.errmsg('`'
+				\ .a:fname
+				\ ."': No such file")
+		return []
 	endif
 
-	let s:demo.file		= readfile(s:demo.data.fname, '', s:demo.data.lines)
-	lockvar s:demo.file
-	let s:demo.data.cols	= max(map(s:demo.file[:], 'len(v:val)'))
+	let l:text	= readfile(a:fname, '', a:lines)
 
-	if len(s:demo.file) < s:demo.data.lines
-		throw 4096
-	elseif winwidth(0) < s:demo.data.cols
-		throw 8192
+	if len(l:text) < a:lines
+		call l:self.errmsg('`'
+				\ .a:fname
+				\ ."': Invalid line count: "
+				\ .len(l:text)
+				\ ." < "
+				\ .a:lines)
+		return []
 	endif
+
+	let l:columns	= max(map(l:text[:], 'strlen(v:val)'))
+
+	if winwidth(0) < l:columns
+		call l:self.errmsg("Narrow width: "
+				\ .winwidth(0)
+				\ ." < "
+				\ .l:columns)
+		return []
+	endif
+
+	return l:text
+endfunction								" }}}1
+
+if !&g:modifiable || &g:readonly
+	call s:demo.errmsg("Cannot make changes")
+	let &cpoptions	= s:cpoptions
+	unlet s:parts s:demo s:cpoptions
+	finish
+endif
+
+try
+	let s:demo.text		= s:demo.fetch('vimvat.txt', 20)
+	let s:demo.linage	= [
+		\ {'name': '1st\ quatrain', 'match': '^Of _vim_', 'offset': 3},
+		\ {'name': '2nd\ quatrain', 'match': '^Mnem0nic\$', 'offset': 3},
+		\ {'name': '3rd\ quatrain', 'match': '^No pop-ups', 'offset': 3},
+		\ {'name': 'the\ couplet', 'match': '^Go to,', 'offset': 1},
+	\ ]	" [buffer_name, line_match, line_offset]
+	let s:demo.delay	= [70, 90, 80, 60]
+	lockvar s:demo.delay s:demo.linage s:demo.text
 
 	if has('autocmd') && &eventignore !~? '\v%(all|vimresized)'
 		augroup demo
@@ -156,27 +321,24 @@ try									" {{{1
 	setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 	unlet! g:demo_info
 	let g:demo_info	= printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
-	let s:demo.gear		= len(s:demo.delay)
-	let s:demo.data.turn	= len(s:demo.data.part) - 1
 
 	if !&laststatus
 		set laststatus&
 	endif
 
-	only
+	if winnr('$') > 1
+		only
+	endif
+
 	redraw!
-	call s:demo.run()
-catch	/\<1024\>/
-	call s:demo.errmsg("Cannot make changes")
-catch	/\<2048\>/
-	call s:demo.errmsg('`'.s:demo.data.fname."': No such file")
-catch	/\<4096\>/
-	call s:demo.errmsg('`'.s:demo.data.fname
-		\ ."': Invalid line count: ".len(s:demo.file)." < "
-					\ .s:demo.data.lines)
-catch	/\<8192\>/
-	call s:demo.errmsg("Narrow width: ".winwidth(0)." < "
-					\ .s:demo.data.cols)
+	lockvar 1 s:demo
+
+	" (Shorter key names shorten lookup time.)
+	" a: tick,
+	" b: seconds,
+	" c: micro- or nano-seconds,
+	" d: characters.
+	call s:demo.run({'a': reltime(), 'b': 0, 'c': 0, 'd': 0})
 catch	/^Vim:Interrupt$/	" Silence this error message.
 finally
 	let @z			= s:demo.reg_z
@@ -188,17 +350,21 @@ finally
 	let &maxfuncdepth	= s:demo.state.maxfuncdepth
 	let &laststatus		= s:demo.state.laststatus
 	let &cpoptions		= s:cpoptions
+	let s:switchbuf		= &switchbuf
 
 	try
+		setglobal switchbuf=useopen
 		execute 'sbuffer '.s:demo.state.buffer
 		lcd -
 	catch	/.*/
 		call s:demo.errmsg(v:exception)
+	finally
+		let &switchbuf	= s:switchbuf
 	endtry
 
-	unlet s:demo s:cpoptions
+	unlet s:switchbuf s:parts s:demo s:cpoptions
 	silent! autocmd! demo
 	silent! augroup! demo
-endtry									" }}}1
+endtry
 
 " vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:

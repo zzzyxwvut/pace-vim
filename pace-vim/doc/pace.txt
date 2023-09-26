@@ -1,4 +1,4 @@
-*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2017-May-14
+*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-19
 
 Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
 Copyleft ())
@@ -27,11 +27,8 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	The features enabled: |+autocmd|, |+cmdline_info|, |+eval|,
 	|+reltime|, |+statusline|, |+user_commands|, and |+modify_fname|.
 
-	The 'eventignore' option should not include: all, |CursorMovedI|,
-	|InsertEnter|, |InsertChange|, and |InsertLeave|.
-
-	The returned item of |reltime()| is system-dependent, it is assumed
-	that its format is a [sec, ...] list.
+	The 'eventignore' option should not include: all, |CursorHoldI|,
+	|CursorMovedI|, |InsertEnter|, |InsertChange|, and |InsertLeave|.
 
 
 ==============================================================================
@@ -80,7 +77,7 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 		[x][y]: [this_hit, hit_time, char, sec] (hit instance) ~
 
 					*:PaceSaveTo*
-		Carry over all data (consider |VimLeave| event): >
+		Carry over all data (consider a |VimLeave| event): >
 
 		:echo writefile(['let g:pace_dump = '.string(Pace_Dump(0))],
 				\ 'path/to/dir/pace_'.localtime())
@@ -112,10 +109,12 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 	g:pace_amin		the pace of all typing a minute.
 
 					*g:pace_info*
-	g:pace_info		current "tick, (char/sec), char, sec",
+	g:pace_info		current "tick, (char/sec), char, sec";
 					where `tick' is the time spent
-					advancing cursor (put in |ruler|
-					or |statusline|).
+					advancing cursor (continuous),
+					otherwise 0.00 (sampling, see
+					|g:pace_sample|) (put in |ruler| or
+					|statusline|).
 
 					*g:pace_policy*
 	g:pace_policy		the sum of any of the following numbers,
@@ -126,10 +125,10 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 		4		poll |Virtual-Replace-mode|;
 		10		keep `reject' record (exclusive), i.e.
 					any pending collected data that
-					have missed |InsertLeave| event
+					have missed an |InsertLeave| event
 					and have not been written to
-					the log (see |i_CTRL-C| exiting
-					in |pace-caveats|);
+					the log (see about |i_CTRL-C| in
+					|pace-caveats|);
 		20		keep `reject' record & mark (exclusive);
 		100		keep `null' record, i.e. no-characters-
 					typed entry (see the inserting
@@ -142,6 +141,23 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 		The range is 1[012][01][012][0-7] (preset to 10007).
 		The variable is timely removed, redefine it to alter
 		the current policy (all changes go to |:messages|).
+
+					*g:pace_sample*
+	g:pace_sample		the number of milliseconds to pass, before
+					another advancement of cursor, for
+					another update of |g:pace_info| to
+					be permitted.
+
+		In other words, have |g:pace_info| updated whenever pace
+		falls behind the set value.  (There is a pending update
+		for every |InsertLeave| event for any value; however, see
+		about |i_CTRL-C| in |pace-caveats|.)  The sampling values
+		range from 50 to 2000 milliseconds, inclusively.  Values
+		out of range are subject to normalisation and inference
+		as follows: inhibit updating for the values above range,
+		adopt the continuous updating for the values below range.
+		The variable is timely removed, redefine it to alter
+		the current sampling (all changes go to |:messages|).
 
 					*g:pace_dump*
 	g:pace_dump		the copy of the log left by |Pace_Free()|.
@@ -176,11 +192,14 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 			having two rulers set to work, after a vertical
 			split;
 		(*) 'statusline': to take precedence of 'rulerformat';
+		(*) 'updatetime' to the value of |g:pace_sample|, if it is
+			defined and within the sampling range: to strive
+			to update |g:pace_info|;
 		(*) 'winheight' to 1 (in the demo script): to arrange all
 			preview windows compactly.
 
 	Leaving |Insert-mode| &c.  by means of the |i_CTRL-C| keystroke
-	ignores |InsertLeave| event.  To force it, and to circumvent
+	ignores an |InsertLeave| event.  To force it, and to circumvent
 	a contingent `reject' policy |g:pace_policy|, run: >
 
 		:doautocmd pace InsertLeave
@@ -197,6 +216,39 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 
 ==============================================================================
 7. History						*pace-history*
+
+	2023-Sep-19	v1.3.
+				demo.vim and pace.vim: ~
+				Links to a repository of the project and
+				archives can be found in the file headers.
+
+				Whenever the sub-_second_ unit cannot be
+				ascertained so that ticks can be scaled,
+				|reltimestr()| is resorted to.
+
+				An in-procedure time lag between an epoch
+				and its future referents ceases from being
+				a factor.
+
+				The core calculations of the measuring
+				algorithm have been further whittled down.
+
+				demo.vim: ~
+				Allowance is made for the option value of
+				'switchbuf' after the demonstration ends.
+
+				For every header line of a batch to print,
+				successive unprinted batches are searched.
+
+				pace.vim: ~
+				The precedence of 'statusline' over 'ruler'
+				and 'rulerformat' is recognised as support
+				warrants for 'laststatus'.
+
+				A sampling alternative to the continuous
+				updating of |g:pace_info| is within reach
+				with |g:pace_sample| (and patch 7.0.104 for
+				Vim).
 
 	2017-May-14	v1.2.
 				demo.vim: ~

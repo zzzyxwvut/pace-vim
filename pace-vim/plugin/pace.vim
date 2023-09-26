@@ -1,7 +1,9 @@
 " Description:	Measure the pace of typing (in Insert mode &c.)
 " Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.2
-" Last Change:	2017-May-14
+" Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/7/0/master]
+" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+" Version:	1.3
+" Last Change:	2023-Sep-19
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -10,85 +12,317 @@
 "		Generate the help tags: ":helptags doc/".
 "		Read the documentation: ":help pace.txt".
 
-let s:cpoptions	= &cpoptions						" {{{1
+let s:cpoptions	= &cpoptions
 set cpoptions-=C					" Join line-breaks.
 
 if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
-	\ has('cmdline_info') && has('statusline') && has('user_commands') &&
-	\ len(reltime()) == 2)
+				\ has('cmdline_info') && has('statusline') &&
+				\ has('user_commands'))
 	let &cpoptions	= s:cpoptions
 	unlet s:cpoptions
 	finish
-elseif exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
-	\ has_key(g:pace_dump, '0') && !max(map(map(values(g:pace_dump),
-	\ '(type(get((type(v:val) == type([]) ? v:val :	[]), 0)) == type([]) &&
-	\ len(v:val[0]) == 4 ? v:val[0] :	[""])'),
-	\ '(type(get(v:val, 0)) != type(0)) + (type(get(v:val, 1)) != type(0)) +
-	\ (type(get(v:val, 2)) != type(0)) + (type(get(v:val, 3)) != type(0))'))
-	let s:carryover	= deepcopy(g:pace_dump, 1)
-else	" NOTE: Call either Pace_Dump() or Pace_Free() to procure g:pace_dump!
-	let s:carryover	= {'0': [[0, 0, 0, 0]]}
-endif	" NOTE: The 0th key value follows a uniform depth: [[]].
+endif
+
+" Ponder before ridding of s:turn.e ((a sum of) characters) and s:turn.f
+" ((a sum of) seconds), and devolving their duties upon s:turn.d (characters)
+" and s:turn.b (seconds).
+"
+" s:turn.e ((a sum of) characters): s:pace.enter() offers no way of telling
+" event calls from command line calls; consider that one may quit typing with
+" Ctrl-c, should now s:turn.b (seconds) serve to distinguish between aborted-
+" `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn.d (i.e.
+" the total and the recent character counts)?  Should the rejected character
+" count be deducted from the s:turn.d figure in s:pace.enter()?
+"
+" s:turn.f ((a sum of) seconds): reltime() returns the time elapsed between
+" events, whereas the total seconds spent typing is the sum of all such runs;
+" therefore, provide another entry that would hold the sum of all Normal-mode
+" time and subtract its value from the value of reltime(first_hit, last_hit)
+" in s:pace.leave().
+"
+" Moreover, s:turn.d (characters) and s:turn.b (seconds) must accommodate any
+" run count policy: single (0000), all (1000), or buffer (2000).
+
+" (Shorter key names shorten lookup time.)
+" a: tick,
+" b: seconds,
+" c: micro- or nano-seconds,
+" d: characters,
+" e: (a sum of) characters,
+" f: (a sum of) seconds.
+let s:turn	= {'a': reltime(), 'b': -1, 'c': 0, 'd': -1, 'e': 0, 'f': 0}
 
 let s:pace	= {
-	\ 'char':	-1,
-	\ 'sec':	-1,
-	\ 'cchar':	0,
-	\ 'ssec':	0,
-	\ 'load':	0,
-	\ 'mark':	0,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
 	\ 'buffer':	bufnr('%'),
 	\ 'policy':	10007,
-	\ 'begin':	reltime(),
-	\ 'break':	reltime(),
-	\ 'dump':	s:carryover,
+	\ 'carry':	0,
+	\ 'load':	0,
+	\ 'mark':	0,
+	\ 'epoch':	reltime(),
 	\ 'pool':	{},
+	\ 'sample':	{
+		\ 'above':	2000,
+		\ 'below':	50,
+		\ 'in':		(50 - 5),
+	\ },
 	\ 'state':	{
 		\ 'laststatus':		&laststatus,
 		\ 'maxfuncdepth':	&maxfuncdepth,
 		\ 'ruler':		&ruler,
 		\ 'rulerformat':	&rulerformat,
 		\ 'statusline':		&g:statusline,
+		\ 'updatetime':		&updatetime,
 	\ },
 	\ 'status':	{},
 \ }
 
-function! s:pace.div(dividend, divisor) abort				" {{{1
-	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
-endfunction	" Not used in pace.eval() since it sips ~1e-5 secs a call.
+if exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
+					\ has_key(g:pace_dump, '0') &&
+					\ 0 == max(map(map(values(g:pace_dump),
+	\ '(type(get((type(v:val) == type([]) ? v:val : []), 0)) == type([]) &&
+				\ len(v:val[0]) == 4 ? v:val[0] : [""])'),
+	\ '(type(get(v:val, 0)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 1)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 2)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 3)) != type(0) ? 1 : 0)'))
+	let s:pace.dump	= deepcopy(g:pace_dump, 1)
+else	" Call either Pace_Dump() or Pace_Free() to obtain g:pace_dump.
+	let s:pace.dump	= {'0': [[0, 0, 0, 0]]}
+endif	" The 0th key value follows a uniform depth: [[]].
 
-function! s:pace.msg(fname, entry) abort				" {{{1
-	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
+" Try to roll over the sub-second unit (see profile_sub() of profile.c).
+let s:parts	= len(reltime()) == 2
+			\ ? map([reltime([0, 0], [0, -1])],
+				\ "v:val[0] == -1 && v:val[1] =~ '^9\\+$'
+							\ ? strlen(v:val[1])
+							\ : 0")[0]
+			\ : 0
+lockvar s:parts s:pace.sample.above s:pace.sample.below
+
+if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+	throw 'My mind is going...'
+endif
+
+if s:parts == 9
+
+function! s:pace.recordunit(go, time) abort				" {{{1
+	let [a:go.b, a:go.c]	=
+		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000000),
+		\ ((a:time[1] + a:go.c) % 1000000000)]
+endfunction								" }}}1
+
+else
+
+function! s:pace.recordunit(go, time) abort				" {{{1
+	let [a:go.b, a:go.c]	=
+		\ [(a:go.b + a:time[0] + (a:time[1] + a:go.c) / 1000000),
+		\ ((a:time[1] + a:go.c) % 1000000)]
+endfunction								" }}}1
+
+endif
+
+if s:parts == 6 || s:parts == 9
+
+function! s:pace.time(tick) abort					" {{{1
+	return a:tick
+endfunction								" }}}1
+
+if s:parts == 6
+
+function! s:pace.eval2(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
 endfunction
 
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
-	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
-		\ l:self.sec + l:self.ssec]
-	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:sec ? l:char / l:sec :	l:char), l:char, l:sec)
-	let l:self.break		= reltime()
-endfunction	" On local machine reltime()[1] spits non-padded microseconds.
+function! s:pace.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
 
-" Ponder before ridding of `cchar' and `ssec', and devolving the duties upon
-" `char' and `sec'.
-"
-" `cchar': pace.enter() offers no way of telling event calls from command line
-" calls; consider that one may quit typing with <Ctrl-c>, should now pace.sec
-" serve to distinguish an aborted-`null' record from a normal-exit record, now
-" pace.dump[0][0][2] == pace.char?  Should the rejected count be deducted from
-" the pace.char figure in pace.enter()?
-"
-" `ssec': reltime() returns the time elapsed between events, whereas the total
-" seconds spent typing is the sum of all such runs; therefore, provide another
-" field that would hold the sum of all Normal-mode time and subtract its value
-" from reltime(first_hit, last_hit) in pace.leave().
-"
-" Moreover, `char' and `sec' must accommodate any run count policy: single
-" (0000), all (1000), or buffer (2000).
+function! s:pace.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
+		\ ((l:tick[1] + a:go.c) % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%06i', l:tick[1]))[: 2].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+elseif s:parts == 9
+
+function! s:pace.eval2(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval1(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval0(go) abort					" {{{1
+	let l:tick	= reltime(a:go.a)
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
+		\ ((l:tick[1] + a:go.c) % 1000000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ l:tick[0].(printf('.%09i', l:tick[1]))[: 2].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+else
+	throw 'My mind is going...'
+endif
+
+else
+
+" The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+
+function! s:pace.time(tick) abort					" {{{1
+	let l:unit	= reltimestr(a:tick)
+	return [str2nr(l:unit), str2nr(l:unit[-6 :])]
+endfunction
+
+function! s:pace.eval2(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval1(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ (l:char / l:sec),
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction
+
+function! s:pace.eval0(go) abort					" {{{1
+	let l:unit	= reltimestr(reltime(a:go.a))
+	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
+	let [a:go.b, a:go.c, a:go.d]	=
+		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
+		\ (l:micros % 1000000),
+		\ (a:go.d + 1)]
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ str2nr(l:unit).l:unit[-7 : -5].',',
+			\ l:sec != 0
+				\ ? l:self.trampolinemoved(l:char / l:sec)
+				\ : l:char,
+			\ l:char,
+			\ l:sec)
+	let a:go.a	= reltime()
+endfunction								" }}}1
+
+endif
+
+function! s:pace.trampolinemoved(value) abort				" {{{1
+	autocmd! pace CursorMovedI
+	autocmd pace CursorMovedI	* call s:pace.eval1(s:turn)
+	return a:value
+endfunction
+
+function! s:pace.trampolinehold(value) abort				" {{{1
+	autocmd! pace CursorHoldI
+	autocmd pace CursorHoldI	* call s:pace.sample1(s:turn)
+	return a:value
+endfunction
+
+function! s:pace.div(dividend, divisor) abort				" {{{1
+	return a:divisor ? (a:dividend / a:divisor) : a:dividend
+endfunction
+
+function! s:pace.sample2(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+						\ '0.00,',
+						\ l:self.div(l:char, l:sec),
+						\ l:char,
+						\ l:sec)
+endfunction
+
+function! s:pace.sample1(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+						\ '0.00,',
+						\ (l:char / l:sec),
+						\ l:char,
+						\ l:sec)
+endfunction
+
+function! s:pace.sample0(go) abort					" {{{1
+	let [l:char, l:sec]	= [(a:go.d + a:go.e), (a:go.b + a:go.f)]
+	let g:pace_info		= printf('%-9s %2i, %7i, %5i',
+			\ '0.00,',
+			\ l:sec != 0
+				\ ? l:self.trampolinehold(l:char / l:sec)
+				\ : l:char,
+			\ l:char,
+			\ l:sec)
+endfunction
+
+function! s:pace.msg(fname, entry) abort				" {{{1
+	echomsg printf('%s: @%i: %s',
+				\ split(a:fname, '\v%(\.\.|\s+)')[-1],
+				\ localtime(),
+				\ a:entry)
+endfunction
 
 function! s:pace.test(pass) abort					" {{{1
 	if !exists('#pace')
@@ -97,32 +331,69 @@ function! s:pace.test(pass) abort					" {{{1
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorHoldI')
+		autocmd! pace CursorHoldI
+	endif
+
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
 		if g:pace_policy != l:self.policy &&
 				\ g:pace_policy =~ '\<1[012][01][012][0-7]\>'
-			call l:self.msg(expand('<sfile>'), 'g:pace_policy: '
-				\ .l:self.policy.'->'.g:pace_policy)
+			call l:self.msg(expand('<sfile>'),
+					\ printf('g:pace_policy: %i->%i',
+							\ l:self.policy,
+							\ g:pace_policy))
 			let l:self.policy	= g:pace_policy
 		endif
 
 		unlet g:pace_policy
 	endif
 
-	if l:self.char < 0
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if g:pace_sample != l:self.sample.in
+			let [l:within, l:candidate]	=
+					\ g:pace_sample > l:self.sample.above
+				\ ? [0, (l:self.sample.above + 5)]
+				\ : g:pace_sample < l:self.sample.below
+					\ ? [0, (l:self.sample.below - 5)]
+					\ : [1, g:pace_sample]
+
+			if l:candidate != l:self.sample.in
+				if l:within != 0
+					let &updatetime	= l:candidate
+				elseif !(l:self.sample.in > l:self.sample.above ||
+						\ l:self.sample.in <
+							\ l:self.sample.below)
+					let &updatetime	= l:self.state.updatetime
+				endif
+
+				call l:self.msg(expand('<sfile>'),
+					\ printf('g:pace_sample: %i->%i',
+							\ l:self.sample.in,
+							\ l:candidate))
+				let l:self.sample.in	= l:candidate
+			endif
+		endif
+
+		unlet g:pace_sample
+	endif
+
+	if s:turn.d < 0
 		return -1
-	elseif !l:self.char && !l:self.policy[2]
+	elseif !s:turn.d && !l:self.policy[2]
+		let s:turn.c	= l:self.carry
 		return 4				" Discard null.
 	elseif !a:pass
 		return 0				" pace.leave() exit.
 	elseif !l:self.policy[3]
+		let s:turn.c	= l:self.carry
 		return 2				" Discard rejects.
 	endif
 
@@ -135,9 +406,26 @@ function! s:pace.test(pass) abort					" {{{1
 endfunction
 
 function! s:pace.leave() abort						" {{{1
+	let l:recordchar_tick	= reltime(l:self.epoch)
+
 	if &maxfuncdepth < 16		" An arbitrary bound.
 		set maxfuncdepth&
 	endif				" What if :doautocmd pace InsertLeave?
+
+	if !(l:self.sample.in < l:self.sample.below)
+		if l:self.sample.in > l:self.sample.above
+			" Counter the overhead of transition from CursorMovedI
+			" to InsertLeave by not rounding up.
+			call l:self.recordunit(s:turn,
+				\ [l:self.time(l:recordchar_tick)[0], 0])
+		endif
+
+		if exists('g:pace_info')
+			unlockvar g:pace_info
+		endif
+
+		call l:self.sample2(s:turn)
+	endif
 
 	if l:self.test(0)
 		return 1
@@ -147,7 +435,7 @@ function! s:pace.leave() abort						" {{{1
 
 	" Update the logged hits and the whole count.
 	let l:whole		= l:self.dump[0][0]
-	let l:whole[0:3]	+= [1, 0, l:self.char, l:self.sec]
+	let l:whole[0 : 3]	+= [1, 0, s:turn.d, s:turn.b]
 	unlet! g:pace_amin
 	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
 	lockvar g:pace_amin
@@ -157,13 +445,16 @@ function! s:pace.leave() abort						" {{{1
 	endif
 
 	" Append a new hit instance and fetch the buffer total entry.
-	let l:total		= add(l:self.dump[l:self.buffer],
-			\ [(l:self.mark ? -l:whole[0] :	l:whole[0]),
-			\ l:self.begin[0], l:self.char, l:self.sec])[0]
+	let l:total	= add(l:self.dump[l:self.buffer],
+				\ [(l:self.mark ? -l:whole[0] : l:whole[0]),
+				\ l:self.time(l:self.epoch)[0],
+				\ s:turn.d,
+				\ s:turn.b])[0]
 	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
-	let [l:total[2], l:total[3]]	+= [l:self.char, l:self.sec]
-	let [l:self.char, l:self.sec]	= [-1, -1]	" Invalidate the count.
-	let l:self.pool		= {}			" Invalidate the cache.
+	let [l:total[2], l:total[3]]	+= [s:turn.d, s:turn.b]
+	let [s:turn.b, s:turn.d]	= [-1, -1]	" Invalidate the count.
+	let l:self.pool		= {}			" Invalidate the pool.
+	let l:self.carry	= s:turn.c		" Copy for rejects &c.
 endfunction
 
 function! s:pace.swap(buffer) abort					" {{{1
@@ -171,8 +462,12 @@ function! s:pace.swap(buffer) abort					" {{{1
 
 	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
 		" Ferret out any doppel-gänger windows.
-		call filter(range(1, winnr('$')), "winbufnr(v:val) == l:self.buffer ?
-				\ setwinvar(v:val, '&statusline', l:status) : 0")
+		call filter(range(1, winnr('$')),
+					\ printf('winbufnr(v:val) == %d
+				\ ? setwinvar(v:val, "&statusline", %s)
+				\ : 0',
+			\ l:self.buffer,
+			\ string(l:status)))
 	elseif bufexists(l:self.buffer)
 		execute 'sbuffer '.l:self.buffer
 		call setbufvar(l:self.buffer, '&statusline', l:status)
@@ -193,19 +488,22 @@ function! s:pace.enter() abort						" {{{1
 
 	call l:self.test(1)		" Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	" Leave and enter gracefully at the switch.  (Although the current
+	" mode may be masked, what its InsertChange complement is can be
+	" undecidable without recourse to mode book-keeping: [r->]i->r or
+	" [v->]i->v.)
 	autocmd! pace InsertChange
 	autocmd pace InsertChange	* call s:pace.leave()
 	autocmd pace InsertChange	* call s:pace.enter()
 
-	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call l:self.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
 	elseif !l:self.policy[4] ||
 		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
 		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
 		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
-		return -1		" Imitates and(l:self.policy[4], 1) &c.
+		return -1		" Imitate and(l:self.policy[4], 1) &c.
 	endif
 
 	if !&laststatus
@@ -218,38 +516,57 @@ function! s:pace.enter() abort						" {{{1
 
 	" Pre-empt the statusline value and substitute it for the one assembled.
 	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
-				\ 'winbufnr(v:val) == l:self.buffer')) > 1
+			\ printf('winbufnr(v:val) == %d', l:self.buffer))) > 1
 		call l:self.swap(bufnr('%'))
 	endif
 
-	let [l:self.cchar, l:self.ssec]	= l:self.policy[1] == 1	?
-		\ [l:self.dump[0][0][2], l:self.dump[0][0][3]]	:
-		\ l:self.policy[1] == 2 && has_key(l:self.dump, l:self.buffer)	?
-		\ [l:self.dump[l:self.buffer][0][2],
-		\ l:self.dump[l:self.buffer][0][3]]	:
-		\ [0, 0]
-	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
-	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
+	" Select the base count values for reporting.
+	let [s:turn.e, s:turn.f]	= l:self.policy[1] == 1
+		\ ? [l:self.dump[0][0][2], l:self.dump[0][0][3]]
+		\ : l:self.policy[1] == 2 &&
+					\ has_key(l:self.dump, l:self.buffer)
+			\ ? [l:self.dump[l:self.buffer][0][2],
+					\ l:self.dump[l:self.buffer][0][3]]
+			\ : [0, 0]
+	let l:self.dump[0][0][1]	+= 1		" All InsertEnter hits.
+	let [s:turn.b, s:turn.d]	= [0, 0]	" Initialise the count.
 	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
-	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
-				\ l:self.div(l:self.cchar, l:self.ssec),
-				\ l:self.cchar, l:self.ssec)
+	let g:pace_info	= printf('%-9s %2i, %7i, %5i',
+				\ '0.00,',
+				\ l:self.div(s:turn.e, s:turn.f),
+				\ s:turn.e,
+				\ s:turn.f)
 
-	if winnr('$') == 1
+	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
 	else
 		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
 					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
-	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval()
+	if l:self.sample.in > l:self.sample.above
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* let s:turn.d	+= 1
+		endif
+	elseif l:self.sample.in < l:self.sample.below
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* call s:pace.eval0(s:turn)
+		endif
+	else
+		if !exists('#pace#CursorHoldI#*')
+			autocmd pace CursorHoldI	* call s:pace.sample0(s:turn)
+		endif
+
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* call s:pace.eval2(s:turn)
+		endif
 	endif
 
 	if !exists('#pace#InsertLeave#*')
 		autocmd pace InsertLeave	* call s:pace.leave()
 	endif
+
+	let [s:turn.a, l:self.epoch]	= [reltime(), reltime()]
 endfunction
 
 function! Pace_Load(entropy) abort					" {{{1
@@ -264,16 +581,23 @@ function! Pace_Load(entropy) abort					" {{{1
 		let &ruler		= s:pace.state.ruler
 		let &maxfuncdepth	= s:pace.state.maxfuncdepth
 		let &laststatus		= s:pace.state.laststatus
+		let &updatetime		= s:pace.state.updatetime
+
+		" Counter the overhead of reltime() by not rounding up.
+		let s:turn.b		= -1
+		let s:turn.c		= 0
+		let s:pace.carry	= 0
 		let s:pace.load		= 0
 		silent! autocmd! pace
 		return 2
-	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
+	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
 		call s:pace.msg(expand('<sfile>'), '&eventignore mask')
 		return -128
 	elseif s:pace.load
 		return -1
 	endif
 
+	let s:pace.state.updatetime	= &updatetime
 	let s:pace.state.laststatus	= &laststatus
 	let s:pace.state.maxfuncdepth	= &maxfuncdepth
 	let s:pace.state.ruler		= &ruler
@@ -283,6 +607,23 @@ function! Pace_Load(entropy) abort					" {{{1
 	let s:pace.buffer	= bufnr('%')
 	let s:pace.load		= 1
 	let s:pace.status[s:pace.buffer]	= &l:statusline
+
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if exists('g:pace_collect_garbage_early') &&
+				\ !(g:pace_sample > s:pace.sample.above ||
+						\ g:pace_sample <
+							\ s:pace.sample.below)
+			unlet g:pace_collect_garbage_early
+
+			" Libate Wine-bottled GUI builds before their first
+			" sampling.  (The availability of the variable is left
+			" undocumented.)
+			call garbagecollect()
+		endif
+	elseif !(s:pace.sample.in > s:pace.sample.above ||
+				\ s:pace.sample.in < s:pace.sample.below)
+		let &updatetime	= s:pace.sample.in
+	endif
 
 	augroup pace
 		autocmd! pace
@@ -306,9 +647,13 @@ function! Pace_Dump(entropy) abort					" {{{1
 	\ }
 
 	for l:i in keys(s:pace.dump)
-		let [l:hits, l:last, l:char, l:sec]	= s:pace.dump[l:i][0][0:3]
+		let [l:hits, l:last, l:char, l:sec]	=
+						\ s:pace.dump[l:i][0][0 : 3]
 		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
-			\ s:pace.div(l:char, l:sec), l:char, l:sec, l:hits)
+						\ s:pace.div(l:char, l:sec),
+						\ l:char,
+						\ l:sec,
+						\ l:hits)
 	endfor
 
 	return copy(s:pace.pool)
@@ -338,39 +683,42 @@ function! Pace_Free() abort						" {{{1
 		let g:pace_dump	= s:pace.dump
 		let g:pace_pool	= s:pace.pool
 		silent! augroup! pace
-		unlet s:pace
+		unlet s:pace s:turn
 	endtry
 
 	return 1
-endfunction
+endfunction								" }}}1
 
-" COMMANDS								" {{{1
 command! -bar PaceOn	:echo Pace_Load(1)
 command! -bar PaceOff	:echo Pace_Load(0)
 command! -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
 command! -bar -nargs=*
-	\ PaceDump	:echo len([<f-args>]) == 3 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]] :
-	\ len([<f-args>]) == 2 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]] :
-	\ len([<f-args>]) == 1 ?
-	\ Pace_Dump(0)[[<f-args>][0]] :
-	\ Pace_Dump(0)
+	\ PaceDump	:echo len([<f-args>]) == 3
+	\ ? Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]]
+	\ : len([<f-args>]) == 2
+		\ ? Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]]
+		\ : len([<f-args>]) == 1
+			\ ? Pace_Dump(0)[[<f-args>][0]]
+			\ : Pace_Dump(0)
 command! -bar PaceFree	:echo Pace_Free()
 
 if has('modify_fname')
 command! -bar -nargs=1 -complete=dir
 	\ PaceSaveTo	:echo writefile(['let g:pace_dump = '
-		\ .string(Pace_Dump(0))], fnamemodify(expand(<q-args>), ':p')
-		\ .'/pace_'.localtime())
+						\ .string(Pace_Dump(0))],
+				\ fnamemodify(expand(<q-args>), ':p')
+						\ .'/pace_'
+						\ .localtime())
 command! -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
-		\ .fnamemodify(expand(<q-args>), ':p:h').' | source '
-		\ .fnamemodify(expand(<q-args>), ':p')
-endif									" }}}1
+				\ .fnamemodify(expand(<q-args>), ':p:h')
+				\ .' | source '
+				\ .fnamemodify(expand(<q-args>), ':p')
+endif
 
+lockvar 1 s:pace s:turn
 let g:pace_lock	= 1
 let &cpoptions	= s:cpoptions
-unlet s:carryover s:cpoptions
+unlet s:parts s:cpoptions
 
 " vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
