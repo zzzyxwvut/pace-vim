@@ -165,15 +165,16 @@ enddef									# }}}1
 
 endif
 
-function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
-	if a:lines < 1
+def s:Print(self: dict<any>, go: dict<any>, i: number, j: number,	# {{{1
+				name: string, lines: number, times: number)
+	if lines < 1
 		return
 	endif
 
-	execute 'noautocmd belowright keepalt keepjumps ' .. a:lines .. 'new +setlocal
+	execute 'noautocmd belowright keepalt keepjumps :' .. lines .. 'new +setlocal
 		\\ bufhidden=hide\ buftype=nofile\ foldcolumn&\ nobuflisted\ noswapfile
 		\\ statusline=%<%f\\\ %h%m%r%=[%{g:demo_info}]\\\ %-14.14(%l,%c%V%)\\\ %P
-		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +' .. a:name .. '+'
+		\\ textwidth=0\ winheight&\ winfixheight\ noequalalways +' .. name .. '+'
 
 	if !&l:modifiable
 		setlocal modifiable
@@ -183,53 +184,52 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 		setlocal noreadonly
 	endif
 
-	if join(getbufline('%', 1, a:lines), '') != ''
-		" Add some empty lines at the buffer end and set cursor there.
-		call map(range(a:lines), "setline((line('$') + 1), '')")
+	if join(getbufline('%', 1, lines), '') != ''
+		# Add some empty lines at the buffer end and set cursor there.
+		map(range(lines), "setline((line('$') + 1), '')")
 		normal! G
 	endif
 
 	try
-		if a:i < 0 || a:j < 0 || a:i > a:j
+		if i < 0 || j < 0 || i > j
 			return
 		endif
 
-		let l:cc	= split(join(l:self.text[a:i : a:j], "\n"), '\zs')
-		let l:z		= len(l:cc)
-		let l:g		= len(l:self.delay)
-		lockvar l:g l:z l:cc
-		let l:k		= localtime() % l:g		" Seed [0-3].
-		let l:n		= 0
+		const cc: list<string> = split(join(self.text[i : j], "\n"), '\zs')
+		const z: number = len(cc)
+		const g: number = len(self.delay)
+		var k: number = localtime() % g			# Seed [0-3].
+		var n: number = 0
 
-		while a:go.b < 1 && l:n < l:z
-			let @z	= l:cc[l:n]
+		while go.b < 1 && n < z
+			@z = cc[n]
 			normal! "zp
-			call s:Eval0(a:go)
-			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
+			Eval0(go)
+			execute 'sleep ' .. self.delay[k % g] .. 'm'
 			redrawstatus
-			let l:k	+= 1
-			let l:n	+= 1
+			k += 1
+			n += 1
 		endwhile
 
-		while l:n < l:z
-			let @z	= l:cc[l:n]
+		while n < z
+			@z = cc[n]
 			normal! "zp
-			call s:Eval1(a:go)
-			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
+			Eval1(go)
+			execute 'sleep ' .. self.delay[k % g] .. 'm'
 			redrawstatus
-			let l:k	+= 1
-			let l:n	+= 1
+			k += 1
+			n += 1
 		endwhile
 	finally
-		if a:times > 0
-			call setbufvar(bufnr('%'), '&statusline', '')
+		if times > 0
+			setbufvar(bufnr('%'), '&statusline', '')
 			normal! gg
 		endif
 
 		setlocal nomodifiable
 		redraw!
 	endtry
-endfunction
+enddef
 
 function s:demo.run(go) abort						" {{{1
 	let l:z	= len(l:self.text)
@@ -244,12 +244,13 @@ function s:demo.run(go) abort						" {{{1
 		endwhile
 
 		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
-		call l:self.print(a:go,
-					\ l:p,
-					\ (l:item.offset + l:p),
-					\ l:item.name,
-					\ (l:item.offset + 1),
-					\ l:t)
+		call s:Print(l:self,
+				\ a:go,
+				\ l:p,
+				\ (l:item.offset + l:p),
+				\ l:item.name,
+				\ (l:item.offset + 1),
+				\ l:t)
 		let l:n	= l:m + l:item.offset + 1
 		let l:t	-= 1
 	endfor

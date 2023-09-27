@@ -28,8 +28,8 @@ s:ReltimeStr('
 ## Generate Awk filter templets for commenting.
 tools/comment_1_with_awk.sh "$1"/comment_1.awk \
 		"^[\t ]+execute 'sleep '
-\\\""		'^[\t ]+redrawstatus
-\"'		'^lockvar s:parts
+#"		'^[\t ]+redrawstatus
+#'		'^lockvar s:parts
 \"'
 tools/comment_n_with_awk.sh "$1"/comment_n.awk \
 		'^try
