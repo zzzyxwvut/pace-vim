@@ -1,71 +1,69 @@
-" Description:	The demo-imitation of the "pace.vim" script
-" Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
-" Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
-" Version:	2.0
-" Last Change:	2023-Sep-27
-" Copyleft ())
-"
-" Dependencies:	cmdline_info, eval, reltime, and statusline features.
-"
-"		The "vimvat.txt" sonnet included.
-"
-" Usage:	Source the file: ":lcd %:p:h | source %".
-"
-" Notes:	In order to preview any other file, change the values of
-"		"text" and "linage" of the s:demo dictionary.  (Read "linage"
-"		elements as follows: seek the leftmost 'line_match' as regexp
-"		at the accumulated 'line_offset' and print the line and its
-"		current 'line_offset' lines that follow; otherwise print
-"		a null line.)
-"
-"		In order to adjust the typing pace, vary s:demo.delay numbers.
-"
-" Caveats:	The "winheight" option is set to 1.
+vim9script noclear
 
-let s:cpoptions	= &cpoptions
-set cpoptions-=C					" Join line-breaks.
+# Description:	The demo-imitation of the "pace.vim" script
+# Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
+# Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
+# Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+# Version:	2.0
+# Last Change:	2023-Sep-27
+# Copyleft ())
+#
+# Dependencies:	cmdline_info, eval, reltime, and statusline features.
+#
+#		The "vimvat.txt" sonnet included.
+#
+# Usage:	Source the file: ":lcd %:p:h | source %".
+#
+# Notes:	In order to preview any other file, change the values of
+#		"text" and "linage" of the s:demo dictionary.  (Read "linage"
+#		elements as follows: seek the leftmost 'line_match' as regexp
+#		at the accumulated 'line_offset' and print the line and its
+#		current 'line_offset' lines that follow; otherwise print
+#		a null line.)
+#
+#		In order to adjust the typing pace, vary s:demo.delay numbers.
+#
+# Caveats:	The "winheight" option is set to 1.
 
 if !(has('reltime') && has('cmdline_info') && has('statusline'))
-	let &cpoptions	= s:cpoptions
-	unlet s:cpoptions
 	finish
 endif
 
-let s:demo	= {
-	\ 'handle':	expand('<script>'),
-	\ 'reg_z':	@z,
-	\ 'delay':	[],
-	\ 'linage':	[],
-	\ 'text':	[],
-	\ 'state':	{
-		\ 'buffer':		bufnr('%'),
-		\ 'laststatus':		&laststatus,
-		\ 'maxfuncdepth':	&maxfuncdepth,
-		\ 'ruler':		&ruler,
-		\ 'rulerformat':	&rulerformat,
-		\ 'winheight':		&winheight,
-		\ 'equalalways':	&equalalways,
-		\ 'statusline':		&g:statusline,
-	\ },
-\ }
+var demo: dict<any> = {
+	handle:		expand('<script>'),
+	reg_z:		@z,
+	delay:		[],
+	linage:		[],
+	text:		[],
+	state:		{
+		buffer:		bufnr('%'),
+		laststatus:	&laststatus,
+		maxfuncdepth:	&maxfuncdepth,
+		ruler:		&ruler,
+		rulerformat:	&rulerformat,
+		winheight:	&winheight,
+		equalalways:	&equalalways,
+		statusline:	&g:statusline,
+	},
+}
 
-" Try to roll over the sub-second unit (see profile_sub() of profile.c).
-let s:parts	= len(reltime()) == 2
-			\ ? map([reltime([0, 0], [0, -1])],
-				\ "v:val[0] == -1 && v:val[1] =~ '^9\\+$'
-							\ ? strlen(v:val[1])
-							\ : 0")[0]
-			\ : 0
-lockvar s:parts
+# Try to roll over the sub-second unit (see profile_sub() of profile.c).
+const parts: number = len(reltime()) == 2
+	? reduce([reltime([0, 0], [0, -1])],
+		(_: number, v: list<number>): number =>
+					v[0] == -1 && string(v[1]) =~ '^9\+$'
+			? strlen(v[1])
+			: 0,
+		0)
+	: 0
 
-if s:parts != 6 && s:parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+if parts != 6 && parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
 	throw 'My mind is going...'
 endif
 
-if s:parts == 6
+if parts == 6
 
-def s:Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)						# {{{1
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -79,7 +77,7 @@ def s:Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def s:Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)						# {{{1
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -95,9 +93,9 @@ def s:Eval0(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef									# }}}1
 
-elseif s:parts == 9
+elseif parts == 9
 
-def s:Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)						# {{{1
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -111,7 +109,7 @@ def s:Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def s:Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)						# {{{1
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -129,9 +127,9 @@ enddef									# }}}1
 
 else
 
-" The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+# The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-def s:Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)						# {{{1
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -146,7 +144,7 @@ def s:Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def s:Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)						# {{{1
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -165,7 +163,7 @@ enddef									# }}}1
 
 endif
 
-def s:Print(self: dict<any>, go: dict<any>, i: number, j: number,	# {{{1
+def Print(self: dict<any>, go: dict<any>, i: number, j: number,		# {{{1
 				name: string, lines: number, times: number)
 	if lines < 1
 		return
@@ -231,7 +229,7 @@ def s:Print(self: dict<any>, go: dict<any>, i: number, j: number,	# {{{1
 	endtry
 enddef
 
-def s:Run(self: dict<any>, go: dict<any>)				# {{{1
+def Run(self: dict<any>, go: dict<any>)					# {{{1
 	const z: number = len(self.text)
 	var t: number = len(self.linage) - 1
 	var p: number = -1
@@ -253,11 +251,11 @@ def s:Run(self: dict<any>, go: dict<any>)				# {{{1
 	endfor
 enddef
 
-def s:Err_Msg(self: dict<any>, entry: string)				# {{{1
+def Err_Msg(self: dict<any>, entry: string)				# {{{1
 	echohl ErrorMsg | echomsg self.handle .. ': ' .. entry | echohl None
 enddef
 
-def s:Fetch(fname: string, lines: number): list<string>			# {{{1
+def Fetch(fname: string, lines: number): list<string>			# {{{1
 	if !filereadable(fname)
 		Err_Msg(demo, '`'
 				.. fname
@@ -293,22 +291,21 @@ enddef									# }}}1
 defcompile
 
 if !&g:modifiable || &g:readonly
-	call s:Err_Msg(s:demo, "Cannot make changes")
-	let &cpoptions	= s:cpoptions
-	unlet s:parts s:demo s:cpoptions
+	Err_Msg(demo, "Cannot make changes")
+	demo = null_dict
 	finish
 endif
 
 try
-	let s:demo.text		= s:Fetch('vimvat.txt', 20)
-	let s:demo.linage	= [
-		\ {'name': '1st\ quatrain', 'match': '^Of _vim_', 'offset': 3},
-		\ {'name': '2nd\ quatrain', 'match': '^Mnem0nic\$', 'offset': 3},
-		\ {'name': '3rd\ quatrain', 'match': '^No pop-ups', 'offset': 3},
-		\ {'name': 'the\ couplet', 'match': '^Go to,', 'offset': 1},
-	\ ]	" [buffer_name, line_match, line_offset]
-	let s:demo.delay	= [70, 90, 80, 60]
-	lockvar s:demo.delay s:demo.linage s:demo.text
+	demo.text = Fetch('vimvat.txt', 20)
+	demo.linage = [
+		{name: '1st\ quatrain', match: '^Of _vim_', offset: 3},
+		{name: '2nd\ quatrain', match: '^Mnem0nic\$', offset: 3},
+		{name: '3rd\ quatrain', match: '^No pop-ups', offset: 3},
+		{name: 'the\ couplet', match: '^Go to,', offset: 1},
+	]	# [buffer_name, line_match, line_offset]
+	demo.delay = [70, 90, 80, 60]
+	lockvar demo.delay demo.linage demo.text
 
 	if has('autocmd') && &eventignore !~? '\v%(all|vimresized)'
 		augroup demo
@@ -320,7 +317,7 @@ try
 	setglobal maxfuncdepth& rulerformat& ruler
 	setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 	unlet! g:demo_info
-	let g:demo_info	= printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
+	g:demo_info = printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
 
 	if !&laststatus
 		set laststatus&
@@ -331,40 +328,45 @@ try
 	endif
 
 	redraw!
-	lockvar 1 s:demo
+	lockvar 1 demo
 
-	" (Shorter key names shorten lookup time.)
-	" a: tick,
-	" b: seconds,
-	" c: micro- or nano-seconds,
-	" d: characters.
-	call s:Run(s:demo, {'a': reltime(), 'b': 0, 'c': 0, 'd': 0})
-catch	/^Vim:Interrupt$/	" Silence this error message.
+	# (Shorter key names shorten lookup time.)
+	# a: tick,
+	# b: seconds,
+	# c: micro- or nano-seconds,
+	# d: characters.
+	Run(demo, {a: reltime(), b: 0, c: 0, d: 0})
+catch	/^Vim:Interrupt$/	# Silence this error message.
 finally
-	let @z			= s:demo.reg_z
-	let &g:statusline	= s:demo.state.statusline
-	let &equalalways	= s:demo.state.equalalways
-"	let &winheight		= s:demo.state.winheight
-	let &rulerformat	= s:demo.state.rulerformat
-	let &ruler		= s:demo.state.ruler
-	let &maxfuncdepth	= s:demo.state.maxfuncdepth
-	let &laststatus		= s:demo.state.laststatus
-	let &cpoptions		= s:cpoptions
-	let s:switchbuf		= &switchbuf
+#	if demo == null_dict	# See Vim patch 9.0.1501 (issues/12245).
+#		finish
+#	endif
+
+	@z = demo.reg_z
+	&g:statusline = demo.state.statusline
+	&equalalways = demo.state.equalalways
+#	&winheight = demo.state.winheight
+	&rulerformat = demo.state.rulerformat
+	&ruler = demo.state.ruler
+	&maxfuncdepth = demo.state.maxfuncdepth
+	&laststatus = demo.state.laststatus
+	var switchbuf: string = &switchbuf
 
 	try
 		setglobal switchbuf=useopen
-		execute 'sbuffer ' .. s:demo.state.buffer
+		execute 'sbuffer ' .. demo.state.buffer
 		lcd -
 	catch	/.*/
-		call s:Err_Msg(s:demo, v:exception)
+		Err_Msg(demo, v:exception)
 	finally
-		let &switchbuf	= s:switchbuf
+		&switchbuf = switchbuf
 	endtry
 
-	unlet s:switchbuf s:parts s:demo s:cpoptions
+	unlockvar 1 demo
+	switchbuf = null_string
+	demo = null_dict
 	silent! autocmd! demo
 	silent! augroup! demo
 endtry
 
-" vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
+# vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:

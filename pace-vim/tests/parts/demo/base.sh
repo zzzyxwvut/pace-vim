@@ -22,19 +22,19 @@ esac
 ## Generate an Awk filter templet for mocking up.
 tools/mockup_with_awk.sh "$1"/mockup.awk \
 		'reltime\(
-s:Reltime('	'reltimestr\(
-s:ReltimeStr('
+Reltime('	'reltimestr\(
+ReltimeStr('
 
 ## Generate Awk filter templets for commenting.
 tools/comment_1_with_awk.sh "$1"/comment_1.awk \
-		"^[\t ]+execute 'sleep '
+		'^vim9script
+#'		"^[\t ]+execute 'sleep '
 #"		'^[\t ]+redrawstatus
-#'		'^lockvar s:parts
-\"'
+#'
 tools/comment_n_with_awk.sh "$1"/comment_n.awk \
 		'^try
 ^endtry
-\"'
+#'
 
 ## Arrange filters before the empty pattern.
 cat "$1"/mockup.awk "$1"/comment_1.awk "$1"/comment_n.awk - > \
@@ -62,73 +62,69 @@ cd "${cwd}"
 
 ## Massage a copy of the original script so that testing it is feasible:
 ##	(1) Mock up reltime() and reltimestr();
-##	(2) Comment out "^[\t ]+execute 'sleep '", '^[\t ]+redrawstatus',
-##		'^lockvar s:parts';
+##	(2) Comment out '^vim9script', "^[\t ]+execute 'sleep '",
+##		'^[\t ]+redrawstatus';
 ##		also, comment out '^try'-'^endtry' blocks.
 awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.
-stdin=46
+vim9script=2
+stdin=40
 cursor=$((`wc -l "$1"/demo.vim \
-parts/share/legacy/mockup.vim \
-parts/share/legacy/assert.vim \
-parts/demo/share/legacy/turn.vim | \
-{ t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
+parts/share/mockup.vim \
+parts/share/assert.vim \
+parts/demo/share/turn.vim | \
+{ t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + \
+${stdin} + ${vim9script} + 1))
 
 ## Implement the --quiet option for ../../tools/assemble_tests.sh: whether
 ## further testing should be abandoned after the first failed assertion.
-test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
+test "$2" -ne 0 && quiet='const assert_quiet: bool = true' || quiet=''
 
 ## Produce a common-base script file.
-cat parts/share/legacy/mockup.vim \
+cat parts/share/mockup.vim \
 "$1"/demo.vim \
 - \
-parts/share/legacy/assert.vim \
-parts/demo/share/legacy/turn.vim > "$1"/base.vim <<EOF
-""""""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
-let s:cpoptions = &cpoptions
-set cpoptions-=C					" Join line-breaks.
+parts/share/assert.vim \
+parts/demo/share/turn.vim > "$1"/base.vim <<EOF
+####################################|STDIN|###################################
+demo.text = [
+	'',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A stanza of four lines, usually with alternate rimes;',
+	'four lines of verse.’ (NED, VIII, I, 36.)',
+	'‘A pair of successive lines of verse, _esp._ when riming',
+	'together and of the same length.’ (NED, II, 1084.)',
+]
+demo.linage = [
+	{name: '1st\ quatrain', match: '^‘A stanza', offset: 3},
+	{name: '2nd\ quatrain', match: '^‘A stanza', offset: 3},
+	{name: '3rd\ quatrain', match: '^‘A stanza', offset: 3},
+	{name: 'the\ couplet', match: '^‘A pair', offset: 1},
+]
+demo.delay = [1, 1]
+lockvar demo.delay demo.linage demo.text
 
-let s:demo.text = [
-	\ '',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A stanza of four lines, usually with alternate rimes;',
-	\ 'four lines of verse.’ (NED, VIII, I, 36.)',
-	\ '‘A pair of successive lines of verse, _esp._ when riming',
-	\ 'together and of the same length.’ (NED, II, 1084.)',
-\ ]
-let s:demo.linage = [
-	\ {'name': '1st\ quatrain', 'match': '^‘A stanza', 'offset': 3},
-	\ {'name': '2nd\ quatrain', 'match': '^‘A stanza', 'offset': 3},
-	\ {'name': '3rd\ quatrain', 'match': '^‘A stanza', 'offset': 3},
-	\ {'name': 'the\ couplet', 'match': '^‘A pair', 'offset': 1},
-\ ]
-let s:demo.delay = [1, 1]
-lockvar s:demo.delay s:demo.linage s:demo.text
-
-" (Shorter key names shorten lookup time.)
-" a: tick,
-" b: seconds,
-" c: micro- or nano-seconds,
-" d: characters.
-let s:turn = {'a': s:Reltime(), 'b': 0, 'c': 0, 'd': 0}
+# (Shorter key names shorten lookup time.)
+# a: tick,
+# b: seconds,
+# c: micro- or nano-seconds,
+# d: characters.
+var turn: dict<any> = {a: Reltime(), b: 0, c: 0, d: 0}
 setglobal maxfuncdepth& rulerformat& ruler
 setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 unlet! g:demo_info
-let g:demo_info = printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
-call cursor((${cursor} + str2nr(\$TEST_DEMO_CURSOR_OFFSET)), 1)
+g:demo_info = printf('%-9s %2i, %7i, %5i', '0.00,', 0, 0, 0)
+cursor((${cursor} + str2nr(\$TEST_DEMO_CURSOR_OFFSET)), 1)
 ${quiet}
-
-let &cpoptions = s:cpoptions
-unlet s:cpoptions
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+#####################################|EOF|####################################
 EOF

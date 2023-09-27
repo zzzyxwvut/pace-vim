@@ -1,5 +1,4 @@
-""""""""""""""""""""""""""""""|eval-tail-str.vim|"""""""""""""""""""""""""""""
-def s:Test()
+##############################|eval-tail-str.vim|#############################
 $TEST_DEMO_CURSOR_OFFSET = '0'
 $TEST_SECOND_PARTS = '0'
 const eval_time_after: list<number> = mockup.time.after
@@ -117,7 +116,4 @@ finally
 endtry
 
 quit
-enddef
-
-call s:Test()
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+#####################################|EOF|####################################
