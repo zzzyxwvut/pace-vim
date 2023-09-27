@@ -231,30 +231,27 @@ def s:Print(self: dict<any>, go: dict<any>, i: number, j: number,	# {{{1
 	endtry
 enddef
 
-function s:demo.run(go) abort						" {{{1
-	let l:z	= len(l:self.text)
-	let l:t	= len(l:self.linage) - 1
-	let l:n	= 0
-	let l:m	= 0
-	let a:go.a	= reltime()
+def s:Run(self: dict<any>, go: dict<any>)				# {{{1
+	const z: number = len(self.text)
+	var t: number = len(self.linage) - 1
+	var p: number = -1
+	var n: number = 0
+	var m: number = 0
+	go.a = reltime()
 
-	for l:item in l:self.linage
-		while l:n < l:z && l:self.text[l:n] !~# l:item.match
-			let l:n	+= 1
+	for item in self.linage
+		while n < z && self.text[n] !~# item.match
+			n += 1
 		endwhile
 
-		let [l:m, l:p]	= l:n < l:z ? [l:n, l:n] : [l:m, -1]
-		call s:Print(l:self,
-				\ a:go,
-				\ l:p,
-				\ (l:item.offset + l:p),
-				\ l:item.name,
-				\ (l:item.offset + 1),
-				\ l:t)
-		let l:n	= l:m + l:item.offset + 1
-		let l:t	-= 1
+		[m, p] = n < z ? [n, n] : [m, -1]
+		Print(self, go, p,
+			(item.offset + p), item.name,
+			(item.offset + 1), t)
+		n = m + item.offset + 1
+		t -= 1
 	endfor
-endfunction
+enddef
 
 def s:Err_Msg(self: dict<any>, entry: string)				# {{{1
 	echohl ErrorMsg | echomsg self.handle .. ': ' .. entry | echohl None
@@ -341,7 +338,7 @@ try
 	" b: seconds,
 	" c: micro- or nano-seconds,
 	" d: characters.
-	call s:demo.run({'a': reltime(), 'b': 0, 'c': 0, 'd': 0})
+	call s:Run(s:demo, {'a': reltime(), 'b': 0, 'c': 0, 'd': 0})
 catch	/^Vim:Interrupt$/	" Silence this error message.
 finally
 	let @z			= s:demo.reg_z

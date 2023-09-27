@@ -1,65 +1,66 @@
 """""""""""""""""""""""""""""""""""|run.vim|""""""""""""""""""""""""""""""""""
-let s:cpoptions = &cpoptions
-set cpoptions-=C					" Join line-breaks.
-
+def s:Test()
 try
-	call s:Assert_Not_Equal(1, 'i', s:mockup.mode)
-	call s:Assert_Equal(1, 0, s:Get_Chars())
-	call s:Assert_Equal(2, 0, s:Get_Secs())
-	call s:Assert_True(1, exists('g:demo_info'))
-	let s:run_any = matchlist(g:demo_info,
-				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
-	call s:Assert_Equal(3, '0.00', s:run_any[1])	" tick
-	call s:Assert_Equal(4, '0', s:run_any[2])	" pace
-	call s:Assert_Equal(5, '0', s:run_any[3])	" chars
-	call s:Assert_Equal(6, '0', s:run_any[4])	" secs
+	var run_linage: dict<any>
+	var run_any: list<any>
 
-	call s:demo.run(s:turn)
+	Assert_Not_Equal(1, 'i', mockup.mode)
+	Assert_Equal(1, 0, Get_Chars())
+	Assert_Equal(2, 0, Get_Secs())
+	Assert_True(1, exists('g:demo_info'))
+	run_any = matchlist(g:demo_info,
+				'\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	Assert_Equal(3, '0.00', run_any[1])	# tick
+	Assert_Equal(4, '0', run_any[2])	# pace
+	Assert_Equal(5, '0', run_any[3])	# chars
+	Assert_Equal(6, '0', run_any[4])	# secs
 
-	call s:Assert_Equal(7, s:mockup.time.before, s:Get_Tick())
-	call s:Assert_Equal(8, 686, s:Get_Chars())
-	call s:Assert_Equal(9, 0, s:Get_Secs())
-	call s:Assert_True(2, exists('g:demo_info'))
-	let s:run_any = matchlist(g:demo_info,
-				\ '\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
-	call s:Assert_Equal(10, '0.00', s:run_any[1])
-	call s:Assert_Equal(11, '686', s:run_any[2])
-	call s:Assert_Equal(12, '686', s:run_any[3])
-	call s:Assert_Equal(13, '0', s:run_any[4])
+	Run(demo, turn)
 
-	let s:run_cursor = 1
+	Assert_Equal(7, mockup.time.before, Get_Tick())
+	Assert_Equal(8, 686, Get_Chars())
+	Assert_Equal(9, 0, Get_Secs())
+	Assert_True(2, exists('g:demo_info'))
+	run_any = matchlist(g:demo_info,
+				'\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')
+	Assert_Equal(10, '0.00', run_any[1])
+	Assert_Equal(11, '686', run_any[2])
+	Assert_Equal(12, '686', run_any[3])
+	Assert_Equal(13, '0', run_any[4])
 
-	for s:run_num in [0, 1, 2, 3]
-		let s:run_linage = s:demo.linage[s:run_num]
-		call s:Assert_Equal(14,
-			\ s:demo.text[(s:run_cursor + s:run_num) :
-				\ (s:run_cursor + s:run_num + s:run_linage.offset)],
-			\ getbufline(s:run_linage.name,
-				\ (len(getbufline(s:run_linage.name, 1, '$')) -
-							\ s:run_linage.offset),
-				\ '$'))
-		let s:run_cursor += s:run_linage.offset
+	var run_cursor: number = 1
+
+	for run_num in [0, 1, 2, 3]
+		run_linage = demo.linage[run_num]
+		Assert_Equal(14,
+			demo.text[(run_cursor + run_num) :
+				(run_cursor + run_num + run_linage.offset)],
+			getbufline(run_linage.name,
+				(len(getbufline(run_linage.name, 1, '$')) -
+							run_linage.offset),
+				'$'))
+		run_cursor += run_linage.offset
 	endfor
 finally
-	let @z = s:demo.reg_z
-	let &g:statusline = s:demo.state.statusline
-	let &equalalways = s:demo.state.equalalways
-	let &rulerformat = s:demo.state.rulerformat
-	let &ruler = s:demo.state.ruler
-	let &maxfuncdepth = s:demo.state.maxfuncdepth
-	let &laststatus = s:demo.state.laststatus
-	let s:run_switchbuf = &switchbuf
+	@z = demo.reg_z
+	&g:statusline = demo.state.statusline
+	&equalalways = demo.state.equalalways
+	&rulerformat = demo.state.rulerformat
+	&ruler = demo.state.ruler
+	&maxfuncdepth = demo.state.maxfuncdepth
+	&laststatus = demo.state.laststatus
+	const run_switchbuf: string = &switchbuf
 
 	try
 		setglobal switchbuf=useopen
-		execute 'sbuffer ' .. s:demo.state.buffer
+		execute 'sbuffer ' .. demo.state.buffer
 	catch	/.*/
-		call s:Err_Msg(s:demo, v:exception)
+		Err_Msg(demo, v:exception)
 	finally
-		let &switchbuf = s:run_switchbuf
+		&switchbuf = run_switchbuf
 	endtry
 
-	" Allow for re-sourcing.
+	# Allow for re-sourcing.
 	if has('autocmd') && &eventignore !~? '\v%(all|sourcepre)'
 		augroup demo
 			autocmd! demo
@@ -70,7 +71,8 @@ finally
 	endif
 endtry
 
-let &cpoptions = s:cpoptions
-unlet s:cpoptions
 quitall
+enddef
+
+call s:Test()
 """""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
