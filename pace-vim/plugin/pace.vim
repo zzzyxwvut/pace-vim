@@ -718,13 +718,17 @@ command -bar PaceOn	:echo g:Pace_Load(1)
 command -bar PaceOff	:echo g:Pace_Load(0)
 command -bar PaceSum	:echo join(sort(items(g:Pace_Dump(1))), "\n")
 command -bar -nargs=*
-	\ PaceDump	:echo len([<f-args>]) == 3
-		\ ? g:Pace_Dump(0)[[<f-args>][0]][eval([<f-args>][1])][eval([<f-args>][2])]
-		\ : len([<f-args>]) == 2
-			\ ? g:Pace_Dump(0)[[<f-args>][0]][eval([<f-args>][1])]
-			\ : len([<f-args>]) == 1
-				\ ? g:Pace_Dump(0)[[<f-args>][0]]
-				\ : g:Pace_Dump(0)
+	\ PaceDump	{
+		const dump_args: list<string> = [<f-args>]
+		const dump_length: number = len(dump_args)
+		echo dump_length == 3
+			? g:Pace_Dump(0)[dump_args[0]][str2nr(dump_args[1])][str2nr(dump_args[2])]
+			: dump_length == 2
+				? g:Pace_Dump(0)[dump_args[0]][str2nr(dump_args[1])]
+				: dump_length == 1
+					? g:Pace_Dump(0)[dump_args[0]]
+					: g:Pace_Dump(0)
+	}
 command -bar PaceFree	:echo g:Pace_Free()
 
 if has('modify_fname')			# Maintain interoperability for Vim 7.
