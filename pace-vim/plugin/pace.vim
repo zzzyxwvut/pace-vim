@@ -3,7 +3,7 @@
 " Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
 " Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	2.0
-" Last Change:	2023-Sep-25
+" Last Change:	2023-Sep-27
 " Copyleft ())
 "
 " Usage:	List all doc/ locations:
@@ -598,67 +598,69 @@ function s:Enter(self) abort						" {{{1
 	return s:Do_Enter(a:self)
 endfunction
 
-function s:Do_Pace_Load(entropy) abort					" {{{1
-	if type(a:entropy) == type(0) && !a:entropy
-		if !s:pace.load || mode() != 'n'
+def s:Do_Pace_Load(entropy: number): number				# {{{1
+	if entropy == 0
+		if !pace.load || mode() != 'n'
 			return 1
 		endif
 
-		call s:Swap(s:pace, bufnr('%'))
-		let &g:statusline	= s:pace.state.statusline
-		let &rulerformat	= s:pace.state.rulerformat
-		let &ruler		= s:pace.state.ruler
-		let &maxfuncdepth	= s:pace.state.maxfuncdepth
-		let &laststatus		= s:pace.state.laststatus
-		let &updatetime		= s:pace.state.updatetime
+		Swap(pace, bufnr('%'))
+		&g:statusline = pace.state.statusline
+		&rulerformat = pace.state.rulerformat
+		&ruler = pace.state.ruler
+		&maxfuncdepth = pace.state.maxfuncdepth
+		&laststatus = pace.state.laststatus
+		&updatetime = pace.state.updatetime
 
-		" Counter the overhead of reltime() by not rounding up.
-		let s:turn.b		= -1
-		let s:turn.c		= 0
-		let s:pace.carry	= 0
-		let s:pace.load		= 0
+		# Counter the overhead of reltime() by not rounding up.
+		turn.b = -1
+		turn.c = 0
+		pace.carry = 0
+		pace.load = false
 		silent! autocmd! pace
 		return 2
 	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
-		call s:Msg(expand('<stack>'), '&eventignore mask')
+		Msg(expand('<stack>'), '&eventignore mask')
 		return -128
-	elseif s:pace.load
+	elseif pace.load
 		return -1
 	endif
 
-	let s:pace.state.updatetime	= &updatetime
-	let s:pace.state.laststatus	= &laststatus
-	let s:pace.state.maxfuncdepth	= &maxfuncdepth
-	let s:pace.state.ruler		= &ruler
-	let s:pace.state.rulerformat	= &rulerformat
-	let s:pace.state.statusline	= &g:statusline
+	pace.state.updatetime = &updatetime
+	pace.state.laststatus = &laststatus
+	pace.state.maxfuncdepth = &maxfuncdepth
+	pace.state.ruler = &ruler
+	pace.state.rulerformat = &rulerformat
+	pace.state.statusline = &g:statusline
 	setglobal ruler statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
-	let s:pace.buffer	= bufnr('%')
-	let s:pace.load		= 1
-	let s:pace.status[s:pace.buffer]	= &l:statusline
+	pace.buffer = bufnr('%')
+	pace.load = true
+	pace.status[pace.buffer] = &l:statusline
 
 	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
 		if exists('g:pace_collect_garbage_early') &&
-				\ !(g:pace_sample > s:pace.sample.above ||
-						\ g:pace_sample <
-							\ s:pace.sample.below)
+				!(g:pace_sample > pace.sample.above ||
+						g:pace_sample <
+							pace.sample.below)
 			unlet g:pace_collect_garbage_early
 
-			" Libate Wine-bottled GUI builds before their first
-			" sampling.  (The availability of the variable is left
-			" undocumented.)
-			call garbagecollect()
+			# Libate Wine-bottled GUI builds before their first
+			# sampling.  (The availability of the variable is left
+			# undocumented.)
+			garbagecollect()
 		endif
-	elseif !(s:pace.sample.in > s:pace.sample.above ||
-				\ s:pace.sample.in < s:pace.sample.below)
-		let &updatetime	= s:pace.sample.in
+	elseif !(pace.sample.in > pace.sample.above ||
+				pace.sample.in < pace.sample.below)
+		&updatetime = pace.sample.in
 	endif
 
 	augroup pace
 		autocmd! pace
-		autocmd InsertEnter	* call s:Enter(s:pace)
+		autocmd InsertEnter	* Enter(pace)
 	augroup END
-endfunction
+
+	return 0
+enddef
 
 function Pace_Load(entropy) abort					" {{{1
 	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
