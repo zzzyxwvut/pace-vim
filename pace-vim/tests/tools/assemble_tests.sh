@@ -7,7 +7,7 @@
 
 parts=''
 quiet=0
-vim_script="${TEST_VIM_SCRIPT:-parts/share/legacy/vimscript.vim}"
+vim_script=parts/share/vim9script.vim
 
 for a
 do
