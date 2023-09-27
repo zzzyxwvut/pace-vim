@@ -63,7 +63,7 @@ endif
 
 if parts == 6
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -77,7 +77,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -91,11 +91,11 @@ def Eval0(go: dict<any>)						# {{{1
 			go.d,
 			go.b)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 elseif parts == 9
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -109,7 +109,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -123,13 +123,13 @@ def Eval0(go: dict<any>)						# {{{1
 			go.d,
 			go.b)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 else
 
 # The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -144,7 +144,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -159,11 +159,11 @@ def Eval0(go: dict<any>)						# {{{1
 			go.d,
 			go.b)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 endif
 
-def Print(self: dict<any>, go: dict<any>, i: number, j: number,		# {{{1
+def Print(self: dict<any>, go: dict<any>, i: number, j: number,
 				name: string, lines: number, times: number)
 	if lines < 1
 		return
@@ -229,7 +229,7 @@ def Print(self: dict<any>, go: dict<any>, i: number, j: number,		# {{{1
 	endtry
 enddef
 
-def Run(self: dict<any>, go: dict<any>)					# {{{1
+def Run(self: dict<any>, go: dict<any>)
 	const z: number = len(self.text)
 	var t: number = len(self.linage) - 1
 	var p: number = -1
@@ -251,11 +251,11 @@ def Run(self: dict<any>, go: dict<any>)					# {{{1
 	endfor
 enddef
 
-def Err_Msg(self: dict<any>, entry: string)				# {{{1
+def Err_Msg(self: dict<any>, entry: string)
 	echohl ErrorMsg | echomsg self.handle .. ': ' .. entry | echohl None
 enddef
 
-def Fetch(fname: string, lines: number): list<string>			# {{{1
+def Fetch(fname: string, lines: number): list<string>
 	if !filereadable(fname)
 		Err_Msg(demo, '`'
 				.. fname
@@ -286,7 +286,7 @@ def Fetch(fname: string, lines: number): list<string>			# {{{1
 	endif
 
 	return text
-enddef									# }}}1
+enddef
 
 defcompile
 
@@ -369,4 +369,4 @@ finally
 	silent! augroup! demo
 endtry
 
-# vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
+# vim:fdm=syntax:sw=8:ts=8:noet:nolist:nosta:
