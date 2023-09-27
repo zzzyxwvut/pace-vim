@@ -108,29 +108,29 @@ endif
 
 if parts == 9
 
-def Record_Unit(go: dict<any>, time: list<number>)			# {{{1
+def Record_Unit(go: dict<any>, time: list<number>)
 	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000000),
 			((time[1] + go.c) % 1000000000)]
-enddef									# }}}1
+enddef
 
 else
 
-def Record_Unit(go: dict<any>, time: list<number>)			# {{{1
+def Record_Unit(go: dict<any>, time: list<number>)
 	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000),
 			((time[1] + go.c) % 1000000)]
-enddef									# }}}1
+enddef
 
 endif
 
 if parts == 6 || parts == 9
 
-def Time(tick: list<number>): list<number>				# {{{1
+def Time(tick: list<number>): list<number>
 	return tick
-enddef									# }}}1
+enddef
 
 if parts == 6
 
-def Eval2(go: dict<any>)						# {{{1
+def Eval2(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -139,7 +139,7 @@ def Eval2(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -154,7 +154,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
@@ -169,11 +169,11 @@ def Eval0(go: dict<any>)						# {{{1
 			char,
 			sec)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 elseif parts == 9
 
-def Eval2(go: dict<any>)						# {{{1
+def Eval2(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -182,7 +182,7 @@ def Eval2(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -197,7 +197,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const tick: list<number> = reltime(go.a)
 	[go.b, go.c, go.d] =
 			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
@@ -212,7 +212,7 @@ def Eval0(go: dict<any>)						# {{{1
 			char,
 			sec)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 else
 	throw 'My mind is going...'
@@ -222,12 +222,12 @@ else
 
 # The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-def Time(tick: list<number>): list<number>				# {{{1
+def Time(tick: list<number>): list<number>
 	const unit: string = reltimestr(tick)
 	return [str2nr(unit), str2nr(unit[-6 :])]
 enddef
 
-def Eval2(go: dict<any>)						# {{{1
+def Eval2(go: dict<any>)
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -237,7 +237,7 @@ def Eval2(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval1(go: dict<any>)						# {{{1
+def Eval1(go: dict<any>)
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -253,7 +253,7 @@ def Eval1(go: dict<any>)						# {{{1
 	go.a = reltime()
 enddef
 
-def Eval0(go: dict<any>)						# {{{1
+def Eval0(go: dict<any>)
 	const unit: string = reltimestr(reltime(go.a))
 	const micros: number = str2nr(unit[-6 :]) + go.c
 	[go.b, go.c, go.d] =
@@ -269,27 +269,27 @@ def Eval0(go: dict<any>)						# {{{1
 			char,
 			sec)
 	go.a = reltime()
-enddef									# }}}1
+enddef
 
 endif
 
-def Trampoline_Moved(value: number): number				# {{{1
+def Trampoline_Moved(value: number): number
 	autocmd! pace CursorMovedI
 	autocmd pace CursorMovedI	* Eval1(turn)
 	return value
 enddef
 
-def Trampoline_Hold(value: number): number				# {{{1
+def Trampoline_Hold(value: number): number
 	autocmd! pace CursorHoldI
 	autocmd pace CursorHoldI	* Sample1(turn)
 	return value
 enddef
 
-def Div(dividend: number, divisor: number): number			# {{{1
+def Div(dividend: number, divisor: number): number
 	return divisor != 0 ? (dividend / divisor) : dividend
 enddef
 
-def Sample2(go: dict<any>)						# {{{1
+def Sample2(go: dict<any>)
 	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
@@ -298,7 +298,7 @@ def Sample2(go: dict<any>)						# {{{1
 			sec)
 enddef
 
-def Sample1(go: dict<any>)						# {{{1
+def Sample1(go: dict<any>)
 	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
@@ -307,7 +307,7 @@ def Sample1(go: dict<any>)						# {{{1
 			sec)
 enddef
 
-def Sample0(go: dict<any>)						# {{{1
+def Sample0(go: dict<any>)
 	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
@@ -318,14 +318,14 @@ def Sample0(go: dict<any>)						# {{{1
 			sec)
 enddef
 
-def Msg(stack: string, entry: string)					# {{{1
+def Msg(stack: string, entry: string)
 	echomsg printf('%s: @%i: %s',
 				split(stack, '\v%(\.\.|\s+)')[-1],
 				localtime(),
 				entry)
 enddef
 
-def Test(self: dict<any>, pass: bool): number				# {{{1
+def Test(self: dict<any>, pass: bool): number
 	if !exists('#pace')
 		# Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
@@ -411,7 +411,7 @@ def Test(self: dict<any>, pass: bool): number				# {{{1
 	return 0
 enddef
 
-def Leave(self: dict<any>): number					# {{{1
+def Leave(self: dict<any>): number
 	const record_char_tick: list<number> = reltime(self.epoch)
 
 	if &maxfuncdepth < 16		# An arbitrary bound.
@@ -463,12 +463,12 @@ def Leave(self: dict<any>): number					# {{{1
 	return 0
 enddef
 
-def Buffer_Matcher(): func(number): func(number, number): bool		# {{{1
+def Buffer_Matcher(): func(number): func(number, number): bool
 	return (buffer) => (_, value) => winbufnr(value) == buffer
 enddef
 
 def Status_Setter(): func(func(number, number): bool, string):
-					\ func(number, number): bool	# {{{1
+						\ func(number, number): bool
 	return (Matcher, status) => (_, value) => {
 		if Matcher(v:none, value)
 			setwinvar(value, '&statusline', status)
@@ -478,7 +478,7 @@ def Status_Setter(): func(func(number, number): bool, string):
 	}
 enddef
 
-def Swap(self: dict<any>, buffer: number)				# {{{1
+def Swap(self: dict<any>, buffer: number)
 	const status: string = get(self.status, self.buffer, &g:statusline)
 
 	if bufwinnr(self.buffer) > 0		# Protect from local change.
@@ -497,7 +497,7 @@ def Swap(self: dict<any>, buffer: number)				# {{{1
 	endif
 enddef
 
-def Enter(self: dict<any>): number					# {{{1
+def Enter(self: dict<any>): number
 	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
 	endif				# Graduate a sounding-rod before s:Test().
@@ -586,7 +586,7 @@ def Enter(self: dict<any>): number					# {{{1
 	return 0
 enddef
 
-def g:Pace_Load(entropy: number): number				# {{{1
+def g:Pace_Load(entropy: number): number
 	if entropy == 0
 		if !pace.load || mode() != 'n'
 			return 1
@@ -650,7 +650,7 @@ def g:Pace_Load(entropy: number): number				# {{{1
 	return 0
 enddef
 
-def g:Pace_Dump(entropy: number): dict<any>				# {{{1
+def g:Pace_Dump(entropy: number): dict<any>
 	if entropy == 0
 		return deepcopy(pace.dump, 1)
 	elseif !empty(pace.pool)			# See s:Leave().
@@ -678,7 +678,7 @@ def g:Pace_Dump(entropy: number): dict<any>				# {{{1
 	return copy(pace.pool)
 enddef
 
-def g:Pace_Free(): number						# {{{1
+def g:Pace_Free(): number
 	if pace == null_dict || mode() != 'n'
 		return 0
 	endif
@@ -712,7 +712,7 @@ def g:Pace_Free(): number						# {{{1
 	endtry
 
 	return 1
-enddef									# }}}1
+enddef
 
 command -bar PaceOn	:echo g:Pace_Load(1)
 command -bar PaceOff	:echo g:Pace_Load(0)
@@ -751,4 +751,4 @@ defcompile
 lockvar 1 pace turn
 g:pace_lock = 1
 
-# vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
+# vim:fdm=syntax:sw=8:ts=8:noet:nolist:nosta:
