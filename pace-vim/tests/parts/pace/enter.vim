@@ -1,6 +1,5 @@
-""""""""""""""""""""""""""""""""""|enter.vim|"""""""""""""""""""""""""""""""""
-" Also see {load,swap,test}.vim.
-def s:Test_()
+##################################|enter.vim|#################################
+# Also see {load,swap,test}.vim.
 pace.dump = {'0': [[0, 0, 0, 0]]}
 const enter_mode: string = mockup.mode
 Assert_Not_Equal(1, 'i', mockup.mode)
@@ -228,7 +227,4 @@ finally
 endtry
 
 quitall
-enddef
-
-call s:Test_()
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+#####################################|EOF|####################################

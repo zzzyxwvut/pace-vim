@@ -92,9 +92,27 @@ then
 fi
 
 i=1
+once=0
 
 for a
 do
+	test "${once}" -eq 1 || \
+	case "$a" in
+	demo)
+		trap 'test -d "${dir}" && rm -fr "${dir}"
+test ! -h "${parts}"/demo.vim || unlink "${parts}"/demo.vim
+test ! -r "${parts}"/demo.b.vim || rm -f "${parts}"/demo.b.vim
+test ! -r "${parts}"/demo.a.vim || \
+mv "${parts}"/demo.a.vim "${parts}"/demo.vim' EXIT HUP INT QUIT TERM
+		once=1
+		mv "${parts}"/demo.vim "${parts}"/demo.a.vim
+		awk 'BEGIN { getline; gsub(/^vim9script/, "# &"); print } { print }' \
+						"${parts}"/demo.a.vim > \
+						"${parts}"/demo.b.vim
+		ln -s "`pwd`/${parts}"/demo.b.vim "`pwd`/${parts}"/demo.vim
+		;;
+	esac
+
 	hh="`printf '%s\n' "${parts}/$a"-head-*.vim`"
 
 	case "${hh}" in

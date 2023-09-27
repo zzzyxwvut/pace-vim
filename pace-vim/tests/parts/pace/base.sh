@@ -21,27 +21,22 @@ esac
 ## Generate an Awk filter templet for mocking up.
 tools/mockup_with_awk.sh "$1"/mockup.awk \
 		'mode\(
-s:Mode('	'reltime\(
-s:Reltime('	'reltimestr\(
-s:ReltimeStr('	'v:insertmode
-s:insertmode'	'Do_Pace_Load\(
-Pace_Load_Do('	'g:Pace_Load\(
-Pace_Load('	'Pace_Load\(
-s:Pace_Load('	'Pace_Load_Do\(
-Do_Pace_Load('	'g:Pace_Dump\(
-Pace_Dump('	'Pace_Dump\(
-s:Pace_Dump('	'g:Pace_Free\(
-Pace_Free('	'Pace_Free\(
-s:Pace_Free('	'^[\t ]*command[ \t]
+Mode('		'reltime\(
+Reltime('	'reltimestr\(
+ReltimeStr('	'v:insertmode
+insertmode'	'g:Pace_Load\(
+Pace_Load('	'g:Pace_Dump\(
+Pace_Dump('	'g:Pace_Free\(
+Pace_Free('	'^[\t ]*command[ \t]
 command! '
 
 ## Generate an Awk filter templet for commenting.
 tools/comment_1_with_awk.sh "$1"/comment.awk \
-		'^[\t ]+silent! delcommand
+		'^vim9script
+#'		'^[\t ]+silent! delcommand
 #'		'^[\t ]+silent! delfunction
-#'		'^lockvar s:parts
-\"'		'^lockvar 1 s:pace s:turn
-\"'
+#'		'^lockvar 1 pace turn
+#'
 
 ## Arrange filters before the empty pattern.
 cat "$1"/mockup.awk "$1"/comment.awk - > "$1"/filter.awk <<'EOF'
@@ -70,30 +65,32 @@ cd "${cwd}"
 ##	(1) Mock up mode(), reltime(), reltimestr(), and v:insertmode;
 ##		also, limit the scope of Pace_{Load,Dump,Free}();
 ##		also, permit command redefinition;
-##	(2) Comment out '^[\t ]+silent! delcommand', '^lockvar s:parts',
-##		'^[\t ]+silent! delfunction', and '^lockvar 1 s:pace s:turn'.
+##	(2) Comment out '^vim9script', '^[\t ]+silent! delcommand',
+##		'^[\t ]+silent! delfunction', and '^lockvar 1 pace turn'.
 awk -f "$1"/filter.awk "${TEST_PACE_PATH:-../plugin/pace.vim}" > "$1"/pace.vim
 
 ## Calculate the first line location of a test file.
+vim9script=2
 stdin=4
 cursor=$((`wc -l "$1"/pace.vim \
-parts/share/legacy/mockup.vim \
-parts/share/legacy/assert.vim \
-parts/pace/share/legacy/turn.vim | \
-{ t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + ${stdin} + 1))
+parts/share/mockup.vim \
+parts/share/assert.vim \
+parts/pace/share/turn.vim | \
+{ t=0; while read -r a rest; do t="$a"; done; echo "$t"; }` + \
+${stdin} + ${vim9script} + 1))
 
 ## Implement the --quiet option for ../../tools/assemble_tests.sh: whether
 ## further testing should be abandoned after the first failed assertion.
-test "$2" -ne 0 && quiet='let s:assert_quiet = 1' || quiet=''
+test "$2" -ne 0 && quiet='const assert_quiet: bool = true' || quiet=''
 
 ## Produce a common-base script file.
-cat parts/share/legacy/mockup.vim \
+cat parts/share/mockup.vim \
 "$1"/pace.vim \
 - \
-parts/share/legacy/assert.vim \
-parts/pace/share/legacy/turn.vim > "$1"/base.vim <<EOF
-""""""""""""""""""""""""""""""""""""|STDIN|"""""""""""""""""""""""""""""""""""
-call cursor((${cursor} + str2nr(\$TEST_PACE_CURSOR_OFFSET)), 1)
+parts/share/assert.vim \
+parts/pace/share/turn.vim > "$1"/base.vim <<EOF
+####################################|STDIN|###################################
+cursor((${cursor} + str2nr(\$TEST_PACE_CURSOR_OFFSET)), 1)
 ${quiet}
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+#####################################|EOF|####################################
 EOF

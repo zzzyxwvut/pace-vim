@@ -1,6 +1,5 @@
-""""""""""""""""""""""""""""""""""|leave.vim|"""""""""""""""""""""""""""""""""
-" Also see {enter,test}.vim.
-def s:Test_()
+##################################|leave.vim|#################################
+# Also see {enter,test}.vim.
 pace.dump = {'0': [[0, 0, 0, 0]]}
 const leave_buffer_1: number = bufnr('%')
 const leave_mode: string = mockup.mode
@@ -238,7 +237,4 @@ finally
 endtry
 
 quitall
-enddef
-
-call s:Test_()
-"""""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""
+#####################################|EOF|####################################
