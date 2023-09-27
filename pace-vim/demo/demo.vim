@@ -259,38 +259,38 @@ def s:Err_Msg(self: dict<any>, entry: string)				# {{{1
 	echohl ErrorMsg | echomsg self.handle .. ': ' .. entry | echohl None
 enddef
 
-function s:demo.fetch(fname, lines) abort				" {{{1
-	if !filereadable(a:fname)
-		call s:Err_Msg(l:self, '`'
-				\ .. a:fname
-				\ .. "': No such file")
+def s:Fetch(fname: string, lines: number): list<string>			# {{{1
+	if !filereadable(fname)
+		Err_Msg(demo, '`'
+				.. fname
+				.. "': No such file")
 		return []
 	endif
 
-	let l:text	= readfile(a:fname, '', a:lines)
+	const text: list<string> = readfile(fname, '', lines)
 
-	if len(l:text) < a:lines
-		call s:Err_Msg(l:self, '`'
-				\ .. a:fname
-				\ .. "': Invalid line count: "
-				\ .. len(l:text)
-				\ .. " < "
-				\ .. a:lines)
+	if len(text) < lines
+		Err_Msg(demo, '`'
+				.. fname
+				.. "': Invalid line count: "
+				.. len(text)
+				.. " < "
+				.. lines)
 		return []
 	endif
 
-	let l:columns	= max(map(l:text[:], 'strlen(v:val)'))
+	const columns: number = max(map(text[:], 'strlen(v:val)'))
 
-	if winwidth(0) < l:columns
-		call s:Err_Msg(l:self, "Narrow width: "
-				\ .. winwidth(0)
-				\ .. " < "
-				\ .. l:columns)
+	if winwidth(0) < columns
+		Err_Msg(demo, "Narrow width: "
+				.. winwidth(0)
+				.. " < "
+				.. columns)
 		return []
 	endif
 
-	return l:text
-endfunction								" }}}1
+	return text
+enddef									# }}}1
 
 defcompile
 
@@ -302,7 +302,7 @@ if !&g:modifiable || &g:readonly
 endif
 
 try
-	let s:demo.text		= s:demo.fetch('vimvat.txt', 20)
+	let s:demo.text		= s:Fetch('vimvat.txt', 20)
 	let s:demo.linage	= [
 		\ {'name': '1st\ quatrain', 'match': '^Of _vim_', 'offset': 3},
 		\ {'name': '2nd\ quatrain', 'match': '^Mnem0nic\$', 'offset': 3},
