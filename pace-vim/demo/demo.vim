@@ -3,7 +3,7 @@
 " Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
 " Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
 " Version:	2.0
-" Last Change:	2023-Sep-21
+" Last Change:	2023-Sep-27
 " Copyleft ())
 "
 " Dependencies:	cmdline_info, eval, reltime, and statusline features.
@@ -65,103 +65,103 @@ endif
 
 if s:parts == 6
 
-function s:demo.eval1(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
-		\ ((l:tick[1] + a:go.c) % 1000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
-		\ (a:go.d / a:go.b),
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			(go.d / go.b),
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef
 
-function s:demo.eval0(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000),
-		\ ((l:tick[1] + a:go.c) % 1000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0] .. (printf('.%06i', l:tick[1]))[: 2] .. ',',
-		\ a:go.b != 0
-			\ ? (a:go.d / a:go.b)
-			\ : a:go.d,
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			go.b != 0
+				? (go.d / go.b)
+				: go.d,
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef									# }}}1
 
 elseif s:parts == 9
 
-function s:demo.eval1(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
-		\ ((l:tick[1] + a:go.c) % 1000000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
-		\ (a:go.d / a:go.b),
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			(go.d / go.b),
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef
 
-function s:demo.eval0(go) abort						" {{{1
-	let l:tick	= reltime(a:go.a)
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + l:tick[0] + (l:tick[1] + a:go.c) / 1000000000),
-		\ ((l:tick[1] + a:go.c) % 1000000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0] .. (printf('.%09i', l:tick[1]))[: 2] .. ',',
-		\ a:go.b != 0
-			\ ? (a:go.d / a:go.b)
-			\ : a:go.d,
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			go.b != 0
+				? (go.d / go.b)
+				: go.d,
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef									# }}}1
 
 else
 
 " The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-function s:demo.eval1(go) abort						" {{{1
-	let l:unit	= reltimestr(reltime(a:go.a))
-	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
-		\ (l:micros % 1000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
-		\ (a:go.d / a:go.b),
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction
+def s:Eval1(go: dict<any>)						# {{{1
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			(go.d / go.b),
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef
 
-function s:demo.eval0(go) abort						" {{{1
-	let l:unit	= reltimestr(reltime(a:go.a))
-	let l:micros	= str2nr(l:unit[-6 :]) + a:go.c
-	let [a:go.b, a:go.c, a:go.d]	=
-		\ [(a:go.b + str2nr(l:unit) + l:micros / 1000000),
-		\ (l:micros % 1000000),
-		\ (a:go.d + 1)]
-	let g:demo_info		= printf('%-9s %2i, %7i, %5i',
-		\ str2nr(l:unit) .. l:unit[-7 : -5] .. ',',
-		\ a:go.b != 0
-			\ ? (a:go.d / a:go.b)
-			\ : a:go.d,
-		\ a:go.d,
-		\ a:go.b)
-	let a:go.a	= reltime()
-endfunction								" }}}1
+def s:Eval0(go: dict<any>)						# {{{1
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	g:demo_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			go.b != 0
+				? (go.d / go.b)
+				: go.d,
+			go.d,
+			go.b)
+	go.a = reltime()
+enddef									# }}}1
 
 endif
 
@@ -204,7 +204,7 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 		while a:go.b < 1 && l:n < l:z
 			let @z	= l:cc[l:n]
 			normal! "zp
-			call l:self.eval0(a:go)
+			call s:Eval0(a:go)
 			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
 			redrawstatus
 			let l:k	+= 1
@@ -214,7 +214,7 @@ function s:demo.print(go, i, j, name, lines, times) abort		" {{{1
 		while l:n < l:z
 			let @z	= l:cc[l:n]
 			normal! "zp
-			call l:self.eval1(a:go)
+			call s:Eval1(a:go)
 			execute 'sleep ' .. l:self.delay[l:k % l:g] .. 'm'
 			redrawstatus
 			let l:k	+= 1
@@ -291,6 +291,8 @@ function s:demo.fetch(fname, lines) abort				" {{{1
 
 	return l:text
 endfunction								" }}}1
+
+defcompile
 
 if !&g:modifiable || &g:readonly
 	call s:demo.errmsg("Cannot make changes")
