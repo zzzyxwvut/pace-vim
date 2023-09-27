@@ -667,33 +667,33 @@ function Pace_Load(entropy) abort					" {{{1
 	return s:Do_Pace_Load(a:entropy)
 endfunction
 
-function Pace_Dump(entropy) abort					" {{{1
-	if type(a:entropy) == type(0) && !a:entropy
-		return deepcopy(s:pace.dump, 1)
-	elseif !empty(s:pace.pool)			" See s:Leave().
-		let s:pace.pool['_rejects']	= printf('%+31i',
-			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0]))
-		return copy(s:pace.pool)
+def g:Pace_Dump(entropy: number): dict<any>				# {{{1
+	if entropy == 0
+		return deepcopy(pace.dump, 1)
+	elseif !empty(pace.pool)			# See s:Leave().
+		pace.pool['_rejects'] = printf('%+31i',
+			(pace.dump[0][0][1] - pace.dump[0][0][0]))
+		return copy(pace.pool)
 	endif
 
-	let s:pace.pool	= {
-		\ '_buffers':	'pace    chars     secs     hits',
-		\ '_rejects':	printf('%+31i',
-			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0])),
-	\ }
+	pace.pool = {
+		'_buffers':	'pace    chars     secs     hits',
+		'_rejects':	printf('%+31i',
+			(pace.dump[0][0][1] - pace.dump[0][0][0])),
+	}
 
-	for l:i in keys(s:pace.dump)
-		let [l:hits, l:last, l:char, l:sec]	=
-						\ s:pace.dump[l:i][0][0 : 3]
-		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
-						\ s:Div(l:char, l:sec),
-						\ l:char,
-						\ l:sec,
-						\ l:hits)
+	for i in keys(pace.dump)
+		const [hits: number, _, char: number, sec: number] =
+							pace.dump[i][0][0 : 3]
+		pace.pool[printf('%08i', eval(i))] = printf('%4i %8i %8i %8i',
+							Div(char, sec),
+							char,
+							sec,
+							hits)
 	endfor
 
-	return copy(s:pace.pool)
-endfunction
+	return copy(pace.pool)
+enddef
 
 function Pace_Free() abort						" {{{1
 	if !exists('s:pace') || mode() != 'n'

@@ -27,7 +27,8 @@ s:ReltimeStr('	'v:insertmode
 s:insertmode'	'Do_Pace_Load\(
 Pace_Load_Do('	'Pace_Load\(
 s:Pace_Load('	'Pace_Load_Do\(
-Do_Pace_Load('	'Pace_Dump\(
+Do_Pace_Load('	'g:Pace_Dump\(
+Pace_Dump('	'Pace_Dump\(
 s:Pace_Dump('	'Pace_Free\(
 s:Pace_Free('	'^[\t ]*command[ \t]
 command! '
