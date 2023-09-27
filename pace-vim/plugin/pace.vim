@@ -20,34 +20,34 @@ if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
 	finish
 endif
 
-# Ponder before ridding of s:turn.e ((a sum of) characters) and s:turn.f
-# ((a sum of) seconds), and devolving their duties upon s:turn.d (characters)
-# and s:turn.b (seconds).
+# Ponder before ridding of s:turn[4] ((a sum of) characters) and s:turn[5]
+# ((a sum of) seconds), and devolving their duties upon s:turn[3] (characters)
+# and s:turn[1] (seconds).
 #
-# s:turn.e ((a sum of) characters): s:Enter() offers no way of telling event
+# s:turn[4] ((a sum of) characters): s:Enter() offers no way of telling event
 # calls from command line calls; consider that one may quit typing with
-# Ctrl-c, should now s:turn.b (seconds) serve to distinguish between aborted-
-# `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn.d (i.e.
+# Ctrl-c, should now s:turn[1] (seconds) serve to distinguish between aborted-
+# `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn[3] (i.e.
 # the total and the recent character counts)?  Should the rejected character
-# count be deducted from the s:turn.d figure in s:Enter()?
+# count be deducted from the s:turn[3] figure in s:Enter()?
 #
-# s:turn.f ((a sum of) seconds): reltime() returns the time elapsed between
+# s:turn[5] ((a sum of) seconds): reltime() returns the time elapsed between
 # events, whereas the total seconds spent typing is the sum of all such runs;
 # therefore, provide another entry that would hold the sum of all Normal-mode
 # time and subtract its value from the value of reltime(first_hit, last_hit)
 # in s:Leave().
 #
-# Moreover, s:turn.d (characters) and s:turn.b (seconds) must accommodate any
-# run count policy: single (0000), all (1000), or buffer (2000).
+# Moreover, s:turn[3] (characters) and s:turn[1] (seconds) must accommodate
+# any run count policy: single (0000), all (1000), or buffer (2000).
 
-# (Shorter key names shorten lookup time.)
-# a: tick,
-# b: seconds,
-# c: micro- or nano-seconds,
-# d: characters,
-# e: (a sum of) characters,
-# f: (a sum of) seconds.
-var turn: dict<any> = {a: reltime(), b: -1, c: 0, d: -1, e: 0, f: 0}
+# A key to indices.
+# 0: tick,
+# 1: seconds,
+# 2: micro- or nano-seconds,
+# 3: characters,
+# 4: (a sum of) characters,
+# 5: (a sum of) seconds.
+var turn: list<any> = [reltime(), -1, 0, -1, 0, 0]
 
 var pace: dict<any> = {
 	buffer:		bufnr('%'),
@@ -108,16 +108,16 @@ endif
 
 if parts == 9
 
-def Record_Unit(go: dict<any>, time: list<number>)
-	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000000),
-			((time[1] + go.c) % 1000000000)]
+def Record_Unit(go: list<any>, time: list<number>)
+	[go[1], go[2]] = [(go[1] + time[0] + (time[1] + go[2]) / 1000000000),
+			((time[1] + go[2]) % 1000000000)]
 enddef
 
 else
 
-def Record_Unit(go: dict<any>, time: list<number>)
-	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000),
-			((time[1] + go.c) % 1000000)]
+def Record_Unit(go: list<any>, time: list<number>)
+	[go[1], go[2]] = [(go[1] + time[0] + (time[1] + go[2]) / 1000000),
+			((time[1] + go[2]) % 1000000)]
 enddef
 
 endif
@@ -130,37 +130,37 @@ enddef
 
 if parts == 6
 
-def Eval2(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
-			((tick[1] + go.c) % 1000000),
-			(go.d + 1)]
-	go.a = reltime()
+def Eval2(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
+			((tick[1] + go[2]) % 1000000),
+			(go[3] + 1)]
+	go[0] = reltime()
 enddef
 
-def Eval1(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
-			((tick[1] + go.c) % 1000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Eval1(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
+			((tick[1] + go[2]) % 1000000),
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
-			((tick[1] + go.c) % 1000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Eval0(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
+			((tick[1] + go[2]) % 1000000),
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
 			sec != 0
@@ -168,42 +168,42 @@ def Eval0(go: dict<any>)
 				: char,
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
 elseif parts == 9
 
-def Eval2(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
-			((tick[1] + go.c) % 1000000000),
-			(go.d + 1)]
-	go.a = reltime()
+def Eval2(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
+			((tick[1] + go[2]) % 1000000000),
+			(go[3] + 1)]
+	go[0] = reltime()
 enddef
 
-def Eval1(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
-			((tick[1] + go.c) % 1000000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Eval1(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
+			((tick[1] + go[2]) % 1000000000),
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
-			((tick[1] + go.c) % 1000000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Eval0(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
+			((tick[1] + go[2]) % 1000000000),
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
 			sec != 0
@@ -211,7 +211,7 @@ def Eval0(go: dict<any>)
 				: char,
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
 else
@@ -227,40 +227,40 @@ def Time(tick: list<number>): list<number>
 	return [str2nr(unit), str2nr(unit[-6 :])]
 enddef
 
-def Eval2(go: dict<any>)
-	const unit: string = reltimestr(reltime(go.a))
-	const micros: number = str2nr(unit[-6 :]) + go.c
-	[go.b, go.c, go.d] =
-			[(go.b + str2nr(unit) + micros / 1000000),
+def Eval2(go: list<any>)
+	const unit: string = reltimestr(reltime(go[0]))
+	const micros: number = str2nr(unit[-6 :]) + go[2]
+	[go[1], go[2], go[3]] =
+			[(go[1] + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go.d + 1)]
-	go.a = reltime()
+			(go[3] + 1)]
+	go[0] = reltime()
 enddef
 
-def Eval1(go: dict<any>)
-	const unit: string = reltimestr(reltime(go.a))
-	const micros: number = str2nr(unit[-6 :]) + go.c
-	[go.b, go.c, go.d] =
-			[(go.b + str2nr(unit) + micros / 1000000),
+def Eval1(go: list<any>)
+	const unit: string = reltimestr(reltime(go[0]))
+	const micros: number = str2nr(unit[-6 :]) + go[2]
+	[go[1], go[2], go[3]] =
+			[(go[1] + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const unit: string = reltimestr(reltime(go.a))
-	const micros: number = str2nr(unit[-6 :]) + go.c
-	[go.b, go.c, go.d] =
-			[(go.b + str2nr(unit) + micros / 1000000),
+def Eval0(go: list<any>)
+	const unit: string = reltimestr(reltime(go[0]))
+	const micros: number = str2nr(unit[-6 :]) + go[2]
+	[go[1], go[2], go[3]] =
+			[(go[1] + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go.d + 1)]
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+			(go[3] + 1)]
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
 			sec != 0
@@ -268,7 +268,7 @@ def Eval0(go: dict<any>)
 				: char,
 			char,
 			sec)
-	go.a = reltime()
+	go[0] = reltime()
 enddef
 
 endif
@@ -289,8 +289,8 @@ def Div(dividend: number, divisor: number): number
 	return divisor != 0 ? (dividend / divisor) : dividend
 enddef
 
-def Sample2(go: dict<any>)
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Sample2(go: list<any>)
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			Div(char, sec),
@@ -298,8 +298,8 @@ def Sample2(go: dict<any>)
 			sec)
 enddef
 
-def Sample1(go: dict<any>)
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Sample1(go: list<any>)
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			(char / sec),
@@ -307,8 +307,8 @@ def Sample1(go: dict<any>)
 			sec)
 enddef
 
-def Sample0(go: dict<any>)
-	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+def Sample0(go: list<any>)
+	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			sec != 0
@@ -389,15 +389,15 @@ def Test(self: dict<any>, pass: bool): number
 		unlet g:pace_sample
 	endif
 
-	if turn.d < 0
+	if turn[3] < 0
 		return -1
-	elseif turn.d == 0 && and(self.policy, 0x10100) == 0x10000
-		turn.c = self.carry
+	elseif turn[3] == 0 && and(self.policy, 0x10100) == 0x10000
+		turn[2] = self.carry
 		return 4				# Discard null.
 	elseif !pass
 		return 0				# s:Leave() exit.
 	elseif and(self.policy, 0x10030) == 0x10000
-		turn.c = self.carry
+		turn[2] = self.carry
 		return 2				# Discard rejects.
 	endif
 
@@ -440,7 +440,7 @@ def Leave(self: dict<any>): number
 
 	# Update the logged hits and the whole count.
 	var whole: list<number> = self.dump[0][0]
-	[whole[0], whole[2], whole[3]] += [1, turn.d, turn.b]
+	[whole[0], whole[2], whole[3]] += [1, turn[3], turn[1]]
 	unlet! g:pace_amin
 	g:pace_amin = Div((whole[2] * 60), whole[3])
 	lockvar g:pace_amin
@@ -453,13 +453,13 @@ def Leave(self: dict<any>): number
 	var total: list<number> = add(self.dump[self.buffer],
 					[(self.mark ? -whole[0] : whole[0]),
 					Time(self.epoch)[0],
-					turn.d,
-					turn.b])[0]
+					turn[3],
+					turn[1]])[0]
 	[total[0], total[1]] = [(total[0] + 1), whole[0]]
-	[total[2], total[3]] += [turn.d, turn.b]
-	[turn.b, turn.d] = [-1, -1]			# Invalidate the count.
+	[total[2], total[3]] += [turn[3], turn[1]]
+	[turn[1], turn[3]] = [-1, -1]			# Invalidate the count.
 	self.pool = {}					# Invalidate the pool.
-	self.carry = turn.c				# Copy for rejects &c.
+	self.carry = turn[2]				# Copy for rejects &c.
 	return 0
 enddef
 
@@ -537,7 +537,7 @@ def Enter(self: dict<any>): number
 	endif
 
 	# Select the base count values for reporting.
-	[turn.e, turn.f] = and(self.policy, 0x11000) == 0x11000
+	[turn[4], turn[5]] = and(self.policy, 0x11000) == 0x11000
 		? [self.dump[0][0][2], self.dump[0][0][3]]
 		: and(self.policy, 0x12000) == 0x12000 &&
 					has_key(self.dump, self.buffer)
@@ -545,13 +545,13 @@ def Enter(self: dict<any>): number
 					self.dump[self.buffer][0][3]]
 			: [0, 0]
 	self.dump[0][0][1] += 1			# All InsertEnter hits.
-	[turn.b, turn.d] = [0, 0]		# Initialise the count.
+	[turn[1], turn[3]] = [0, 0]		# Initialise the count.
 	unlet! g:pace_info	# Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 						'0.00,',
-						Div(turn.e, turn.f),
-						turn.e,
-						turn.f)
+						Div(turn[4], turn[5]),
+						turn[4],
+						turn[5])
 
 	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
@@ -562,7 +562,7 @@ def Enter(self: dict<any>): number
 
 	if self.sample.in > self.sample.above
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* turn.d += 1
+			autocmd pace CursorMovedI	* turn[3] += 1
 		endif
 	elseif self.sample.in < self.sample.below
 		if !exists('#pace#CursorMovedI#*')
@@ -582,7 +582,7 @@ def Enter(self: dict<any>): number
 		autocmd pace InsertLeave	* Leave(pace)
 	endif
 
-	[turn.a, self.epoch] = [reltime(), reltime()]
+	[turn[0], self.epoch] = [reltime(), reltime()]
 	return 0
 enddef
 
@@ -601,8 +601,8 @@ def g:Pace_Load(entropy: number): number
 		&updatetime = pace.state.updatetime
 
 		# Counter the overhead of reltime() by not rounding up.
-		turn.b = -1
-		turn.c = 0
+		turn[1] = -1
+		turn[2] = 0
 		pace.carry = 0
 		pace.load = false
 		silent! autocmd! pace
@@ -708,7 +708,7 @@ def g:Pace_Free(): number
 		silent! augroup! pace
 		unlockvar 1 pace turn
 		pace = null_dict
-		turn = null_dict
+		turn = null_list
 	endtry
 
 	return 1
