@@ -1,33 +1,33 @@
 """""""""""""""""""""""""""""|demo/share/turn.vim|""""""""""""""""""""""""""""
 function s:Get_Tick() abort						" {{{1
-	return s:turn.a
+	return s:turn[0]
 endfunction
 
 function s:Set_Tick(value) abort					" {{{1
-	let s:turn.a = a:value
+	let s:turn[0] = a:value
 endfunction
 
 function s:Get_Secs() abort						" {{{1
-	return s:turn.b
+	return s:turn[1]
 endfunction
 
 function s:Set_Secs(value) abort					" {{{1
-	let s:turn.b = a:value
+	let s:turn[1] = a:value
 endfunction
 
 function s:Get_Parts() abort						" {{{1
-	return s:turn.c
+	return s:turn[2]
 endfunction
 
 function s:Set_Parts(value) abort					" {{{1
-	let s:turn.c = a:value
+	let s:turn[2] = a:value
 endfunction
 
 function s:Get_Chars() abort						" {{{1
-	return s:turn.d
+	return s:turn[3]
 endfunction
 
 function s:Set_Chars(value) abort					" {{{1
-	let s:turn.d = a:value
+	let s:turn[3] = a:value
 endfunction								" }}}1
 """""""""""""""""""""""""""""""""""""|EOF|""""""""""""""""""""""""""""""""""""

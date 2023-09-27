@@ -63,107 +63,107 @@ endif
 
 if parts == 6
 
-def Eval1(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
-			((tick[1] + go.c) % 1000000),
-			(go.d + 1)]
+def Eval1(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
+			((tick[1] + go[2]) % 1000000),
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
-			(go.d / go.b),
-			go.d,
-			go.b)
-	go.a = reltime()
+			(go[3] / go[1]),
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
-			((tick[1] + go.c) % 1000000),
-			(go.d + 1)]
+def Eval0(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
+			((tick[1] + go[2]) % 1000000),
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
-			go.b != 0
-				? (go.d / go.b)
-				: go.d,
-			go.d,
-			go.b)
-	go.a = reltime()
+			go[1] != 0
+				? (go[3] / go[1])
+				: go[3],
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
 elseif parts == 9
 
-def Eval1(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
-			((tick[1] + go.c) % 1000000000),
-			(go.d + 1)]
+def Eval1(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
+			((tick[1] + go[2]) % 1000000000),
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
-			(go.d / go.b),
-			go.d,
-			go.b)
-	go.a = reltime()
+			(go[3] / go[1]),
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const tick: list<number> = reltime(go.a)
-	[go.b, go.c, go.d] =
-			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
-			((tick[1] + go.c) % 1000000000),
-			(go.d + 1)]
+def Eval0(go: list<any>)
+	const tick: list<number> = reltime(go[0])
+	[go[1], go[2], go[3]] =
+			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
+			((tick[1] + go[2]) % 1000000000),
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
-			go.b != 0
-				? (go.d / go.b)
-				: go.d,
-			go.d,
-			go.b)
-	go.a = reltime()
+			go[1] != 0
+				? (go[3] / go[1])
+				: go[3],
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
 else
 
 # The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
 
-def Eval1(go: dict<any>)
-	const unit: string = reltimestr(reltime(go.a))
-	const micros: number = str2nr(unit[-6 :]) + go.c
-	[go.b, go.c, go.d] =
-			[(go.b + str2nr(unit) + micros / 1000000),
+def Eval1(go: list<any>)
+	const unit: string = reltimestr(reltime(go[0]))
+	const micros: number = str2nr(unit[-6 :]) + go[2]
+	[go[1], go[2], go[3]] =
+			[(go[1] + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go.d + 1)]
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
-			(go.d / go.b),
-			go.d,
-			go.b)
-	go.a = reltime()
+			(go[3] / go[1]),
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
-def Eval0(go: dict<any>)
-	const unit: string = reltimestr(reltime(go.a))
-	const micros: number = str2nr(unit[-6 :]) + go.c
-	[go.b, go.c, go.d] =
-			[(go.b + str2nr(unit) + micros / 1000000),
+def Eval0(go: list<any>)
+	const unit: string = reltimestr(reltime(go[0]))
+	const micros: number = str2nr(unit[-6 :]) + go[2]
+	[go[1], go[2], go[3]] =
+			[(go[1] + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go.d + 1)]
+			(go[3] + 1)]
 	g:demo_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
-			go.b != 0
-				? (go.d / go.b)
-				: go.d,
-			go.d,
-			go.b)
-	go.a = reltime()
+			go[1] != 0
+				? (go[3] / go[1])
+				: go[3],
+			go[3],
+			go[1])
+	go[0] = reltime()
 enddef
 
 endif
 
-def Print(self: dict<any>, go: dict<any>, i: number, j: number,
+def Print(self: dict<any>, go: list<any>, i: number, j: number,
 				name: string, lines: number, times: number)
 	if lines < 1
 		return
@@ -199,7 +199,7 @@ def Print(self: dict<any>, go: dict<any>, i: number, j: number,
 		var k: number = localtime() % g			# Seed [0-3].
 		var n: number = 0
 
-		while go.b < 1 && n < z
+		while go[1] < 1 && n < z
 			@z = cc[n]
 			normal! "zp
 			Eval0(go)
@@ -229,13 +229,13 @@ def Print(self: dict<any>, go: dict<any>, i: number, j: number,
 	endtry
 enddef
 
-def Run(self: dict<any>, go: dict<any>)
+def Run(self: dict<any>, go: list<any>)
 	const z: number = len(self.text)
 	var t: number = len(self.linage) - 1
 	var p: number = -1
 	var n: number = 0
 	var m: number = 0
-	go.a = reltime()
+	go[0] = reltime()
 
 	for item in self.linage
 		while n < z && self.text[n] !~# item.match
@@ -330,12 +330,12 @@ try
 	redraw!
 	lockvar 1 demo
 
-	# (Shorter key names shorten lookup time.)
-	# a: tick,
-	# b: seconds,
-	# c: micro- or nano-seconds,
-	# d: characters.
-	Run(demo, {a: reltime(), b: 0, c: 0, d: 0})
+	# A key to indices.
+	# 0: tick,
+	# 1: seconds,
+	# 2: micro- or nano-seconds,
+	# 3: characters.
+	Run(demo, [reltime(), 0, 0, 0])
 catch	/^Vim:Interrupt$/	# Silence this error message.
 finally
 #	if demo == null_dict	# See Vim patch 9.0.1501 (issues/12245).

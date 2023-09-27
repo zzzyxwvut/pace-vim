@@ -114,12 +114,12 @@ demo.linage = [
 demo.delay = [1, 1]
 lockvar demo.delay demo.linage demo.text
 
-# (Shorter key names shorten lookup time.)
-# a: tick,
-# b: seconds,
-# c: micro- or nano-seconds,
-# d: characters.
-var turn: dict<any> = {a: Reltime(), b: 0, c: 0, d: 0}
+# A key to indices.
+# 0: tick,
+# 1: seconds,
+# 2: micro- or nano-seconds,
+# 3: characters.
+var turn: list<any> = [Reltime(), 0, 0, 0]
 setglobal maxfuncdepth& rulerformat& ruler
 setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 unlet! g:demo_info
