@@ -695,35 +695,41 @@ def g:Pace_Dump(entropy: number): dict<any>				# {{{1
 	return copy(pace.pool)
 enddef
 
-function Pace_Free() abort						" {{{1
-	if !exists('s:pace') || mode() != 'n'
+def g:Pace_Free(): number						# {{{1
+	if pace == null_dict || mode() != 'n'
 		return 0
 	endif
 
 	try
-		let s:pace.load	= 1
-		call Pace_Dump(1)
-		call Pace_Load(0)
-	catch	/^Vim\%((\a\+)\)\=:E117/		" An unknown function.
-		call s:Swap(s:pace, bufnr('%'))
+		pace.load = true
+		g:Pace_Dump(1)
+		g:Pace_Load(0)
+	catch	/^Vim\%((\a\+)\)\=:E117/		# An unknown function.
+		Swap(pace, bufnr('%'))
 		silent! autocmd! pace
 	finally
+		if pace == null_dict	# See Vim patch 9.0.1501 (issues/12245).
+			return 1
+		endif
+
 		silent! delcommand PaceOn
 		silent! delcommand PaceOff
 		silent! delcommand PaceSum
 		silent! delcommand PaceDump
 		silent! delcommand PaceSaveTo
-		silent! delfunction Pace_Load
-		silent! delfunction Pace_Dump
+		silent! delfunction g:Pace_Load
+		silent! delfunction g:Pace_Dump
 		unlet! g:pace_dump g:pace_pool
-		let g:pace_dump	= s:pace.dump
-		let g:pace_pool	= s:pace.pool
+		g:pace_dump = pace.dump
+		g:pace_pool = pace.pool
 		silent! augroup! pace
-		unlet s:pace s:turn
+		unlockvar 1 pace turn
+		s:pace = null_dict	# FIXME: No effect for :def callers
+		s:turn = null_dict	# FIXME: and no s: (issues/13177).
 	endtry
 
 	return 1
-endfunction								" }}}1
+enddef									# }}}1
 
 command -bar PaceOn	:echo Pace_Load(1)
 command -bar PaceOff	:echo Pace_Load(0)

@@ -25,19 +25,21 @@ s:Mode('	'reltime\(
 s:Reltime('	'reltimestr\(
 s:ReltimeStr('	'v:insertmode
 s:insertmode'	'Do_Pace_Load\(
-Pace_Load_Do('	'Pace_Load\(
+Pace_Load_Do('	'g:Pace_Load\(
+Pace_Load('	'Pace_Load\(
 s:Pace_Load('	'Pace_Load_Do\(
 Do_Pace_Load('	'g:Pace_Dump\(
 Pace_Dump('	'Pace_Dump\(
-s:Pace_Dump('	'Pace_Free\(
+s:Pace_Dump('	'g:Pace_Free\(
+Pace_Free('	'Pace_Free\(
 s:Pace_Free('	'^[\t ]*command[ \t]
 command! '
 
 ## Generate an Awk filter templet for commenting.
 tools/comment_1_with_awk.sh "$1"/comment.awk \
 		'^[\t ]+silent! delcommand
-\"'		'^[\t ]+silent! delfunction
-\"'		'^lockvar s:parts
+#'		'^[\t ]+silent! delfunction
+#'		'^lockvar s:parts
 \"'		'^lockvar 1 s:pace s:turn
 \"'
 
