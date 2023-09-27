@@ -255,13 +255,13 @@ function s:demo.run(go) abort						" {{{1
 	endfor
 endfunction
 
-function s:demo.errmsg(entry) abort					" {{{1
-	echohl ErrorMsg | echomsg l:self.handle .. ': ' .. a:entry | echohl None
-endfunction
+def s:Err_Msg(self: dict<any>, entry: string)				# {{{1
+	echohl ErrorMsg | echomsg self.handle .. ': ' .. entry | echohl None
+enddef
 
 function s:demo.fetch(fname, lines) abort				" {{{1
 	if !filereadable(a:fname)
-		call l:self.errmsg('`'
+		call s:Err_Msg(l:self, '`'
 				\ .. a:fname
 				\ .. "': No such file")
 		return []
@@ -270,7 +270,7 @@ function s:demo.fetch(fname, lines) abort				" {{{1
 	let l:text	= readfile(a:fname, '', a:lines)
 
 	if len(l:text) < a:lines
-		call l:self.errmsg('`'
+		call s:Err_Msg(l:self, '`'
 				\ .. a:fname
 				\ .. "': Invalid line count: "
 				\ .. len(l:text)
@@ -282,7 +282,7 @@ function s:demo.fetch(fname, lines) abort				" {{{1
 	let l:columns	= max(map(l:text[:], 'strlen(v:val)'))
 
 	if winwidth(0) < l:columns
-		call l:self.errmsg("Narrow width: "
+		call s:Err_Msg(l:self, "Narrow width: "
 				\ .. winwidth(0)
 				\ .. " < "
 				\ .. l:columns)
@@ -295,7 +295,7 @@ endfunction								" }}}1
 defcompile
 
 if !&g:modifiable || &g:readonly
-	call s:demo.errmsg("Cannot make changes")
+	call s:Err_Msg(s:demo, "Cannot make changes")
 	let &cpoptions	= s:cpoptions
 	unlet s:parts s:demo s:cpoptions
 	finish
@@ -359,7 +359,7 @@ finally
 		execute 'sbuffer ' .. s:demo.state.buffer
 		lcd -
 	catch	/.*/
-		call s:demo.errmsg(v:exception)
+		call s:Err_Msg(s:demo, v:exception)
 	finally
 		let &switchbuf	= s:switchbuf
 	endtry

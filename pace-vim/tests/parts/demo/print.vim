@@ -180,7 +180,7 @@ finally
 		setglobal switchbuf=useopen
 		execute 'sbuffer ' .. s:demo.state.buffer
 	catch	/.*/
-		call s:demo.errmsg(v:exception)
+		call s:Err_Msg(s:demo, v:exception)
 	finally
 		let &switchbuf = s:print_switchbuf
 	endtry
