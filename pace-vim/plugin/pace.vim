@@ -272,16 +272,11 @@ enddef									# }}}1
 
 endif
 
-def s:Do_Trampoline_Moved(value: number): number			# {{{1
+def s:Trampoline_Moved(value: number): number				# {{{1
 	autocmd! pace CursorMovedI
 	autocmd pace CursorMovedI	* Eval1(turn)
 	return value
 enddef
-
-function s:Trampoline_Moved(value) abort				" {{{1
-	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:Do_Trampoline_Moved(a:value)
-endfunction
 
 function s:pace.dotrampolinehold(value) abort				" {{{1
 	autocmd! pace CursorHoldI
