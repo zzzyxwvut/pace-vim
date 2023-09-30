@@ -598,7 +598,7 @@ function s:Enter(self) abort						" {{{1
 	return s:Do_Enter(a:self)
 endfunction
 
-def s:Do_Pace_Load(entropy: number): number				# {{{1
+def g:Pace_Load(entropy: number): number				# {{{1
 	if entropy == 0
 		if !pace.load || mode() != 'n'
 			return 1
@@ -661,11 +661,6 @@ def s:Do_Pace_Load(entropy: number): number				# {{{1
 
 	return 0
 enddef
-
-function Pace_Load(entropy) abort					" {{{1
-	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:Do_Pace_Load(a:entropy)
-endfunction
 
 function Pace_Dump(entropy) abort					" {{{1
 	if type(a:entropy) == type(0) && !a:entropy
