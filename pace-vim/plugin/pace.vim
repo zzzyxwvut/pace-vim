@@ -283,16 +283,11 @@ function s:Trampoline_Moved(value) abort				" {{{1
 	return s:Do_Trampoline_Moved(a:value)
 endfunction
 
-def s:Do_Trampoline_Hold(value: number): number				# {{{1
+def s:Trampoline_Hold(value: number): number				# {{{1
 	autocmd! pace CursorHoldI
 	autocmd pace CursorHoldI	* Sample1(turn)
 	return value
 enddef
-
-function s:Trampoline_Hold(value) abort					" {{{1
-	" FIXME: Clue Vim in on syntax in an autocmd context (issues/13179).
-	return s:Do_Trampoline_Hold(a:value)
-endfunction
 
 def s:Div(dividend: number, divisor: number): number			# {{{1
 	return divisor != 0 ? (dividend / divisor) : dividend
