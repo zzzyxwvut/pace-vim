@@ -1,4 +1,4 @@
-*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Sep-27
+*pace.txt*	Measure the pace of typing (in Insert mode &c.)	2023-Dec-30
 
 Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
 Copyleft ())
@@ -218,6 +218,12 @@ See |load-vim-script| and |add-local-help| and |add-plugin|.
 
 ==============================================================================
 7. History						*pace-history*
+
+	2023-Dec-30	v3.0.
+				demo.vim and pace.vim: ~
+				Vim9 classes afford another opportunity as
+				a shorter turnaround alternative for access
+				to lists.
 
 	2023-Sep-27	v2.0.
 				demo.vim and pace.vim: ~
