@@ -338,10 +338,6 @@ try
 	Run(demo, [reltime(), 0, 0, 0])
 catch	/^Vim:Interrupt$/	# Silence this error message.
 finally
-#	if demo == null_dict	# See Vim patch 9.0.1501 (issues/12245).
-#		finish
-#	endif
-
 	@z = demo.reg_z
 	&g:statusline = demo.state.statusline
 	&equalalways = demo.state.equalalways
