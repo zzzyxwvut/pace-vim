@@ -1,18 +1,28 @@
 ##############################|share/mockup.vim|##############################
+class ElapsedTime
+	public var after: list<number> = [0, 1]
+	public var between: list<number> = [0, 1]
+	public var before: list<number> = [0, 0]
+	public var over: list<number> = [-1, -1]
+
+	def new()
+	enddef
+endclass
+
+class Mockup
+	public var mode: string = 'n'
+
+	const parts: number = !empty($TEST_SECOND_PARTS)
+		? str2nr($TEST_SECOND_PARTS)
+		: 0
+	const time: ElapsedTime = ElapsedTime.new()
+
+	def new()
+	enddef
+endclass
+
 var insertmode: string = 'i'
-var mockup: dict<any> = {
-	mode:	'n',
-	parts:	!empty($TEST_SECOND_PARTS)
-			? str2nr($TEST_SECOND_PARTS)
-			: 0,
-	time:	{
-		after:		[0, 1],
-		between:	[0, 1],
-		before:		[0, 0],
-		over:		[-1, -1],
-	},
-}
-lockvar mockup.parts
+var mockup: Mockup = Mockup.new()
 
 if mockup.parts == 9				# nsec
 	mockup.time.after = [0, 1000000]	# 1/1000
