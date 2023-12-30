@@ -691,10 +691,6 @@ def g:Pace_Free(): number
 		Swap(pace, bufnr('%'))
 		silent! autocmd! pace
 	finally
-		if pace == null_dict	# See Vim patch 9.0.1501 (issues/12245).
-			return 1
-		endif
-
 		silent! delcommand PaceOn
 		silent! delcommand PaceOff
 		silent! delcommand PaceSum
