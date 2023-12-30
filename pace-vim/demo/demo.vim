@@ -2,10 +2,10 @@ vim9script noclear
 
 # Description:	The demo-imitation of the "pace.vim" script
 # Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-# Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/0/master]
+# Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/1/master]
 # Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
-# Version:	2.0
-# Last Change:	2023-Sep-27
+# Version:	3.0
+# Last Change:	2023-Dec-30
 # Copyleft ())
 #
 # Dependencies:	cmdline_info, eval, reltime, and statusline features.
