@@ -1,211 +1,549 @@
-" Description:	Measure the pace of typing (in Insert mode &c.)
-" Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
-" Version:	1.2
-" Last Change:	2017-May-14
-" Copyleft ())
-"
-" Usage:	List all doc/ locations:
-"		":echo finddir('doc', &runtimepath, -1)".
-"
-"		Generate the help tags: ":helptags doc/".
-"		Read the documentation: ":help pace.txt".
+vim9script noclear
 
-let s:cpoptions	= &cpoptions						" {{{1
-set cpoptions-=C					" Join line-breaks.
+# Description:	Measure the pace of typing (in Insert mode &c.)
+# Author:	Aliaksei Budavei (0x000c70 AT gmail DOT com)
+# Repository:	https://github.com/zzzyxwvut/pace-vim.git [vim/9/1/master]
+# Bundles:	https://www.vim.org/scripts/script.php?script_id=5472
+# Version:	3.0
+# Last Change:	2023-Dec-30
+# Copyleft ())
+#
+# Usage:	List all doc/ locations:
+#		":echo finddir('doc', &runtimepath, -1)".
+#
+#		Generate the help tags: ":helptags doc/".
+#		Read the documentation: ":help pace.txt".
 
 if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
-	\ has('cmdline_info') && has('statusline') && has('user_commands') &&
-	\ len(reltime()) == 2)
-	let &cpoptions	= s:cpoptions
-	unlet s:cpoptions
+				has('cmdline_info') && has('statusline') &&
+				has('user_commands'))
 	finish
-elseif exists('g:pace_dump') && type(g:pace_dump) == type({}) &&
-	\ has_key(g:pace_dump, '0') && !max(map(map(values(g:pace_dump),
-	\ '(type(get((type(v:val) == type([]) ? v:val :	[]), 0)) == type([]) &&
-	\ len(v:val[0]) == 4 ? v:val[0] :	[""])'),
-	\ '(type(get(v:val, 0)) != type(0)) + (type(get(v:val, 1)) != type(0)) +
-	\ (type(get(v:val, 2)) != type(0)) + (type(get(v:val, 3)) != type(0))'))
-	let s:carryover	= deepcopy(g:pace_dump, 1)
-else	" NOTE: Call either Pace_Dump() or Pace_Free() to procure g:pace_dump!
-	let s:carryover	= {'0': [[0, 0, 0, 0]]}
-endif	" NOTE: The 0th key value follows a uniform depth: [[]].
+endif
 
-let s:pace	= {
-	\ 'char':	-1,
-	\ 'sec':	-1,
-	\ 'cchar':	0,
-	\ 'ssec':	0,
-	\ 'load':	0,
-	\ 'mark':	0,
-	\ 'micro':	len(reltime([0, 0], [0, -1])[1]),
-	\ 'buffer':	bufnr('%'),
-	\ 'policy':	10007,
-	\ 'begin':	reltime(),
-	\ 'break':	reltime(),
-	\ 'dump':	s:carryover,
-	\ 'pool':	{},
-	\ 'state':	{
-		\ 'laststatus':		&laststatus,
-		\ 'maxfuncdepth':	&maxfuncdepth,
-		\ 'ruler':		&ruler,
-		\ 'rulerformat':	&rulerformat,
-		\ 'statusline':		&g:statusline,
-	\ },
-	\ 'status':	{},
-\ }
+# Ponder before ridding of Turn.e ((a sum of) characters) and Turn.f ((a sum
+# of) seconds), and devolving their duties upon Turn.d (characters) and Turn.b
+# (seconds).
+#
+# Turn.e ((a sum of) characters): s:Enter() offers no way of telling event
+# calls from command line calls; consider that one may quit typing with
+# Ctrl-c, should now Turn.b (seconds) serve to distinguish between aborted-
+# `null' and normal-exit records, now s:pace.dump[0][0][2] == Turn.d (i.e.
+# the total and the recent character counts)?  Should the rejected character
+# count be deducted from the Turn.d figure in s:Enter()?
+#
+# Turn.f ((a sum of) seconds): reltime() returns the time elapsed between
+# events, whereas the total seconds spent typing is the sum of all such runs;
+# therefore, provide another entry that would hold the sum of all Normal-mode
+# time and subtract its value from the value of reltime(first_hit, last_hit)
+# in s:Leave().
+#
+# Moreover, Turn.d (characters) and Turn.b (seconds) must accommodate any run
+# count policy: single (0000), all (1000), or buffer (2000).
 
-function! s:pace.div(dividend, divisor) abort				" {{{1
-	return (a:divisor ? a:dividend / a:divisor :	a:dividend)
-endfunction	" Not used in pace.eval() since it sips ~1e-5 secs a call.
+# Fancy at-source-time function despatch and classes with anaemic behaviour.
 
-function! s:pace.msg(fname, entry) abort				" {{{1
-	echomsg split(a:fname, '\v%(\.\.|\s+)')[-1].': @'.localtime().': '.a:entry
-endfunction
+# (Shorter field names shorten lookup time.)
+class Turn
+	public var a: list<number> = reltime()	# tick
+	public var b: number = -1		# seconds
+	public var c: number = 0		# micro- or nano-seconds
+	public var d: number = -1		# characters
+	public var e: number = 0		# (a sum of) characters
+	public var f: number = 0		# (a sum of) seconds
 
-function! s:pace.eval() abort						" {{{1
-	let l:tick	= reltime(l:self.break) + reltime(l:self.begin)
-	let [l:self.char, l:self.sec]	= [(l:self.char + 1), l:tick[2]]
-	let [l:char, l:sec]		= [l:self.char + l:self.cchar,
-		\ l:self.sec + l:self.ssec]
-	let g:pace_info			= printf('%-9s %2i, %7i, %5i',
-		\ l:tick[0].('.'.printf('%0*i', l:self.micro, l:tick[1]))[:2].',',
-		\ (l:sec ? l:char / l:sec :	l:char), l:char, l:sec)
-	let l:self.break		= reltime()
-endfunction	" On local machine reltime()[1] spits non-padded microseconds.
+	def new()
+	enddef
+endclass
 
-" Ponder before ridding of `cchar' and `ssec', and devolving the duties upon
-" `char' and `sec'.
-"
-" `cchar': pace.enter() offers no way of telling event calls from command line
-" calls; consider that one may quit typing with <Ctrl-c>, should now pace.sec
-" serve to distinguish an aborted-`null' record from a normal-exit record, now
-" pace.dump[0][0][2] == pace.char?  Should the rejected count be deducted from
-" the pace.char figure in pace.enter()?
-"
-" `ssec': reltime() returns the time elapsed between events, whereas the total
-" seconds spent typing is the sum of all such runs; therefore, provide another
-" field that would hold the sum of all Normal-mode time and subtract its value
-" from reltime(first_hit, last_hit) in pace.leave().
-"
-" Moreover, `char' and `sec' must accommodate any run count policy: single
-" (0000), all (1000), or buffer (2000).
+class State
+	const laststatus: number = &laststatus
+	const maxfuncdepth: number = &maxfuncdepth
+	const ruler: bool = &ruler
+	const rulerformat: string = &rulerformat
+	const statusline: string = &g:statusline
+	const updatetime: number = &updatetime
 
-function! s:pace.test(pass) abort					" {{{1
+	def new()
+	enddef
+
+	def Restore()
+		&laststatus = this.laststatus
+		&maxfuncdepth = this.maxfuncdepth
+		&ruler = this.ruler
+		&rulerformat = this.rulerformat
+		&g:statusline = this.statusline
+		&updatetime = this.updatetime
+	enddef
+endclass
+
+class Pace
+	static const sample_above: number = 2000
+	static const sample_below: number = 50
+
+	public var sample_in: number = sample_below - 5
+	public var buffer: number = bufnr('%')
+	public var policy: number = 0x10007
+	public var carry: number = 0
+	public var load: bool = false
+	public var mark: bool = false
+	public var epoch: list<number> = reltime()
+	final dump: dict<list<list<number>>> = exists('g:pace_dump') &&
+				type(g:pace_dump) == type({}) &&
+				has_key(g:pace_dump, '0') &&
+					0 == max(map(map(values(g:pace_dump),
+			'(type(get((type(v:val) == type([]) ? v:val : []), 0))
+								\ == type([]) &&
+				\ len(v:val[0]) == 4 ? v:val[0] : [""])'),
+			'(type(get(v:val, 0)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 1)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 2)) != type(0) ? 1 : 0) +
+				\ (type(get(v:val, 3)) != type(0) ? 1 : 0)'))
+
+		# Call either g:Pace_Dump() or g:Pace_Free() to obtain
+		# g:pace_dump.
+		? deepcopy(<dict<list<list<number>>>>g:pace_dump, 1)
+
+		# The 0th key value follows a uniform depth: [[]].
+		: {'0': [[0, 0, 0, 0]]}
+	public var pool: dict<string> = {}
+	final status: dict<string> = {}
+	public var state: State = State.new()
+
+	def new()
+	enddef
+endclass
+
+var turn: Turn = Turn.new()
+var pace: Pace = Pace.new()
+
+# Try to roll over the sub-second unit (see profile_sub() of profile.c).
+const parts: number = len(reltime()) == 2
+	? reduce([reltime([0, 0], [0, -1])],
+		(_: number, v: list<number>): number =>
+					v[0] == -1 && string(v[1]) =~ '^9\+$'
+			? strlen(v[1])
+			: 0,
+		0)
+	: 0
+
+if parts != 6 && parts != 9 && reltimestr(reltime())[-7 : -7] != '.'
+	throw 'My mind is going...'
+endif
+
+if parts == 9
+
+def Record_Unit(go: Turn, time: list<number>)
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000000),
+			((time[1] + go.c) % 1000000000)]
+enddef
+
+else
+
+def Record_Unit(go: Turn, time: list<number>)
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000),
+			((time[1] + go.c) % 1000000)]
+enddef
+
+endif
+
+if parts == 6 || parts == 9
+
+def Time(tick: list<number>): list<number>
+	return tick
+enddef
+
+if parts == 6
+
+def Eval2(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
+
+def Eval1(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+def Eval0(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+elseif parts == 9
+
+def Eval2(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
+
+def Eval1(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+def Eval0(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+else
+	throw 'My mind is going...'
+endif
+
+else
+
+# The 1e+06 constants rely on 1e-06 seconds obtainable from reltimestr().
+
+def Time(tick: list<number>): list<number>
+	const unit: string = reltimestr(tick)
+	return [str2nr(unit), str2nr(unit[-6 :])]
+enddef
+
+def Eval2(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	go.a = reltime()
+enddef
+
+def Eval1(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			(char / sec),
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+def Eval0(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
+			(micros % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			trim(unit)[: -5] .. ',',
+			sec != 0
+				? Trampoline_Moved(char / sec)
+				: char,
+			char,
+			sec)
+	go.a = reltime()
+enddef
+
+endif
+
+def Trampoline_Moved(value: number): number
+	autocmd! pace CursorMovedI
+	autocmd pace CursorMovedI	* Eval1(turn)
+	return value
+enddef
+
+def Trampoline_Hold(value: number): number
+	autocmd! pace CursorHoldI
+	autocmd pace CursorHoldI	* Sample1(turn)
+	return value
+enddef
+
+def Div(dividend: number, divisor: number): number
+	return divisor != 0 ? (dividend / divisor) : dividend
+enddef
+
+def Sample2(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			Div(char, sec),
+			char,
+			sec)
+enddef
+
+def Sample1(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			(char / sec),
+			char,
+			sec)
+enddef
+
+def Sample0(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+			'0.00,',
+			sec != 0
+				? Trampoline_Hold(char / sec)
+				: char,
+			char,
+			sec)
+enddef
+
+def Msg(stack: string, entry: string)
+	echomsg printf('%s: @%i: %s',
+				split(stack, '\v%(\.\.|\s+)')[-1],
+				localtime(),
+				entry)
+enddef
+
+def Test(self: Pace, pass: bool): number
 	if !exists('#pace')
-		" Redefine the _pace_ group, but do not touch its commands!
+		# Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
 		augroup END
 	endif
 
-	if exists('#pace#CursorMovedI#*')
+	if exists('#pace#CursorHoldI')
+		autocmd! pace CursorHoldI
+	endif
+
+	if exists('#pace#CursorMovedI')
 		autocmd! pace CursorMovedI
 	endif
 
-	if exists('#pace#InsertLeave#*')
+	if exists('#pace#InsertLeave')
 		autocmd! pace InsertLeave
 	endif
 
 	if exists('g:pace_policy') && type(g:pace_policy) == type(0)
-		if g:pace_policy != l:self.policy &&
-				\ g:pace_policy =~ '\<1[012][01][012][0-7]\>'
-			call l:self.msg(expand('<sfile>'), 'g:pace_policy: '
-				\ .l:self.policy.'->'.g:pace_policy)
-			let l:self.policy	= g:pace_policy
+		const policy_base_16: string = string(g:pace_policy)
+		const policy_base_10: number = eval('0x' .. policy_base_16)
+
+		if policy_base_10 != self.policy &&
+				policy_base_16 =~ '\<1[012][01][012][0-7]\>'
+			Msg(expand('<stack>'),
+					printf('g:pace_policy: %x->%s',
+							self.policy,
+							policy_base_16))
+			self.policy = policy_base_10
 		endif
 
 		unlet g:pace_policy
 	endif
 
-	if l:self.char < 0
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if g:pace_sample != self.sample_in
+			const [within: bool, candidate: number] =
+					g:pace_sample > Pace.sample_above
+				? [false, (Pace.sample_above + 5)]
+				: g:pace_sample < Pace.sample_below
+					? [false, (Pace.sample_below - 5)]
+					: [true, g:pace_sample]
+
+			if candidate != self.sample_in
+				if within
+					&updatetime = candidate
+				elseif !(self.sample_in > Pace.sample_above ||
+						self.sample_in <
+							Pace.sample_below)
+					&updatetime = self.state.updatetime
+				endif
+
+				Msg(expand('<stack>'),
+					printf('g:pace_sample: %i->%i',
+							self.sample_in,
+							candidate))
+				self.sample_in = candidate
+			endif
+		endif
+
+		unlet g:pace_sample
+	endif
+
+	if turn.d < 0
 		return -1
-	elseif !l:self.char && !l:self.policy[2]
-		return 4				" Discard null.
-	elseif !a:pass
-		return 0				" pace.leave() exit.
-	elseif !l:self.policy[3]
-		return 2				" Discard rejects.
+	elseif turn.d == 0 && and(self.policy, 0x10100) == 0x10000
+		turn.c = self.carry
+		return 4				# Discard null.
+	elseif !pass
+		return 0				# s:Leave() exit.
+	elseif and(self.policy, 0x10030) == 0x10000
+		turn.c = self.carry
+		return 2				# Discard rejects.
 	endif
 
 	try
-		let l:self.mark	= l:self.policy[3] == 2	" Add (-) to hit.
-		return l:self.leave()			" Collect rejects.
+		self.mark = and(self.policy, 0x10020) == 0x10020
+		return Leave(self)			# Collect rejects.
 	finally
-		let l:self.mark	= 0
+		self.mark = false
 	endtry
-endfunction
 
-function! s:pace.leave() abort						" {{{1
-	if &maxfuncdepth < 16		" An arbitrary bound.
+	return 0
+enddef
+
+def Leave(self: Pace): number
+	const record_char_tick: list<number> = reltime(self.epoch)
+
+	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
-	endif				" What if :doautocmd pace InsertLeave?
+	endif				# What if :doautocmd pace InsertLeave?
 
-	if l:self.test(0)
-		return 1
-	elseif !has_key(l:self.dump, l:self.buffer)
-		let l:self.dump[l:self.buffer]	= [[0, 0, 0, 0]]
+	if !(self.sample_in < Pace.sample_below)
+		if self.sample_in > Pace.sample_above
+			# Counter the overhead of transition from CursorMovedI
+			# to InsertLeave by not rounding up.
+			Record_Unit(turn, [Time(record_char_tick)[0], 0])
+		endif
+
+		if exists('g:pace_info')
+			unlockvar g:pace_info
+		endif
+
+		Sample2(turn)
 	endif
 
-	" Update the logged hits and the whole count.
-	let l:whole		= l:self.dump[0][0]
-	let l:whole[0:3]	+= [1, 0, l:self.char, l:self.sec]
+	if Test(self, false) != 0
+		return 1
+	elseif !has_key(self.dump, self.buffer)
+		self.dump[self.buffer] = [[0, 0, 0, 0]]
+	endif
+
+	# Update the logged hits and the whole count.
+	var whole: list<number> = self.dump[0][0]
+	[whole[0], whole[2], whole[3]] += [1, turn.d, turn.b]
 	unlet! g:pace_amin
-	let g:pace_amin		= l:self.div((l:whole[2] * 60), l:whole[3])
+	g:pace_amin = Div((whole[2] * 60), whole[3])
 	lockvar g:pace_amin
 
 	if exists('g:pace_info')
 		lockvar g:pace_info
 	endif
 
-	" Append a new hit instance and fetch the buffer total entry.
-	let l:total		= add(l:self.dump[l:self.buffer],
-			\ [(l:self.mark ? -l:whole[0] :	l:whole[0]),
-			\ l:self.begin[0], l:self.char, l:self.sec])[0]
-	let [l:total[0], l:total[1]]	= [(l:total[0] + 1), l:whole[0]]
-	let [l:total[2], l:total[3]]	+= [l:self.char, l:self.sec]
-	let [l:self.char, l:self.sec]	= [-1, -1]	" Invalidate the count.
-	let l:self.pool		= {}			" Invalidate the cache.
-endfunction
+	# Append a new hit instance and fetch the buffer total entry.
+	var total: list<number> = add(self.dump[self.buffer],
+					[(self.mark ? -whole[0] : whole[0]),
+					Time(self.epoch)[0],
+					turn.d,
+					turn.b])[0]
+	[total[0], total[1]] = [(total[0] + 1), whole[0]]
+	[total[2], total[3]] += [turn.d, turn.b]
+	[turn.b, turn.d] = [-1, -1]			# Invalidate the count.
+	self.pool = {}					# Invalidate the pool.
+	self.carry = turn.c				# Copy for rejects &c.
+	return 0
+enddef
 
-function! s:pace.swap(buffer) abort					" {{{1
-	let l:status	= get(l:self.status, l:self.buffer, &g:statusline)
+def Buffer_Matcher(): func(number): func(number, number): bool
+	return (buffer) => (_, value) => winbufnr(value) == buffer
+enddef
 
-	if bufwinnr(l:self.buffer) > 0		" Protect from local change.
-		" Ferret out any doppel-gänger windows.
-		call filter(range(1, winnr('$')), "winbufnr(v:val) == l:self.buffer ?
-				\ setwinvar(v:val, '&statusline', l:status) : 0")
-	elseif bufexists(l:self.buffer)
-		execute 'sbuffer '.l:self.buffer
-		call setbufvar(l:self.buffer, '&statusline', l:status)
+def Status_Setter(): func(func(number, number): bool, string):
+						\ func(number, number): bool
+	return (Matcher, status) => (_, value) => {
+		if Matcher(v:none, value)
+			setwinvar(value, '&statusline', status)
+		endif
+
+		return true
+	}
+enddef
+
+def Swap(self: Pace, buffer: number)
+	const status: string = get(self.status, self.buffer, &g:statusline)
+
+	if bufwinnr(self.buffer) > 0		# Protect from local change.
+		# Ferret out any doppel-gänger windows.
+		filter(range(1, winnr('$')),
+			Status_Setter()(Buffer_Matcher()(self.buffer),
+								status))
+	elseif bufexists(self.buffer)
+		execute 'sbuffer ' .. string(self.buffer)
+		setbufvar(self.buffer, '&statusline', status)
 		silent! close!
 	endif
 
-	if l:self.buffer == a:buffer
-		return 1
+	if self.buffer != buffer
+		[self.status[buffer], self.buffer] = [&l:statusline, buffer]
 	endif
+enddef
 
-	let [l:self.status[a:buffer], l:self.buffer]	= [&l:statusline, a:buffer]
-endfunction
-
-function! s:pace.enter() abort						" {{{1
-	if &maxfuncdepth < 16		" An arbitrary bound.
+def Enter(self: Pace): number
+	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
-	endif				" Graduate a sounding-rod before _test_.
+	endif				# Graduate a sounding-rod before s:Test().
 
-	call l:self.test(1)		" Make allowance for any leftovers.
+	Test(self, true)		# Make allowance for any leftovers.
 
-	" Leave and enter gracefully at the switch.
+	# Leave and enter gracefully at the switch.  (Although the current
+	# mode may be masked, what its InsertChange complement is can be
+	# undecidable without recourse to mode book-keeping: [r->]i->r or
+	# [v->]i->v.)
 	autocmd! pace InsertChange
-	autocmd pace InsertChange	* call s:pace.leave()
-	autocmd pace InsertChange	* call s:pace.enter()
+	autocmd pace InsertChange	* Leave(pace)
+	autocmd pace InsertChange	* Enter(pace)
 
-	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
-		call l:self.msg(expand('<sfile>'), '&eventignore mask')
+	if &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
+		Msg(expand('<stack>'), '&eventignore mask')
 		return -128
-	elseif !l:self.policy[4] ||
-		\ (v:insertmode == 'i' && l:self.policy[4] !~ '[1357]') ||
-		\ (v:insertmode == 'r' && l:self.policy[4] !~ '[2367]') ||
-		\ (v:insertmode == 'v' && l:self.policy[4] !~ '[4567]')
-		return -1		" Imitates and(l:self.policy[4], 1) &c.
+	elseif and(self.policy, 0x10007) == 0x10000 ||
+		(v:insertmode == 'i' && and(self.policy, 0x10001) != 0x10001) ||
+		(v:insertmode == 'r' && and(self.policy, 0x10002) != 0x10002) ||
+		(v:insertmode == 'v' && and(self.policy, 0x10004) != 0x10004)
+		return -1
 	endif
 
 	if !&laststatus
@@ -216,115 +554,155 @@ function! s:pace.enter() abort						" {{{1
 		set ruler
 	endif
 
-	" Pre-empt the statusline value and substitute it for the one assembled.
-	if bufnr('%') != l:self.buffer || len(filter(range(1, winnr('$')),
-				\ 'winbufnr(v:val) == l:self.buffer')) > 1
-		call l:self.swap(bufnr('%'))
+	# Pre-empt the statusline value and substitute it for the one assembled.
+	if bufnr('%') != self.buffer || len(filter(range(1, winnr('$')),
+					Buffer_Matcher()(self.buffer))) > 1
+		Swap(self, bufnr('%'))
 	endif
 
-	let [l:self.cchar, l:self.ssec]	= l:self.policy[1] == 1	?
-		\ [l:self.dump[0][0][2], l:self.dump[0][0][3]]	:
-		\ l:self.policy[1] == 2 && has_key(l:self.dump, l:self.buffer)	?
-		\ [l:self.dump[l:self.buffer][0][2],
-		\ l:self.dump[l:self.buffer][0][3]]	:
-		\ [0, 0]
-	let l:self.dump[0][0][1]		+= 1	" All InsertEnter hits.
-	let [l:self.char, l:self.sec]		= [0, 0]
-	let [l:self.begin, l:self.break]	= [reltime(), reltime()]
-	unlet! g:pace_info	" Fits: 27:46:39 wait|type @ 99 char/sec pace.
-	let g:pace_info	= printf('%-9s %2i, %7i, %5i', '0.00,',
-				\ l:self.div(l:self.cchar, l:self.ssec),
-				\ l:self.cchar, l:self.ssec)
+	# Select the base count values for reporting.
+	[turn.e, turn.f] = and(self.policy, 0x11000) == 0x11000
+		? [self.dump[0][0][2], self.dump[0][0][3]]
+		: and(self.policy, 0x12000) == 0x12000 &&
+					has_key(self.dump, self.buffer)
+			? [self.dump[self.buffer][0][2],
+					self.dump[self.buffer][0][3]]
+			: [0, 0]
+	self.dump[0][0][1] += 1			# All InsertEnter hits.
+	[turn.b, turn.d] = [0, 0]		# Initialise the count.
+	unlet! g:pace_info	# Fits: 27:46:39 wait|type @ 99 char/sec pace.
+	g:pace_info = printf('%-9s %2i, %7i, %5i',
+						'0.00,',
+						Div(turn.e, turn.f),
+						turn.e,
+						turn.f)
 
-	if winnr('$') == 1
+	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
 	else
 		setlocal statusline=%<%f\ %h%m%r%=[%{g:pace_info}]
 					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
-	if !exists('#pace#CursorMovedI#*')
-		autocmd pace CursorMovedI	* call s:pace.eval()
+	if self.sample_in > Pace.sample_above
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* turn.d += 1
+		endif
+	elseif self.sample_in < Pace.sample_below
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* Eval0(turn)
+		endif
+	else
+		if !exists('#pace#CursorHoldI#*')
+			autocmd pace CursorHoldI	* Sample0(turn)
+		endif
+
+		if !exists('#pace#CursorMovedI#*')
+			autocmd pace CursorMovedI	* Eval2(turn)
+		endif
 	endif
 
 	if !exists('#pace#InsertLeave#*')
-		autocmd pace InsertLeave	* call s:pace.leave()
+		autocmd pace InsertLeave	* Leave(pace)
 	endif
-endfunction
 
-function! Pace_Load(entropy) abort					" {{{1
-	if type(a:entropy) == type(0) && !a:entropy
-		if !s:pace.load || mode() != 'n'
+	[turn.a, self.epoch] = [reltime(), reltime()]
+	return 0
+enddef
+
+def g:Pace_Load(entropy: number): number
+	if entropy == 0
+		if !pace.load || mode() != 'n'
 			return 1
 		endif
 
-		call s:pace.swap(bufnr('%'))
-		let &g:statusline	= s:pace.state.statusline
-		let &rulerformat	= s:pace.state.rulerformat
-		let &ruler		= s:pace.state.ruler
-		let &maxfuncdepth	= s:pace.state.maxfuncdepth
-		let &laststatus		= s:pace.state.laststatus
-		let s:pace.load		= 0
+		Swap(pace, bufnr('%'))
+		pace.state.Restore()
+
+		# Counter the overhead of reltime() by not rounding up.
+		turn.b = -1
+		turn.c = 0
+		pace.carry = 0
+		pace.load = false
 		silent! autocmd! pace
 		return 2
-	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursormovedi)'
-		call s:pace.msg(expand('<sfile>'), '&eventignore mask')
+	elseif &eventignore =~? '\v%(all|insert%(enter|change|leave)|cursor%(hold|moved)i)'
+		Msg(expand('<stack>'), '&eventignore mask')
 		return -128
-	elseif s:pace.load
+	elseif pace.load
 		return -1
 	endif
 
-	let s:pace.state.laststatus	= &laststatus
-	let s:pace.state.maxfuncdepth	= &maxfuncdepth
-	let s:pace.state.ruler		= &ruler
-	let s:pace.state.rulerformat	= &rulerformat
-	let s:pace.state.statusline	= &g:statusline
+	pace.state = State.new()
 	setglobal ruler statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
-	let s:pace.buffer	= bufnr('%')
-	let s:pace.load		= 1
-	let s:pace.status[s:pace.buffer]	= &l:statusline
+	pace.buffer = bufnr('%')
+	pace.load = true
+	pace.status[pace.buffer] = &l:statusline
+
+	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
+		if exists('g:pace_collect_garbage_early') &&
+				!(g:pace_sample > Pace.sample_above ||
+						g:pace_sample <
+							Pace.sample_below)
+			unlet g:pace_collect_garbage_early
+
+			# Libate Wine-bottled GUI builds before their first
+			# sampling.  (The availability of the variable is left
+			# undocumented.)
+			garbagecollect()
+		endif
+	elseif !(pace.sample_in > Pace.sample_above ||
+				pace.sample_in < Pace.sample_below)
+		&updatetime = pace.sample_in
+	endif
 
 	augroup pace
 		autocmd! pace
-		autocmd InsertEnter	* call s:pace.enter()
+		autocmd InsertEnter	* Enter(pace)
 	augroup END
-endfunction
 
-function! Pace_Dump(entropy) abort					" {{{1
-	if type(a:entropy) == type(0) && !a:entropy
-		return deepcopy(s:pace.dump, 1)
-	elseif !empty(s:pace.pool)			" pace.leave() empties.
-		let s:pace.pool['_rejects']	= printf('%+31i',
-			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0]))
-		return copy(s:pace.pool)
+	return 0
+enddef
+
+def g:Pace_Dump(entropy: number): dict<any>
+	if entropy == 0
+		return deepcopy(pace.dump, 1)
+	elseif !empty(pace.pool)			# See s:Leave().
+		pace.pool['_rejects'] = printf('%+31i',
+			(pace.dump[0][0][1] - pace.dump[0][0][0]))
+		return copy(pace.pool)
 	endif
 
-	let s:pace.pool	= {
-		\ '_buffers':	'pace    chars     secs     hits',
-		\ '_rejects':	printf('%+31i',
-			\ (s:pace.dump[0][0][1] - s:pace.dump[0][0][0])),
-	\ }
+	pace.pool = {
+		'_buffers':	'pace    chars     secs     hits',
+		'_rejects':	printf('%+31i',
+			(pace.dump[0][0][1] - pace.dump[0][0][0])),
+	}
 
-	for l:i in keys(s:pace.dump)
-		let [l:hits, l:last, l:char, l:sec]	= s:pace.dump[l:i][0][0:3]
-		let s:pace.pool[printf('%08i', l:i)]	= printf('%4i %8i %8i %8i',
-			\ s:pace.div(l:char, l:sec), l:char, l:sec, l:hits)
+	for i in keys(pace.dump)
+		const [hits: number, _, char: number, sec: number] =
+							pace.dump[i][0][0 : 3]
+		pace.pool[printf('%08i', eval(i))] = printf('%4i %8i %8i %8i',
+							Div(char, sec),
+							char,
+							sec,
+							hits)
 	endfor
 
-	return copy(s:pace.pool)
-endfunction
+	return copy(pace.pool)
+enddef
 
-function! Pace_Free() abort						" {{{1
-	if !exists('s:pace') || mode() != 'n'
+def g:Pace_Free(): number
+	if pace == null_object || mode() != 'n'
 		return 0
 	endif
 
 	try
-		let s:pace.load	= 1
-		call Pace_Dump(1)
-		call Pace_Load(0)
-	catch	/^Vim\%((\a\+)\)\=:E117/		" An unknown function.
-		call s:pace.swap(bufnr('%'))
+		pace.load = true
+		g:Pace_Dump(1)
+		g:Pace_Load(0)
+	catch	/^Vim\%((\a\+)\)\=:E117/		# An unknown function.
+		Swap(pace, bufnr('%'))
 		silent! autocmd! pace
 	finally
 		silent! delcommand PaceOn
@@ -332,45 +710,55 @@ function! Pace_Free() abort						" {{{1
 		silent! delcommand PaceSum
 		silent! delcommand PaceDump
 		silent! delcommand PaceSaveTo
-		silent! delfunction Pace_Load
-		silent! delfunction Pace_Dump
+		silent! delfunction g:Pace_Load
+		silent! delfunction g:Pace_Dump
 		unlet! g:pace_dump g:pace_pool
-		let g:pace_dump	= s:pace.dump
-		let g:pace_pool	= s:pace.pool
+		g:pace_dump = pace.dump
+		g:pace_pool = pace.pool
 		silent! augroup! pace
-		unlet s:pace
+		unlockvar 1 pace turn
+		pace = null_object
+		turn = null_object
 	endtry
 
 	return 1
-endfunction
+enddef
 
-" COMMANDS								" {{{1
-command! -bar PaceOn	:echo Pace_Load(1)
-command! -bar PaceOff	:echo Pace_Load(0)
-command! -bar PaceSum	:echo join(sort(items(Pace_Dump(1))), "\n")
-command! -bar -nargs=*
-	\ PaceDump	:echo len([<f-args>]) == 3 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]][[<f-args>][2]] :
-	\ len([<f-args>]) == 2 ?
-	\ Pace_Dump(0)[[<f-args>][0]][[<f-args>][1]] :
-	\ len([<f-args>]) == 1 ?
-	\ Pace_Dump(0)[[<f-args>][0]] :
-	\ Pace_Dump(0)
-command! -bar PaceFree	:echo Pace_Free()
+command -bar PaceOn	:echo g:Pace_Load(1)
+command -bar PaceOff	:echo g:Pace_Load(0)
+command -bar PaceSum	:echo join(sort(items(g:Pace_Dump(1))), "\n")
+command -bar -nargs=*
+	\ PaceDump	{
+		const dump_args: list<string> = [<f-args>]
+		const dump_length: number = len(dump_args)
+		echo dump_length == 3
+			? g:Pace_Dump(0)[dump_args[0]][str2nr(dump_args[1])][str2nr(dump_args[2])]
+			: dump_length == 2
+				? g:Pace_Dump(0)[dump_args[0]][str2nr(dump_args[1])]
+				: dump_length == 1
+					? g:Pace_Dump(0)[dump_args[0]]
+					: g:Pace_Dump(0)
+	}
+command -bar PaceFree	:echo g:Pace_Free()
 
-if has('modify_fname')
-command! -bar -nargs=1 -complete=dir
+if has('modify_fname')			# Maintain interoperability for Vim 7.
+
+command -bar -nargs=1 -complete=dir
 	\ PaceSaveTo	:echo writefile(['let g:pace_dump = '
-		\ .string(Pace_Dump(0))], fnamemodify(expand(<q-args>), ':p')
-		\ .'/pace_'.localtime())
-command! -bar -nargs=1 -complete=file
+						\ .. string(g:Pace_Dump(0))],
+				\ fnamemodify(expand(<q-args>), ':p')
+						\ .. '/pace_'
+						\ .. localtime())
+command -bar -nargs=1 -complete=file
 	\ PaceDemo	:execute 'lcd '
-		\ .fnamemodify(expand(<q-args>), ':p:h').' | source '
-		\ .fnamemodify(expand(<q-args>), ':p')
-endif									" }}}1
+				\ .. fnamemodify(expand(<q-args>), ':p:h')
+				\ .. ' | source '
+				\ .. fnamemodify(expand(<q-args>), ':p')
 
-let g:pace_lock	= 1
-let &cpoptions	= s:cpoptions
-unlet s:carryover s:cpoptions
+endif
 
-" vim:fdm=marker:sw=8:ts=8:noet:nolist:nosta:
+defcompile
+lockvar 1 pace turn
+g:pace_lock = 1
+
+# vim:fdm=syntax:sw=8:ts=8:noet:nolist:nosta:
