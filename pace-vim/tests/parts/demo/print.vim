@@ -1,7 +1,7 @@
 ##################################|print.vim|#################################
 try
 	var print_cursor: number = 1
-	var print_linage: dict<any>
+	var print_linage: Linage
 	var print_num: number = 0
 	var print_pos: number = 0
 	var print_match: string
@@ -9,6 +9,8 @@ try
 	var print_any: list<any>
 
 	Assert_Not_Equal(1, 'i', mockup.mode)
+	Assert_Not_Equal(2, demo, null_object)
+	Assert_Not_Equal(3, turn, null_object)
 	Assert_Equal(1, 0, Get_Chars())
 	Assert_Equal(2, 0, Get_Secs())
 	Assert_True(1, exists('g:demo_info'))
@@ -173,12 +175,7 @@ try
 ##	print_cursor += print_linage.offset
 finally
 	@z = demo.reg_z
-	&g:statusline = demo.state.statusline
-	&equalalways = demo.state.equalalways
-	&rulerformat = demo.state.rulerformat
-	&ruler = demo.state.ruler
-	&maxfuncdepth = demo.state.maxfuncdepth
-	&laststatus = demo.state.laststatus
+	demo.state.Restore()
 	const print_switchbuf: string = &switchbuf
 
 	try

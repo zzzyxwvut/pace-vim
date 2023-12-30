@@ -1,34 +1,34 @@
 #############################|demo/share/turn.vim|############################
 def Get_Tick(): list<number>
-	return turn[0]
+	return turn.a
 enddef
 
 def Set_Tick(value: list<number>)
-	turn[0] = value
+	turn.a = value
 enddef
 
 def Get_Secs(): number
-	return turn[1]
+	return turn.b
 enddef
 
 def Set_Secs(value: number)
-	turn[1] = value
+	turn.b = value
 enddef
 
 def Get_Parts(): number
-	return turn[2]
+	return turn.c
 enddef
 
 def Set_Parts(value: number)
-	turn[2] = value
+	turn.c = value
 enddef
 
 def Get_Chars(): number
-	return turn[3]
+	return turn.d
 enddef
 
 def Set_Chars(value: number)
-	turn[3] = value
+	turn.d = value
 enddef
 
 defcompile

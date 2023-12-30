@@ -69,7 +69,7 @@ awk -f "$1"/filter.awk "${TEST_DEMO_PATH:-../demo/demo.vim}" > "$1"/demo.vim
 
 ## Calculate the first line location of a test file.
 vim9script=2
-stdin=40
+stdin=32
 cursor=$((`wc -l "$1"/demo.vim \
 parts/share/mockup.vim \
 parts/share/assert.vim \
@@ -88,38 +88,30 @@ cat parts/share/mockup.vim \
 parts/share/assert.vim \
 parts/demo/share/turn.vim > "$1"/base.vim <<EOF
 ####################################|STDIN|###################################
-demo.text = [
-	'',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A stanza of four lines, usually with alternate rimes;',
-	'four lines of verse.’ (NED, VIII, I, 36.)',
-	'‘A pair of successive lines of verse, _esp._ when riming',
-	'together and of the same length.’ (NED, II, 1084.)',
-]
-demo.linage = [
-	{name: '1st\ quatrain', match: '^‘A stanza', offset: 3},
-	{name: '2nd\ quatrain', match: '^‘A stanza', offset: 3},
-	{name: '3rd\ quatrain', match: '^‘A stanza', offset: 3},
-	{name: 'the\ couplet', match: '^‘A pair', offset: 1},
-]
-demo.delay = [1, 1]
-lockvar demo.delay demo.linage demo.text
-
-# A key to indices.
-# 0: tick,
-# 1: seconds,
-# 2: micro- or nano-seconds,
-# 3: characters.
-var turn: list<any> = [Reltime(), 0, 0, 0]
+demo = Demo.new([
+		'',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A stanza of four lines, usually with alternate rimes;',
+		'four lines of verse.’ (NED, VIII, I, 36.)',
+		'‘A pair of successive lines of verse, _esp._ when riming',
+		'together and of the same length.’ (NED, II, 1084.)',
+	],
+	[
+		Linage.new('1st\ quatrain', '^‘A stanza', 3),
+		Linage.new('2nd\ quatrain', '^‘A stanza', 3),
+		Linage.new('3rd\ quatrain', '^‘A stanza', 3),
+		Linage.new('the\ couplet', '^‘A pair', 1),
+	])
+turn = Turn.new()
 setglobal maxfuncdepth& rulerformat& ruler
 setglobal statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 unlet! g:demo_info

@@ -1,9 +1,11 @@
 ###################################|run.vim|##################################
 try
-	var run_linage: dict<any>
+	var run_linage: Linage
 	var run_any: list<any>
 
 	Assert_Not_Equal(1, 'i', mockup.mode)
+	Assert_Not_Equal(2, demo, null_object)
+	Assert_Not_Equal(3, turn, null_object)
 	Assert_Equal(1, 0, Get_Chars())
 	Assert_Equal(2, 0, Get_Secs())
 	Assert_True(1, exists('g:demo_info'))
@@ -42,12 +44,8 @@ try
 	endfor
 finally
 	@z = demo.reg_z
-	&g:statusline = demo.state.statusline
-	&equalalways = demo.state.equalalways
-	&rulerformat = demo.state.rulerformat
-	&ruler = demo.state.ruler
-	&maxfuncdepth = demo.state.maxfuncdepth
-	&laststatus = demo.state.laststatus
+	demo.state.Restore()
+
 	const run_switchbuf: string = &switchbuf
 
 	try
