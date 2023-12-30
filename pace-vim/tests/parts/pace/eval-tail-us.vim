@@ -277,14 +277,14 @@ try
 	g:pace_policy = 10007
 	Assert_Equal(125, -1, Get_Chars())
 	Assert_Equal(126, -1, Get_Secs())
-	Assert_True(34, pace.sample.in < pace.sample.below)
+	Assert_True(34, pace.sample_in < Pace.sample_below)
 
 	try
-		g:pace_sample = pace.sample.above - pace.sample.below
+		g:pace_sample = Pace.sample_above - Pace.sample_below
 		Assert_True(35, exists('#pace'))
 		Assert_True(36, exists('#pace#InsertEnter#*'))
 		doautocmd pace InsertEnter
-		Assert_Equal(127, &updatetime, pace.sample.in)
+		Assert_Equal(127, &updatetime, pace.sample_in)
 		Assert_True(37, exists('g:pace_info'))
 		eval_any = matchlist(g:pace_info,
 				'\v(\d+\.\d\d),\s+(\d+),\s+(\d+),\s+(\d+)')

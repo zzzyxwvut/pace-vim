@@ -390,46 +390,46 @@ try
 	const test_3: number = Pace_Load(1)
 	mockup.mode = 'i'
 	const test_updatetime: number = &updatetime
-	&updatetime = pace.sample.above - 2 * pace.sample.below
+	&updatetime = Pace.sample_above - 2 * Pace.sample_below
 	unlet! g:pace_sample
-	Assert_True(93, pace.sample.in < pace.sample.below)
+	Assert_True(93, pace.sample_in < Pace.sample_below)
 	var test_sample_in: number
 
 	try
-		g:pace_sample = pace.sample.above - pace.sample.below
-		test_sample_in = pace.sample.in
+		g:pace_sample = Pace.sample_above - Pace.sample_below
+		test_sample_in = pace.sample_in
 		doautocmd pace InsertEnter
-		Assert_Not_Equal(2, pace.sample.in, test_sample_in)
+		Assert_Not_Equal(2, pace.sample_in, test_sample_in)
 		Assert_Not_Equal(3, &updatetime, pace.state.updatetime)
-		Assert_Equal(103, &updatetime, pace.sample.in)
+		Assert_Equal(103, &updatetime, pace.sample_in)
 
-		g:pace_sample = pace.sample.above + 1
-		test_sample_in = pace.sample.in
+		g:pace_sample = Pace.sample_above + 1
+		test_sample_in = pace.sample_in
 		doautocmd pace InsertEnter
-		Assert_Not_Equal(4, pace.sample.in, test_sample_in)
-		Assert_Not_Equal(5, &updatetime, pace.sample.in)
+		Assert_Not_Equal(4, pace.sample_in, test_sample_in)
+		Assert_Not_Equal(5, &updatetime, pace.sample_in)
 		Assert_Equal(104, &updatetime, pace.state.updatetime)
 
-		g:pace_sample = pace.sample.below - 1
-		test_sample_in = pace.sample.in
+		g:pace_sample = Pace.sample_below - 1
+		test_sample_in = pace.sample_in
 		doautocmd pace InsertEnter
-		Assert_Not_Equal(6, pace.sample.in, test_sample_in)
-		Assert_Not_Equal(7, &updatetime, pace.sample.in)
+		Assert_Not_Equal(6, pace.sample_in, test_sample_in)
+		Assert_Not_Equal(7, &updatetime, pace.sample_in)
 		Assert_Equal(105, &updatetime, pace.state.updatetime)
 
-		g:pace_sample = pace.sample.above - pace.sample.below
-		test_sample_in = pace.sample.in
+		g:pace_sample = Pace.sample_above - Pace.sample_below
+		test_sample_in = pace.sample_in
 		doautocmd pace InsertEnter
-		Assert_Not_Equal(8, pace.sample.in, test_sample_in)
+		Assert_Not_Equal(8, pace.sample_in, test_sample_in)
 		Assert_Not_Equal(9, &updatetime, pace.state.updatetime)
-		Assert_Equal(106, &updatetime, pace.sample.in)
+		Assert_Equal(106, &updatetime, pace.sample_in)
 
-		g:pace_sample = pace.sample.above - 2 * pace.sample.below
-		test_sample_in = pace.sample.in
+		g:pace_sample = Pace.sample_above - 2 * Pace.sample_below
+		test_sample_in = pace.sample_in
 		doautocmd pace InsertEnter
-		Assert_Not_Equal(10, pace.sample.in, test_sample_in)
+		Assert_Not_Equal(10, pace.sample_in, test_sample_in)
 		Assert_Not_Equal(11, &updatetime, pace.state.updatetime)
-		Assert_Equal(107, &updatetime, pace.sample.in)
+		Assert_Equal(107, &updatetime, pace.sample_in)
 	finally
 		&updatetime = test_updatetime
 	endtry

@@ -27,7 +27,8 @@ ReltimeStr('	'v:insertmode
 insertmode'	'g:Pace_Load\(
 Pace_Load('	'g:Pace_Dump\(
 Pace_Dump('	'g:Pace_Free\(
-Pace_Free('	'^[\t ]*command[ \t]
+Pace_Free('	'^[\t ]+final dump:
+	public var dump:'	'^[\t ]*command[ \t]
 command! '
 
 ## Generate an Awk filter templet for commenting.
@@ -64,6 +65,7 @@ cd "${cwd}"
 ## Massage a copy of the original script so that testing it is feasible:
 ##	(1) Mock up mode(), reltime(), reltimestr(), and v:insertmode;
 ##		also, limit the scope of Pace_{Load,Dump,Free}();
+##		also, permit assignment of Pace.dump;
 ##		also, permit command redefinition;
 ##	(2) Comment out '^vim9script', '^[\t ]+silent! delcommand',
 ##		'^[\t ]+silent! delfunction', and '^lockvar 1 pace turn'.

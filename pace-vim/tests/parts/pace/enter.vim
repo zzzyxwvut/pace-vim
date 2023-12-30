@@ -146,10 +146,10 @@ doautocmd pace InsertLeave
 
 try
 	unlet! g:pace_sample
-	Assert_True(37, pace.sample.in < pace.sample.below)
+	Assert_True(37, pace.sample_in < Pace.sample_below)
 
 	# The inhibited updating of g:pace_info.
-	pace.sample.in = pace.sample.above + 1
+	pace.sample_in = Pace.sample_above + 1
 	Assert_True(38, !exists('#pace#CursorMovedI#*'))
 	Assert_True(39, !exists('#pace#InsertLeave#*'))
 	Assert_True(40, exists('#pace#InsertEnter#*'))
@@ -175,7 +175,7 @@ try
 	Assert_Equal(24, '0', enter_any[4])
 
 	# The continuous updating of g:pace_info.
-	pace.sample.in = pace.sample.below - 1
+	pace.sample_in = Pace.sample_below - 1
 	Assert_True(45, !exists('#pace#CursorMovedI#*'))
 	Assert_True(46, !exists('#pace#InsertLeave#*'))
 	Assert_True(47, exists('#pace#InsertEnter#*'))
@@ -195,7 +195,7 @@ try
 	doautocmd pace InsertLeave
 
 	# The sampling updating of g:pace_info.
-	pace.sample.in = pace.sample.above - pace.sample.below
+	pace.sample_in = Pace.sample_above - Pace.sample_below
 	Assert_True(52, !exists('#pace#CursorMovedI#*'))
 	Assert_True(53, !exists('#pace#CursorHoldI#*'))
 	Assert_True(54, !exists('#pace#InsertLeave#*'))

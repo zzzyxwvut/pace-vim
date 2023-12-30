@@ -9,7 +9,7 @@ try
 	mockup.mode = 'i'
 	free_1 = Pace_Free()
 	Assert_True(1, exists('s:pace'))
-	Assert_True(101, pace != null_dict)
+	Assert_True(101, pace != null_object)
 	Assert_True(2, !exists('g:pace_dump'))
 	Assert_True(3, !exists('g:pace_pool'))
 finally
@@ -18,7 +18,7 @@ endtry
 
 const free_2: number = Pace_Free()
 Assert_True(4, exists('s:pace'))
-Assert_True(102, pace == null_dict)
+Assert_True(102, pace == null_object)
 Assert_True(5, !exists('#pace'))
 Assert_True(6, exists('g:pace_pool'))
 Assert_True(7, exists('g:pace_dump'))
@@ -26,7 +26,7 @@ Assert_Not_Equal(2, free_1, free_2)
 
 const free_3: number = Pace_Free()
 Assert_True(8, exists('s:pace'))
-Assert_True(103, pace == null_dict)
+Assert_True(103, pace == null_object)
 Assert_True(9, !exists('#pace'))
 Assert_True(10, exists('g:pace_pool'))
 Assert_True(11, exists('g:pace_dump'))
@@ -41,7 +41,7 @@ try
 	mockup.mode = 'i'
 	free_4 = Pace_Free()
 	Assert_True(12, exists('s:pace'))
-	Assert_True(104, pace == null_dict)
+	Assert_True(104, pace == null_object)
 	Assert_True(13, !exists('#pace'))
 	Assert_True(14, !exists('g:pace_dump'))
 	Assert_True(15, !exists('g:pace_pool'))

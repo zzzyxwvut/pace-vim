@@ -126,7 +126,7 @@ try
 	Assert_True(13, exists('#pace'))
 
 	# The inhibited updating of g:pace_info.
-	pace.sample.in = pace.sample.above + 1
+	pace.sample_in = Pace.sample_above + 1
 
 	insertmode = 'i'
 	Assert_True(14, !exists('#pace#CursorMovedI#*'))
@@ -158,7 +158,7 @@ try
 	Assert_True(32, !islocked('g:pace_info'))
 
 	# The continuous updating of g:pace_info.
-	pace.sample.in = pace.sample.below - 1
+	pace.sample_in = Pace.sample_below - 1
 
 	insertmode = 'i'
 	Assert_True(33, !exists('#pace#CursorMovedI#*'))
@@ -190,7 +190,7 @@ try
 	Assert_True(51, !islocked('g:pace_info'))
 
 	# The sampling updating of g:pace_info.
-	pace.sample.in = pace.sample.above - pace.sample.below
+	pace.sample_in = Pace.sample_above - Pace.sample_below
 
 	insertmode = 'i'
 	Assert_True(52, !exists('#pace#CursorMovedI#*'))

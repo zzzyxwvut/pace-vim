@@ -20,43 +20,74 @@ if exists('g:pace_lock') || !(has('reltime') && has('autocmd') &&
 	finish
 endif
 
-# Ponder before ridding of s:turn[4] ((a sum of) characters) and s:turn[5]
-# ((a sum of) seconds), and devolving their duties upon s:turn[3] (characters)
-# and s:turn[1] (seconds).
+# Ponder before ridding of Turn.e ((a sum of) characters) and Turn.f ((a sum
+# of) seconds), and devolving their duties upon Turn.d (characters) and Turn.b
+# (seconds).
 #
-# s:turn[4] ((a sum of) characters): s:Enter() offers no way of telling event
+# Turn.e ((a sum of) characters): s:Enter() offers no way of telling event
 # calls from command line calls; consider that one may quit typing with
-# Ctrl-c, should now s:turn[1] (seconds) serve to distinguish between aborted-
-# `null' and normal-exit records, now s:pace.dump[0][0][2] == s:turn[3] (i.e.
+# Ctrl-c, should now Turn.b (seconds) serve to distinguish between aborted-
+# `null' and normal-exit records, now s:pace.dump[0][0][2] == Turn.d (i.e.
 # the total and the recent character counts)?  Should the rejected character
-# count be deducted from the s:turn[3] figure in s:Enter()?
+# count be deducted from the Turn.d figure in s:Enter()?
 #
-# s:turn[5] ((a sum of) seconds): reltime() returns the time elapsed between
+# Turn.f ((a sum of) seconds): reltime() returns the time elapsed between
 # events, whereas the total seconds spent typing is the sum of all such runs;
 # therefore, provide another entry that would hold the sum of all Normal-mode
 # time and subtract its value from the value of reltime(first_hit, last_hit)
 # in s:Leave().
 #
-# Moreover, s:turn[3] (characters) and s:turn[1] (seconds) must accommodate
-# any run count policy: single (0000), all (1000), or buffer (2000).
+# Moreover, Turn.d (characters) and Turn.b (seconds) must accommodate any run
+# count policy: single (0000), all (1000), or buffer (2000).
 
-# A key to indices.
-# 0: tick,
-# 1: seconds,
-# 2: micro- or nano-seconds,
-# 3: characters,
-# 4: (a sum of) characters,
-# 5: (a sum of) seconds.
-var turn: list<any> = [reltime(), -1, 0, -1, 0, 0]
+# Fancy at-source-time function despatch and classes with anaemic behaviour.
 
-var pace: dict<any> = {
-	buffer:		bufnr('%'),
-	policy:		0x10007,
-	carry:		0,
-	load:		false,
-	mark:		false,
-	epoch:		reltime(),
-	dump:			exists('g:pace_dump') &&
+# (Shorter field names shorten lookup time.)
+class Turn
+	public var a: list<number> = reltime()	# tick
+	public var b: number = -1		# seconds
+	public var c: number = 0		# micro- or nano-seconds
+	public var d: number = -1		# characters
+	public var e: number = 0		# (a sum of) characters
+	public var f: number = 0		# (a sum of) seconds
+
+	def new()
+	enddef
+endclass
+
+class State
+	const laststatus: number = &laststatus
+	const maxfuncdepth: number = &maxfuncdepth
+	const ruler: bool = &ruler
+	const rulerformat: string = &rulerformat
+	const statusline: string = &g:statusline
+	const updatetime: number = &updatetime
+
+	def new()
+	enddef
+
+	def Restore()
+		&laststatus = this.laststatus
+		&maxfuncdepth = this.maxfuncdepth
+		&ruler = this.ruler
+		&rulerformat = this.rulerformat
+		&g:statusline = this.statusline
+		&updatetime = this.updatetime
+	enddef
+endclass
+
+class Pace
+	static const sample_above: number = 2000
+	static const sample_below: number = 50
+
+	public var sample_in: number = sample_below - 5
+	public var buffer: number = bufnr('%')
+	public var policy: number = 0x10007
+	public var carry: number = 0
+	public var load: bool = false
+	public var mark: bool = false
+	public var epoch: list<number> = reltime()
+	final dump: dict<list<list<number>>> = exists('g:pace_dump') &&
 				type(g:pace_dump) == type({}) &&
 				has_key(g:pace_dump, '0') &&
 					0 == max(map(map(values(g:pace_dump),
@@ -68,29 +99,22 @@ var pace: dict<any> = {
 				\ (type(get(v:val, 2)) != type(0) ? 1 : 0) +
 				\ (type(get(v:val, 3)) != type(0) ? 1 : 0)'))
 
-			# Call either g:Pace_Dump() or g:Pace_Free() to obtain
-			# g:pace_dump.
-			? deepcopy(<dict<list<list<number>>>>g:pace_dump, 1)
+		# Call either g:Pace_Dump() or g:Pace_Free() to obtain
+		# g:pace_dump.
+		? deepcopy(<dict<list<list<number>>>>g:pace_dump, 1)
 
-			# The 0th key value follows a uniform depth: [[]].
-			: {'0': [[0, 0, 0, 0]]},
-	pool:		{},
-	sample:		{
-		above:		2000,
-		below:		50,
-		in:		(50 - 5),
-	},
-	state:		{
-		laststatus:	&laststatus,
-		maxfuncdepth:	&maxfuncdepth,
-		ruler:		&ruler,
-		rulerformat:	&rulerformat,
-		statusline:	&g:statusline,
-		updatetime:	&updatetime,
-	},
-	status:		{},
-}
-lockvar pace.sample.above pace.sample.below
+		# The 0th key value follows a uniform depth: [[]].
+		: {'0': [[0, 0, 0, 0]]}
+	public var pool: dict<string> = {}
+	final status: dict<string> = {}
+	public var state: State = State.new()
+
+	def new()
+	enddef
+endclass
+
+var turn: Turn = Turn.new()
+var pace: Pace = Pace.new()
 
 # Try to roll over the sub-second unit (see profile_sub() of profile.c).
 const parts: number = len(reltime()) == 2
@@ -108,16 +132,16 @@ endif
 
 if parts == 9
 
-def Record_Unit(go: list<any>, time: list<number>)
-	[go[1], go[2]] = [(go[1] + time[0] + (time[1] + go[2]) / 1000000000),
-			((time[1] + go[2]) % 1000000000)]
+def Record_Unit(go: Turn, time: list<number>)
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000000),
+			((time[1] + go.c) % 1000000000)]
 enddef
 
 else
 
-def Record_Unit(go: list<any>, time: list<number>)
-	[go[1], go[2]] = [(go[1] + time[0] + (time[1] + go[2]) / 1000000),
-			((time[1] + go[2]) % 1000000)]
+def Record_Unit(go: Turn, time: list<number>)
+	[go.b, go.c] = [(go.b + time[0] + (time[1] + go.c) / 1000000),
+			((time[1] + go.c) % 1000000)]
 enddef
 
 endif
@@ -130,37 +154,37 @@ enddef
 
 if parts == 6
 
-def Eval2(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
-			((tick[1] + go[2]) % 1000000),
-			(go[3] + 1)]
-	go[0] = reltime()
+def Eval2(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	go.a = reltime()
 enddef
 
-def Eval1(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
-			((tick[1] + go[2]) % 1000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Eval1(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
-def Eval0(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000),
-			((tick[1] + go[2]) % 1000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Eval0(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000),
+			((tick[1] + go.c) % 1000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%06i', tick[1]))[: 2] .. ',',
 			sec != 0
@@ -168,42 +192,42 @@ def Eval0(go: list<any>)
 				: char,
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
 elseif parts == 9
 
-def Eval2(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
-			((tick[1] + go[2]) % 1000000000),
-			(go[3] + 1)]
-	go[0] = reltime()
+def Eval2(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	go.a = reltime()
 enddef
 
-def Eval1(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
-			((tick[1] + go[2]) % 1000000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Eval1(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
-def Eval0(go: list<any>)
-	const tick: list<number> = reltime(go[0])
-	[go[1], go[2], go[3]] =
-			[(go[1] + tick[0] + (tick[1] + go[2]) / 1000000000),
-			((tick[1] + go[2]) % 1000000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Eval0(go: Turn)
+	const tick: list<number> = reltime(go.a)
+	[go.b, go.c, go.d] =
+			[(go.b + tick[0] + (tick[1] + go.c) / 1000000000),
+			((tick[1] + go.c) % 1000000000),
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			tick[0] .. (printf('.%09i', tick[1]))[: 2] .. ',',
 			sec != 0
@@ -211,7 +235,7 @@ def Eval0(go: list<any>)
 				: char,
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
 else
@@ -227,40 +251,40 @@ def Time(tick: list<number>): list<number>
 	return [str2nr(unit), str2nr(unit[-6 :])]
 enddef
 
-def Eval2(go: list<any>)
-	const unit: string = reltimestr(reltime(go[0]))
-	const micros: number = str2nr(unit[-6 :]) + go[2]
-	[go[1], go[2], go[3]] =
-			[(go[1] + str2nr(unit) + micros / 1000000),
+def Eval2(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go[3] + 1)]
-	go[0] = reltime()
+			(go.d + 1)]
+	go.a = reltime()
 enddef
 
-def Eval1(go: list<any>)
-	const unit: string = reltimestr(reltime(go[0]))
-	const micros: number = str2nr(unit[-6 :]) + go[2]
-	[go[1], go[2], go[3]] =
-			[(go[1] + str2nr(unit) + micros / 1000000),
+def Eval1(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
 			(char / sec),
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
-def Eval0(go: list<any>)
-	const unit: string = reltimestr(reltime(go[0]))
-	const micros: number = str2nr(unit[-6 :]) + go[2]
-	[go[1], go[2], go[3]] =
-			[(go[1] + str2nr(unit) + micros / 1000000),
+def Eval0(go: Turn)
+	const unit: string = reltimestr(reltime(go.a))
+	const micros: number = str2nr(unit[-6 :]) + go.c
+	[go.b, go.c, go.d] =
+			[(go.b + str2nr(unit) + micros / 1000000),
 			(micros % 1000000),
-			(go[3] + 1)]
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+			(go.d + 1)]
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			trim(unit)[: -5] .. ',',
 			sec != 0
@@ -268,7 +292,7 @@ def Eval0(go: list<any>)
 				: char,
 			char,
 			sec)
-	go[0] = reltime()
+	go.a = reltime()
 enddef
 
 endif
@@ -289,8 +313,8 @@ def Div(dividend: number, divisor: number): number
 	return divisor != 0 ? (dividend / divisor) : dividend
 enddef
 
-def Sample2(go: list<any>)
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Sample2(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			Div(char, sec),
@@ -298,8 +322,8 @@ def Sample2(go: list<any>)
 			sec)
 enddef
 
-def Sample1(go: list<any>)
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Sample1(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			(char / sec),
@@ -307,8 +331,8 @@ def Sample1(go: list<any>)
 			sec)
 enddef
 
-def Sample0(go: list<any>)
-	const [char: number, sec: number] = [(go[3] + go[4]), (go[1] + go[5])]
+def Sample0(go: Turn)
+	const [char: number, sec: number] = [(go.d + go.e), (go.b + go.f)]
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 			'0.00,',
 			sec != 0
@@ -325,7 +349,7 @@ def Msg(stack: string, entry: string)
 				entry)
 enddef
 
-def Test(self: dict<any>, pass: bool): number
+def Test(self: Pace, pass: bool): number
 	if !exists('#pace')
 		# Redefine the _pace_ group, but do not touch its commands!
 		augroup pace
@@ -361,43 +385,43 @@ def Test(self: dict<any>, pass: bool): number
 	endif
 
 	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
-		if g:pace_sample != self.sample.in
+		if g:pace_sample != self.sample_in
 			const [within: bool, candidate: number] =
-					g:pace_sample > self.sample.above
-				? [false, (self.sample.above + 5)]
-				: g:pace_sample < self.sample.below
-					? [false, (self.sample.below - 5)]
+					g:pace_sample > Pace.sample_above
+				? [false, (Pace.sample_above + 5)]
+				: g:pace_sample < Pace.sample_below
+					? [false, (Pace.sample_below - 5)]
 					: [true, g:pace_sample]
 
-			if candidate != self.sample.in
+			if candidate != self.sample_in
 				if within
 					&updatetime = candidate
-				elseif !(self.sample.in > self.sample.above ||
-						self.sample.in <
-							self.sample.below)
+				elseif !(self.sample_in > Pace.sample_above ||
+						self.sample_in <
+							Pace.sample_below)
 					&updatetime = self.state.updatetime
 				endif
 
 				Msg(expand('<stack>'),
 					printf('g:pace_sample: %i->%i',
-							self.sample.in,
+							self.sample_in,
 							candidate))
-				self.sample.in = candidate
+				self.sample_in = candidate
 			endif
 		endif
 
 		unlet g:pace_sample
 	endif
 
-	if turn[3] < 0
+	if turn.d < 0
 		return -1
-	elseif turn[3] == 0 && and(self.policy, 0x10100) == 0x10000
-		turn[2] = self.carry
+	elseif turn.d == 0 && and(self.policy, 0x10100) == 0x10000
+		turn.c = self.carry
 		return 4				# Discard null.
 	elseif !pass
 		return 0				# s:Leave() exit.
 	elseif and(self.policy, 0x10030) == 0x10000
-		turn[2] = self.carry
+		turn.c = self.carry
 		return 2				# Discard rejects.
 	endif
 
@@ -411,15 +435,15 @@ def Test(self: dict<any>, pass: bool): number
 	return 0
 enddef
 
-def Leave(self: dict<any>): number
+def Leave(self: Pace): number
 	const record_char_tick: list<number> = reltime(self.epoch)
 
 	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
 	endif				# What if :doautocmd pace InsertLeave?
 
-	if !(self.sample.in < self.sample.below)
-		if self.sample.in > self.sample.above
+	if !(self.sample_in < Pace.sample_below)
+		if self.sample_in > Pace.sample_above
 			# Counter the overhead of transition from CursorMovedI
 			# to InsertLeave by not rounding up.
 			Record_Unit(turn, [Time(record_char_tick)[0], 0])
@@ -440,7 +464,7 @@ def Leave(self: dict<any>): number
 
 	# Update the logged hits and the whole count.
 	var whole: list<number> = self.dump[0][0]
-	[whole[0], whole[2], whole[3]] += [1, turn[3], turn[1]]
+	[whole[0], whole[2], whole[3]] += [1, turn.d, turn.b]
 	unlet! g:pace_amin
 	g:pace_amin = Div((whole[2] * 60), whole[3])
 	lockvar g:pace_amin
@@ -453,13 +477,13 @@ def Leave(self: dict<any>): number
 	var total: list<number> = add(self.dump[self.buffer],
 					[(self.mark ? -whole[0] : whole[0]),
 					Time(self.epoch)[0],
-					turn[3],
-					turn[1]])[0]
+					turn.d,
+					turn.b])[0]
 	[total[0], total[1]] = [(total[0] + 1), whole[0]]
-	[total[2], total[3]] += [turn[3], turn[1]]
-	[turn[1], turn[3]] = [-1, -1]			# Invalidate the count.
+	[total[2], total[3]] += [turn.d, turn.b]
+	[turn.b, turn.d] = [-1, -1]			# Invalidate the count.
 	self.pool = {}					# Invalidate the pool.
-	self.carry = turn[2]				# Copy for rejects &c.
+	self.carry = turn.c				# Copy for rejects &c.
 	return 0
 enddef
 
@@ -478,7 +502,7 @@ def Status_Setter(): func(func(number, number): bool, string):
 	}
 enddef
 
-def Swap(self: dict<any>, buffer: number)
+def Swap(self: Pace, buffer: number)
 	const status: string = get(self.status, self.buffer, &g:statusline)
 
 	if bufwinnr(self.buffer) > 0		# Protect from local change.
@@ -497,7 +521,7 @@ def Swap(self: dict<any>, buffer: number)
 	endif
 enddef
 
-def Enter(self: dict<any>): number
+def Enter(self: Pace): number
 	if &maxfuncdepth < 16		# An arbitrary bound.
 		set maxfuncdepth&
 	endif				# Graduate a sounding-rod before s:Test().
@@ -537,7 +561,7 @@ def Enter(self: dict<any>): number
 	endif
 
 	# Select the base count values for reporting.
-	[turn[4], turn[5]] = and(self.policy, 0x11000) == 0x11000
+	[turn.e, turn.f] = and(self.policy, 0x11000) == 0x11000
 		? [self.dump[0][0][2], self.dump[0][0][3]]
 		: and(self.policy, 0x12000) == 0x12000 &&
 					has_key(self.dump, self.buffer)
@@ -545,13 +569,13 @@ def Enter(self: dict<any>): number
 					self.dump[self.buffer][0][3]]
 			: [0, 0]
 	self.dump[0][0][1] += 1			# All InsertEnter hits.
-	[turn[1], turn[3]] = [0, 0]		# Initialise the count.
+	[turn.b, turn.d] = [0, 0]		# Initialise the count.
 	unlet! g:pace_info	# Fits: 27:46:39 wait|type @ 99 char/sec pace.
 	g:pace_info = printf('%-9s %2i, %7i, %5i',
 						'0.00,',
-						Div(turn[4], turn[5]),
-						turn[4],
-						turn[5])
+						Div(turn.e, turn.f),
+						turn.e,
+						turn.f)
 
 	if &laststatus != 2 && winnr('$') == 1
 		set rulerformat=%-48([%{g:pace_info}]%)\ %<%l,%c%V\ %=%P
@@ -560,11 +584,11 @@ def Enter(self: dict<any>): number
 					\\ %-14.14(%l,%c%V%)\ %P rulerformat&
 	endif
 
-	if self.sample.in > self.sample.above
+	if self.sample_in > Pace.sample_above
 		if !exists('#pace#CursorMovedI#*')
-			autocmd pace CursorMovedI	* turn[3] += 1
+			autocmd pace CursorMovedI	* turn.d += 1
 		endif
-	elseif self.sample.in < self.sample.below
+	elseif self.sample_in < Pace.sample_below
 		if !exists('#pace#CursorMovedI#*')
 			autocmd pace CursorMovedI	* Eval0(turn)
 		endif
@@ -582,7 +606,7 @@ def Enter(self: dict<any>): number
 		autocmd pace InsertLeave	* Leave(pace)
 	endif
 
-	[turn[0], self.epoch] = [reltime(), reltime()]
+	[turn.a, self.epoch] = [reltime(), reltime()]
 	return 0
 enddef
 
@@ -593,16 +617,11 @@ def g:Pace_Load(entropy: number): number
 		endif
 
 		Swap(pace, bufnr('%'))
-		&g:statusline = pace.state.statusline
-		&rulerformat = pace.state.rulerformat
-		&ruler = pace.state.ruler
-		&maxfuncdepth = pace.state.maxfuncdepth
-		&laststatus = pace.state.laststatus
-		&updatetime = pace.state.updatetime
+		pace.state.Restore()
 
 		# Counter the overhead of reltime() by not rounding up.
-		turn[1] = -1
-		turn[2] = 0
+		turn.b = -1
+		turn.c = 0
 		pace.carry = 0
 		pace.load = false
 		silent! autocmd! pace
@@ -614,12 +633,7 @@ def g:Pace_Load(entropy: number): number
 		return -1
 	endif
 
-	pace.state.updatetime = &updatetime
-	pace.state.laststatus = &laststatus
-	pace.state.maxfuncdepth = &maxfuncdepth
-	pace.state.ruler = &ruler
-	pace.state.rulerformat = &rulerformat
-	pace.state.statusline = &g:statusline
+	pace.state = State.new()
 	setglobal ruler statusline=%<%f\ %h%m%r%=%-14.14(%l,%c%V%)\ %P
 	pace.buffer = bufnr('%')
 	pace.load = true
@@ -627,9 +641,9 @@ def g:Pace_Load(entropy: number): number
 
 	if exists('g:pace_sample') && type(g:pace_sample) == type(0)
 		if exists('g:pace_collect_garbage_early') &&
-				!(g:pace_sample > pace.sample.above ||
+				!(g:pace_sample > Pace.sample_above ||
 						g:pace_sample <
-							pace.sample.below)
+							Pace.sample_below)
 			unlet g:pace_collect_garbage_early
 
 			# Libate Wine-bottled GUI builds before their first
@@ -637,9 +651,9 @@ def g:Pace_Load(entropy: number): number
 			# undocumented.)
 			garbagecollect()
 		endif
-	elseif !(pace.sample.in > pace.sample.above ||
-				pace.sample.in < pace.sample.below)
-		&updatetime = pace.sample.in
+	elseif !(pace.sample_in > Pace.sample_above ||
+				pace.sample_in < Pace.sample_below)
+		&updatetime = pace.sample_in
 	endif
 
 	augroup pace
@@ -679,7 +693,7 @@ def g:Pace_Dump(entropy: number): dict<any>
 enddef
 
 def g:Pace_Free(): number
-	if pace == null_dict || mode() != 'n'
+	if pace == null_object || mode() != 'n'
 		return 0
 	endif
 
@@ -703,8 +717,8 @@ def g:Pace_Free(): number
 		g:pace_pool = pace.pool
 		silent! augroup! pace
 		unlockvar 1 pace turn
-		pace = null_dict
-		turn = null_list
+		pace = null_object
+		turn = null_object
 	endtry
 
 	return 1

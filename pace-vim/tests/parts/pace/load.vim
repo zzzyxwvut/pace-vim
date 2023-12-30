@@ -52,31 +52,31 @@ endtry
 
 try
 	unlet! g:pace_sample
-	Assert_True(8, pace.sample.in < pace.sample.below)
+	Assert_True(8, pace.sample_in < Pace.sample_below)
 
-	pace.sample.in = pace.sample.below - 1
+	pace.sample_in = Pace.sample_below - 1
 	load_on_n = Pace_Load(1)
-	Assert_Not_Equal(6, &updatetime, pace.sample.in)
+	Assert_Not_Equal(6, &updatetime, pace.sample_in)
 	load_off_n = Pace_Load(0)
 
-	pace.sample.in = pace.sample.above + 1
+	pace.sample_in = Pace.sample_above + 1
 	load_on_n = Pace_Load(1)
-	Assert_Not_Equal(7, &updatetime, pace.sample.in)
+	Assert_Not_Equal(7, &updatetime, pace.sample_in)
 	load_off_n = Pace_Load(0)
 
-	pace.sample.in = pace.sample.below
+	pace.sample_in = Pace.sample_below
 	load_on_n = Pace_Load(1)
-	Assert_Equal(3, &updatetime, pace.sample.in)
+	Assert_Equal(3, &updatetime, pace.sample_in)
 	load_off_n = Pace_Load(0)
 
-	pace.sample.in = pace.sample.above
+	pace.sample_in = Pace.sample_above
 	load_on_n = Pace_Load(1)
-	Assert_Equal(4, &updatetime, pace.sample.in)
+	Assert_Equal(4, &updatetime, pace.sample_in)
 	load_off_n = Pace_Load(0)
 
-	pace.sample.in = pace.sample.above - pace.sample.below
+	pace.sample_in = Pace.sample_above - Pace.sample_below
 	load_on_n = Pace_Load(1)
-	Assert_Equal(5, &updatetime, pace.sample.in)
+	Assert_Equal(5, &updatetime, pace.sample_in)
 	load_off_n = Pace_Load(0)
 finally
 	&updatetime = pace.state.updatetime
