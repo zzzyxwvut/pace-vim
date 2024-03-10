@@ -17,7 +17,7 @@ Vim directory, either clone this repository and copy all
 Since Vim 8, consider assembling a Vim package for either  
 cloning, copying, or extracting:
 ```vim
-help packages
+:help packages
 ```
 
 Having the files installed, launch Vim and list all `doc/`  
